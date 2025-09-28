@@ -31639,19 +31639,16 @@ else
                 document.head.appendChild(style);
                 this.log('init', 'CSS injected');
 
-                // Load state
-                await this.loadState();
-                this.log('init', 'State loaded:', this.state);
+                // Load state (non-blocking failure ok)
+                try {
+                    await this.loadState();
+                    this.log('init', 'State loaded:', this.state);
+                } catch (e) {
+                    this.log('init', 'State load skipped/failed (non-blocking):', e.message);
+                }
 
                 // Install write guards before any potential writes
                 this.installWriteGuards();
-
-                // Initialize storage keys for first-time users
-                await this.initializeStorageKeys();
-
-                // Load characters
-                await this.loadCharacters();
-                this.log('init', 'Characters loaded:', this.characters.length);
 
                 // Build UI
                 this.buildUI();
@@ -31683,8 +31680,8 @@ else
                 // Set startup configuration
                 this.setupStartupConfiguration();
 
-                // Restore visual theme
-                await this.restoreVisualTheme();
+                // Restore visual theme (non-blocking)
+                try { await this.restoreVisualTheme(); } catch (e) { this.log('init', 'Visual theme restore skipped:', e.message); }
 
                 // Initialize panels
                 this.loadPanel('left', this.state.tabs.left);
@@ -31706,6 +31703,24 @@ else
                 document.body.classList.add('klite-active');
 
                 // Avatars disabled for chat stability; do not override Lite avatar globals
+
+                // Defer storage init and character load until after UI is visible
+                Promise.resolve().then(async () => {
+                    try {
+                        await this.initializeStorageKeys();
+                    } catch (e) {
+                        this.log('init', 'initializeStorageKeys failed/declined (non-blocking):', e.message || e);
+                    }
+                    try {
+                        await this.loadCharacters();
+                        this.log('init', 'Characters loaded (deferred):', this.characters.length);
+                        // Refresh panels that depend on characters
+                        this.panels.CHARS?.refresh?.();
+                        this.panels.GROUP?.refresh?.();
+                    } catch (e) {
+                        this.log('init', 'Deferred character load failed:', e.message || e);
+                    }
+                });
 
                 this.essential('✅ KLITE RP Mod initialized successfully');
             } catch (error) {
