@@ -27897,15 +27897,16 @@ else
   // Enforce RPMod overlay and block switching back to Lite UI
   function enforceRPOverlay(){
     try{
-      // Force overlay visible
-      document.body.classList.add('klite-active');
+      // Only hide base UI when RP overlay exists
       var cont = document.getElementById('klite-container');
-      if(cont){ cont.style.display = 'grid'; }
-      // Hide base containers for clarity
-      ['#gamecontainer','#main_container','#inputrow'].forEach(function(sel){
-        var el = document.querySelector(sel);
-        if(el){ el.style.display = 'none'; el.setAttribute('hidden','hidden'); }
-      });
+      if (cont) {
+        document.body.classList.add('klite-active');
+        cont.style.display = 'grid';
+      } else {
+        // Keep base UI visible until overlay is ready
+        document.body.classList.remove('klite-active');
+      }
+
       // If RPMod is available, disable its hotswap behavior
       if(window.KLITE_RPMod){
         try{ window.KLITE_RPMod.toggleUI = function(){}; }catch(e){}
@@ -27976,12 +27977,20 @@ else
     // =============================================
     // CONSOLE RESTORATION FOR KOBOLDAI LITE
     // =============================================
-    const consoleFrame = document.createElement('iframe');
-    consoleFrame.style.display = 'none';
-    document.body.appendChild(consoleFrame);
-    window.console = consoleFrame.contentWindow.console;
-
-    console.log('[KLITE RPMod] Console access restored via iframe');
+    // Best-effort console restoration (guarded for compatibility)
+    (function(){
+      try {
+        const consoleFrame = document.createElement('iframe');
+        consoleFrame.style.display = 'none';
+        document.body.appendChild(consoleFrame);
+        if (consoleFrame.contentWindow && consoleFrame.contentWindow.console) {
+          window.console = consoleFrame.contentWindow.console;
+          window.console.log('[KLITE RPMod] Console access restored via iframe');
+        }
+      } catch (e) {
+        // Keep existing console; do not fail initialization
+      }
+    })();
 
     // =============================================
     // 1. COMPLETE CSS WITH ALL PANEL STYLES
