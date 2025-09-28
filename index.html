@@ -27944,6 +27944,7 @@ else
       setTimeout(lockModeAndTheme, 1200);
       setTimeout(enforceRPOverlay, 500);
       setTimeout(enforceRPOverlay, 1400);
+      // Note: RPMod has its own readiness loop; avoid double-init here.
     });
   }else{
     hardenCore();
@@ -27954,6 +27955,7 @@ else
     setTimeout(lockModeAndTheme, 1200);
     setTimeout(enforceRPOverlay, 500);
     setTimeout(enforceRPOverlay, 1400);
+    // Note: RPMod has its own readiness loop; avoid double-init here.
   }
 })();
 </script>
@@ -31625,6 +31627,8 @@ else
         },
 
         async init() {
+            if (this._initialized) { this.log('init', 'Already initialized, skipping'); return; }
+            this._initialized = true;
             this.essential('🚀 KLITE RP Mod initializing...');
 
             try {
@@ -31706,6 +31710,7 @@ else
                 this.essential('✅ KLITE RP Mod initialized successfully');
             } catch (error) {
                 this.error('Failed to initialize:', error);
+                this._initialized = false; // allow retry on failure
                 throw error;
             }
         },
