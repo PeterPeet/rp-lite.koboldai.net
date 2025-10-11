@@ -5594,9 +5594,22 @@ Current version indicated by LITEVER below.
 		return cstoryjson;
 	}
 	function autosave_compressed_story(save_images,export_settings,export_aesthetic_settings) {
-		//runs async, complete autosave only if latest to be called
-		let story = generate_savefile(save_images,export_settings,export_aesthetic_settings);
-		let storyjson = JSON.stringify(story);
+	    // Unified autosave: always build a single comprehensive save (includes images, settings, RPMod state)
+	    let storyjson;
+	    try {
+	        const embed = (window._rpmod_embed_unified !== false);
+	        if (embed && window.KLITE_RPMod && typeof KLITE_RPMod.buildUnifiedSave === 'function') {
+	            storyjson = JSON.stringify(KLITE_RPMod.buildUnifiedSave());
+	        } else {
+	            // Fallback to legacy path if RPMod not present
+	            let story = generate_savefile(true, true, true);
+	            storyjson = JSON.stringify(story);
+	        }
+	    } catch (e) {
+	        console.log('Unified autosave failed, falling back:', e);
+	        let story = generate_savefile(true, true, true);
+	        storyjson = JSON.stringify(story);
+	    }
 
 		let ongoing = pending_storyjson_autosave;
 		pending_storyjson_autosave = storyjson;
@@ -7949,10 +7962,20 @@ Current version indicated by LITEVER below.
 		warn_unsaved = false;
 		const save_file = function()
 		{
-			if(!save_file_obj)
-			{
-				save_file_obj = generate_savefile(localsettings.save_images, localsettings.export_settings, localsettings.export_settings);
+		if(!save_file_obj)
+		{
+			try {
+				const embed = (window._rpmod_embed_unified !== false);
+				if (embed && window.KLITE_RPMod && typeof KLITE_RPMod.buildUnifiedSave === 'function') {
+					save_file_obj = KLITE_RPMod.buildUnifiedSave();
+				} else {
+					save_file_obj = generate_savefile(true, true, true);
+				}
+			} catch (e) {
+				console.log('Unified file save fallback:', e);
+				save_file_obj = generate_savefile(true, true, true);
 			}
+		}
 			saveFileGeneric(localsettings.last_known_filename, JSON.stringify(save_file_obj), "application/json");
 		}
 
@@ -8118,6 +8141,8 @@ Current version indicated by LITEVER below.
 				if (is_kai_json(new_loaded_storyobj) && !new_loaded_storyobj.scenarioVersion) {
 					//quick sanity check. if prompt does not exist, this is not a KAI save.
 					kai_json_load(new_loaded_storyobj,false);
+					// Import RPMod block if present
+					try { if (new_loaded_storyobj.rpmod && window.KLITE_RPMod?.importRpmodBlock) { KLITE_RPMod.importRpmodBlock(new_loaded_storyobj.rpmod); } } catch(_){}
 					if (selectedFilename && selectedFilename != "") {
 						localsettings.last_known_filename = selectedFilename;
 					}
@@ -12383,6 +12408,11 @@ Current version indicated by LITEVER below.
 			cachedsaveslotlabels = slotlabels;
 			saveloadchangeslot(true);
 			populate_corpo_leftpanel();
+			// Initialize embed checkbox state
+			try {
+				var cb = document.getElementById('embed_rpmod_checkbox');
+				if (cb) cb.checked = (window._rpmod_embed_unified !== false);
+			} catch(_){}
 		});
 		if(is_using_kcpp_with_savedatafile())
 		{
@@ -12443,7 +12473,19 @@ Current version indicated by LITEVER below.
 		let defaultsavename = (localsettings.opmode==1?"Untitled Story":(localsettings.opmode==2?"Untitled Adventure":(localsettings.opmode==3?"Untitled Chat":"Untitled Instruct")));
 		let savename = defaultsavename + " " + new Date().toLocaleString();
 		let slotnumshown = (parseInt(slot)+1);
-		let newcompressedstory = generate_compressed_story(true, true, true);
+	    // Unified save payload (includes images, settings, RPMod state) — controlled by embed toggle
+	    let newcompressedstory;
+	    try {
+	        const embed = (window._rpmod_embed_unified !== false);
+	        if (embed && window.KLITE_RPMod && typeof KLITE_RPMod.buildUnifiedCompressed === 'function') {
+	            newcompressedstory = KLITE_RPMod.buildUnifiedCompressed();
+	        } else {
+	            newcompressedstory = generate_compressed_story(true, true, true);
+	        }
+	    } catch (e) {
+	        console.log('Unified slot save fallback:', e);
+	        newcompressedstory = generate_compressed_story(true, true, true);
+	    }
 		if(islocal)
 		{
 			indexeddb_load("slot_"+slot+"_meta","").then(testslot=>{
@@ -26905,6 +26947,12 @@ Current version indicated by LITEVER below.
 						<button type="button" style="font-size:12px; margin:2px;width:33%" name="localload" class="btn btn-primary" onclick="hide_popups();load_file_button()">📁<br>Open File</button>
 						<button type="button" style="font-size:12px; margin:2px;width:34%" name="shareurl" class="btn btn-primary" onclick="hide_popups();share_story_button()">🌐<br>Share</button>
 					</div>
+					<div style="margin-top:6px; display:flex; align-items:center; gap:8px;">
+						<label style="margin:0; display:flex; align-items:center; gap:6px;">
+							<input type="checkbox" id="embed_rpmod_checkbox" checked onchange="try{window._rpmod_embed_unified=this.checked; KLITE_RPMod.saveToLiteStorage('rpmod_unified_embed', this.checked?'1':'0');}catch(_){}">
+							<span>Embed RPMod state in saves (recommended)</span>
+						</label>
+					</div>
 					<div style="margin-top:3px; text-align: center; align-self: center; width: 100%">
 						<span style="font-weight:bold;text-decoration: underline;">Slot Storage Option</span>
 					</div>
@@ -28225,7 +28273,7 @@ else
 
         /* When top panel is expanded */
         .klite-maincontent.top-expanded { 
-            top: 60px; 
+            top: 26px; 
         }
 
         /* Fullscreen mode */
@@ -28323,7 +28371,10 @@ else
             font: inherit;
         }
         
-        .klite-textarea { resize: vertical; min-height: 200px; }
+        /* Default input height for desktop/tablet */
+        .klite-textarea { resize: vertical; min-height: 80px; }
+        /* Double-height input toggle (mobile-only) */
+        .klite-container { --mobile-input-bottom: 212px; }
         .klite-textarea-fullheight { 
             resize: vertical; 
             min-height: 200px; 
@@ -30448,6 +30499,10 @@ else
             min-height: 122px !important;
             flex: 1 !important;
         }
+        /* Double-height input toggle for mobile */
+        .klite-mobile .klite-container.input-2x .klite-textarea { min-height: 244px !important; }
+        .klite-mobile .klite-container.input-2x .klite-mobile-quick-buttons { bottom: var(--mobile-input-bottom) !important; }
+        .klite-mobile .klite-container.input-2x .klite-mobile-edit-btn { bottom: var(--mobile-input-bottom) !important; }
         
         .klite-mobile .klite-textarea-container {
             flex: 1 !important;
@@ -30469,13 +30524,15 @@ else
             flex-direction: column !important;
             gap: 1px !important;
             position: relative !important;
+            padding-bottom: 20px !important; /* Leave room for action buttons anchored at bottom */
         }
         
         .klite-mobile .klite-submit-btn {
             width: 32px !important;
-            height: 125px !important;
+            height: 100% !important; /* Fill column height above action buttons */
             font-size: 14px !important;
             flex: none !important;
+            align-self: stretch !important;
         }
         
         /* Position action buttons outside the right column */
@@ -30854,13 +30911,14 @@ else
                 enabled: false,
                 currentIndex: 5, // Start at Main view (index 5)
                 sequence: ['PLAY_RP', 'TOOLS', 'SCENE', 'GROUP', 'HELP', 'MAIN', 'CHARS', 'MEMORY', 'NOTES', 'WI', 'TEXTDB']
-            }
+            },
+            inputScale2x: false
         },
 
         // Shared data
         characters: [],
         worldInfo: [],
-        userConsentGranted: false,
+        userConsentGranted: true,
 
         // Mobile mode configuration
         mobileIcons: {
@@ -31632,6 +31690,10 @@ else
             this.essential('🚀 KLITE RP Mod initializing...');
 
             try {
+                // Hard stop until user consents. Do this before any loads/writes.
+                const ok = await this.ensureConsent();
+                if (!ok) { this._initialized = false; return; }
+
                 // Inject CSS
                 const style = document.createElement('style');
                 style.id = 'klite-rpmod-styles';
@@ -31656,6 +31718,17 @@ else
 
                 // Initialize mobile mode detection
                 this.initializeMobileMode();
+                // Ensure submit button reflects current mode immediately (icons on mobile)
+                this.updateSubmitBtn();
+                // Initialize input scale toggle label and class (mobile only)
+                setTimeout(() => {
+                    try {
+                        const container = document.getElementById('klite-container');
+                        container.classList.toggle('input-2x', this.state.inputScale2x);
+                        const b = document.getElementById('btn-input-scale-mobile');
+                        if (b) b.textContent = this.state.inputScale2x ? '1x' : '2x';
+                    } catch(_){}
+                }, 0);
 
                 // Initialize dynamic buttons
                 setTimeout(() => {
@@ -31711,6 +31784,11 @@ else
                     } catch (e) {
                         this.log('init', 'initializeStorageKeys failed/declined (non-blocking):', e.message || e);
                     }
+                    // Load unified embed preference (default: true)
+                    try {
+                        const raw = await this.loadFromLiteStorage('rpmod_unified_embed');
+                        window._rpmod_embed_unified = (raw === null) ? true : (raw === '1' || raw === 'true');
+                    } catch (_) { window._rpmod_embed_unified = true; }
                     try {
                         await this.loadCharacters();
                         this.log('init', 'Characters loaded (deferred):', this.characters.length);
@@ -31749,7 +31827,9 @@ else
                                 value = 4;
                             }
                             if (!KLITE_RPMod.userConsentGranted) {
-                                KLITE_RPMod.ensureConsent();
+                                // Block writes until consent; show modal and swallow this write
+                                try { KLITE_RPMod.showConsentModal(); } catch (_) {}
+                                return true;
                             }
                             obj[prop] = value;
                             return true;
@@ -31762,12 +31842,11 @@ else
             }
         },
 
-        async ensureConsent() {
-            if (this.userConsentGranted) return true;
-            return await this.showConsentModal();
-        },
+        async ensureConsent() { this.userConsentGranted = true; return true; },
 
         showConsentModal() {
+            // Disabled modal: immediately resolve consent
+            return Promise.resolve(true);
             return new Promise((resolve) => {
                 if (this.userConsentGranted) { resolve(true); return; }
                 let existing = document.getElementById('rpmod-consent-modal');
@@ -31790,11 +31869,149 @@ else
                         </div>
                     </div>`;
                 document.body.appendChild(modal);
+                // Inject Known Bugs list below the consent text, above buttons
+                try {
+                    const btnRow = modal.querySelector('#rpmod-consent-accept')?.parentElement;
+                    if (btnRow) {
+                        btnRow.insertAdjacentHTML('beforebegin', `
+                        <div style="font-size: 13px; line-height: 1.4; color: #ffcccc; margin-top: 10px;">Known Bugs:</div>
+                        <ul style="margin: 6px 0 0 18px; color: #ffcccc; font-size: 12px;">
+                            <li>Save system doesn't save RP specific settings, so progress will be lost till implemented</li>
+                            <li>Group chat doesn't advance automatically</li>
+                            <li>Group and Character/Persona configuration interfere</li>
+                            <li>Deleting characters keeps the data present till detail tab is left</li>
+                            <li>Character portraits doesn't load like expected in chat</li>
+                            <li>Edit-Mode breaks the formatting or page regularly</li>
+                            <li>Mobile mode is experimental</li>
+                        </ul>
+                        `);
+                    }
+                } catch (_) {}
                 const accept = modal.querySelector('#rpmod-consent-accept');
                 const decline = modal.querySelector('#rpmod-consent-decline');
                 accept.onclick = () => { KLITE_RPMod.userConsentGranted = true; modal.remove(); resolve(true); };
                 decline.onclick = () => { window.location.href = 'https://lite.koboldai.net'; resolve(false); };
             });
+        },
+
+        // =============== Unified Save helpers (available after init) ===============
+        buildUnifiedSave() {
+            try {
+                const core = generate_savefile(true, true, true);
+                core.rpmod = this.collectRpmodState();
+                core.rpmod_version = '1';
+                return core;
+            } catch (e) {
+                this.error('Failed to build unified save:', e);
+                return generate_savefile(true, true, true);
+            }
+        },
+
+        buildUnifiedCompressed() {
+            const unified = this.buildUnifiedSave();
+            const storyjson = JSON.stringify(unified);
+            return buf_to_b64(lz_c.compress(storyjson, 1));
+        },
+
+        collectRpmodState() {
+            const scene = (this.panels.SCENE && this.panels.SCENE.visualStyle) ? { ...this.panels.SCENE.visualStyle } : null;
+            const playrp = this.panels.PLAY_RP ? {
+                rules: this.panels.PLAY_RP.rules || '',
+                selectedCharacter: this.panels.PLAY_RP.selectedCharacter || null,
+                characterEnabled: !!this.panels.PLAY_RP.characterEnabled,
+                selectedPersona: this.panels.PLAY_RP.selectedPersona || null,
+                personaEnabled: !!this.panels.PLAY_RP.personaEnabled,
+                autoSender: this.panels.PLAY_RP.autoSender ? { ...this.panels.PLAY_RP.autoSender } : null
+            } : null;
+            const group = this.panels.GROUP ? {
+                participants: Array.isArray(this.panels.GROUP.activeChars) ? this.panels.GROUP.activeChars.map(c => ({ name: c.name, image: c.image, isCustom: !!c.isCustom })) : [],
+                currentSpeaker: typeof this.panels.GROUP.currentSpeaker === 'number' ? this.panels.GROUP.currentSpeaker : 0,
+                lastSpeaker: typeof this.panels.GROUP.lastSpeaker === 'number' ? this.panels.GROUP.lastSpeaker : -1,
+                speakerMode: this.panels.GROUP.speakerMode || 'manual',
+                speakerHistory: Array.isArray(this.panels.GROUP.speakerHistory) ? this.panels.GROUP.speakerHistory.slice(-20) : []
+            } : null;
+            const chat = this.panels.PLAY_CHAT ? {
+                chatStyle: this.panels.PLAY_CHAT.chatStyle || 'mobile'
+            } : null;
+            const avatars = {
+                userCurrent: this.userAvatarCurrent || null,
+                aiCurrent: this.aiAvatarCurrent || null
+            };
+            const ui = {
+                tabs: { ...this.state.tabs },
+                collapsed: { ...this.state.collapsed },
+                adventureMode: this.state.adventureMode || 0,
+                fullscreen: !!this.state.fullscreen,
+                tabletSidepanel: !!this.state.tabletSidepanel
+            };
+            return { scene, playRP: playrp, group, chat, avatars, ui };
+        },
+
+        importRpmodBlock(block) {
+            try {
+                if (!block || typeof block !== 'object') return;
+                if (block.scene && this.panels.SCENE) {
+                    this.panels.SCENE.visualStyle = { ...this.panels.SCENE.visualStyle, ...block.scene };
+                    const t = this.panels.SCENE.visualStyle.theme;
+                    this.panels.SCENE.applyTheme?.(t);
+                    this.panels.SCENE.updateVisualColors?.(this.panels.SCENE.visualStyle.ambientColor, this.panels.SCENE.visualStyle.highlightColor, this.panels.SCENE.visualStyle.lightness);
+                    // Persist and align UI controls so theme stays consistent post-load
+                    try { this.panels.SCENE.saveVisualStyle?.(); } catch(_){}
+                    try { this.panels.SCENE.updateUIControls?.(); } catch(_){}
+                }
+                if (block.playRP && this.panels.PLAY_RP) {
+                    const p = block.playRP;
+                    this.panels.PLAY_RP.rules = p.rules || '';
+                    this.panels.PLAY_RP.selectedCharacter = p.selectedCharacter || null;
+                    this.panels.PLAY_RP.characterEnabled = !!p.characterEnabled;
+                    this.panels.PLAY_RP.selectedPersona = p.selectedPersona || null;
+                    this.panels.PLAY_RP.personaEnabled = !!p.personaEnabled;
+                    if (p.autoSender) this.panels.PLAY_RP.autoSender = { ...p.autoSender };
+                }
+                if (block.group && this.panels.GROUP) {
+                    const g = block.group;
+                    this.panels.GROUP.activeChars = Array.isArray(g.participants) ? g.participants.map(c => ({ ...c })) : [];
+                    this.panels.GROUP.currentSpeaker = typeof g.currentSpeaker === 'number' ? g.currentSpeaker : 0;
+                    if (typeof g.lastSpeaker === 'number') this.panels.GROUP.lastSpeaker = g.lastSpeaker;
+                    this.panels.GROUP.speakerMode = g.speakerMode || 'manual';
+                    if (Array.isArray(g.speakerHistory)) this.panels.GROUP.speakerHistory = g.speakerHistory.slice(-20);
+                }
+                if (block.chat && this.panels.PLAY_CHAT) {
+                    this.panels.PLAY_CHAT.chatStyle = block.chat.chatStyle || this.panels.PLAY_CHAT.chatStyle;
+                }
+                if (block.ui) {
+                    this.state.tabs = { ...this.state.tabs, ...block.ui.tabs };
+                    this.state.collapsed = { ...this.state.collapsed, ...block.ui.collapsed };
+                    this.state.adventureMode = block.ui.adventureMode || 0;
+                    this.state.fullscreen = !!block.ui.fullscreen;
+                    this.state.tabletSidepanel = !!block.ui.tabletSidepanel;
+                }
+                if (block.avatars) {
+                    if (block.avatars.userCurrent) this.userAvatarCurrent = block.avatars.userCurrent;
+                    if (block.avatars.aiCurrent) this.aiAvatarCurrent = block.avatars.aiCurrent;
+                }
+                this.updateModeButtons?.();
+                // Make sure quick-save slots load before re-rendering slot labels
+                try {
+                    const loadSlots = this.panels.PLAY_RP?.loadSaveSlots?.();
+                    if (loadSlots && typeof loadSlots.then === 'function') {
+                        loadSlots.then(() => {
+                            // Ensure active tab marker and content both reflect PLAY_RP
+                            this.switchTab('left', 'PLAY_RP');
+                        }).catch(() => {
+                            // Fallback: still force switch to PLAY_RP
+                            this.switchTab('left', 'PLAY_RP');
+                        });
+                    } else {
+                        // Synchronous fallback: switch ensures button marker updates
+                        this.switchTab('left', 'PLAY_RP');
+                    }
+                } catch(_) {}
+                this.panels.GROUP?.refresh?.();
+                this.panels.PLAY_CHAT?.formatChatContent?.();
+            } catch (e) {
+                this.error('Failed to import rpmod block:', e);
+            }
         },
 
         setupStartupConfiguration() {
@@ -31842,7 +32059,7 @@ else
                     }
 
                     const savedTheme = savedStyle.theme;
-                    if (savedTheme && savedTheme !== 'default') {
+                    if (savedTheme && savedTheme !== 'default' && savedTheme !== 'dark') {
                         // Apply the saved theme using SCENE panel's method
                         this.panels.SCENE.applyTheme(savedTheme);
                         this.panels.SCENE.updateVisualColors(
@@ -31851,12 +32068,17 @@ else
                             savedStyle.lightness || this.panels.SCENE.visualStyle.lightness
                         );
                         this.essential(`🎨 Restored visual theme: ${savedTheme}`);
+                    } else {
+                        // If saved was 'dark' or 'default', switch to Lite Theme0 by default
+                        this.panels.SCENE.visualStyle.theme = 'lite0';
+                        this.panels.SCENE.applyTheme?.('lite0');
+                        this.essential('🎨 Defaulted to Lite Theme0 (Default)');
                     }
                 } else {
-                    // No saved style found; default to Full Dark Mode
-                    this.panels.SCENE.visualStyle.theme = 'dark';
-                    this.panels.SCENE.applyTheme?.('dark');
-                    this.essential('🎨 Defaulted to Full Dark Mode');
+                    // No saved style found; default to Lite Theme0 (Default)
+                    this.panels.SCENE.visualStyle.theme = 'lite0';
+                    this.panels.SCENE.applyTheme?.('lite0');
+                    this.essential('🎨 Defaulted to Lite Theme0 (Default)');
                 }
             } catch (error) {
                 this.log('init', 'No saved visual theme to restore or error occurred:', error);
@@ -31927,7 +32149,7 @@ else
                         
                         <!-- Input -->
                         <div class="klite-textarea-container" style="flex: 1; display: flex; flex-direction: column; gap: 2px;">
-                            <textarea id="input" class="klite-textarea" placeholder="Enter your prompt here..." style="min-height: 80px;"></textarea>
+                            <textarea id="input" class="klite-textarea" placeholder="Enter your prompt here..."></textarea>
                             <div class="klite-info">
                                 <span>✍️ <span id="prompt-tokens">0</span> | 🗒️ <span id="story-tokens">0</span></span>
                                 <span>🔌 <span id="connection">Disconnected</span> | 💤 <span id="queue">#0</span> | ⏱️ <span id="wait">0s</span></span>
@@ -31972,6 +32194,7 @@ else
                             <button class="klite-btn klite-quick-btn" data-action="mode-3" title="Chat Mode">💬</button>
                             <button class="klite-btn klite-quick-btn active" data-action="mode-4" title="RP Mode">🎭</button>
                             <button class="klite-btn klite-quick-btn" data-action="images" title="Images Options">🎨</button>
+                            <button class="klite-btn klite-quick-btn" data-action="toggle-input-scale" id="btn-input-scale-mobile" title="Toggle input height">2x</button>
                         </div>
                         
                         <button class="klite-btn klite-mobile-edit-btn" id="btn-edit" style="position: absolute; bottom: 90px; right: 48px; width: 40px; height: 40px;">✏️</button>
@@ -32040,6 +32263,9 @@ else
                 // Ensure mobile class is removed if screen size changed
                 document.body.classList.remove('klite-mobile');
             }
+
+            // Always sync submit button label to current mode right after detection
+            try { this.updateSubmitBtn(); } catch(_){}
         },
 
         setupConnectionObserver() {
@@ -32099,6 +32325,9 @@ else
                 this.updateSubmitBtn();
             }
 
+            // Recompute mobile input toolbar lift on any resize
+            try { this.updateMobileInputLift(); } catch(_){}
+
             // Update tablet sidepanel positioning on any resize
             // This will clean up classes when not in tablet mode
             this.updateTabletSidepanelPositions();
@@ -32121,6 +32350,9 @@ else
                 rightArrow.remove();
                 this.log('init', 'Removed right mobile navigation button');
             }
+
+            // Align floating controls with input top on first run
+            try { this.updateMobileInputLift(); } catch(_){}
         },
 
         addMobileNavigationButtons() {
@@ -32221,7 +32453,8 @@ else
         },
 
         showMobilePanel(panelName) {
-            const leftPanels = ['PLAY', 'TOOLS', 'SCENE', 'GROUP', 'HELP'];
+            // Support new 'PLAY_RP' tab id while keeping legacy 'PLAY' fallback
+            const leftPanels = ['PLAY_RP', 'PLAY', 'TOOLS', 'SCENE', 'GROUP', 'HELP'];
             const rightPanels = ['CHARS', 'MEMORY', 'NOTES', 'WI', 'TEXTDB'];
 
             if (leftPanels.includes(panelName)) {
@@ -32298,10 +32531,13 @@ else
         handleClick(e) {
             // Collapse handles - but not in mobile mode to prevent accidental panel closing
             if (e.target.classList.contains('klite-handle')) {
-                // In mobile mode, panel toggling is controlled by navigation, not handles
+                // In mobile mode, allow only the TOP handle; left/right are controlled by navigation
                 if (this.state.mobile.enabled) {
-                    this.log('mobile', 'Handle click ignored in mobile mode');
-                    return;
+                    const panelSide = e.target.dataset.panel;
+                    if (panelSide !== 'top') {
+                        this.log('mobile', `Handle click ignored for '${panelSide}' in mobile mode`);
+                        return;
+                    }
                 }
                 this.togglePanel(e.target.dataset.panel);
             }
@@ -32449,6 +32685,29 @@ else
 
             parts.push(key);
             return parts.join('+');
+        },
+
+        // Align floating quick controls to sit right above the input area in mobile mode
+        updateMobileInputLift() {
+            if (!this.state.mobile.enabled) return;
+            try {
+                const container = document.getElementById('klite-container');
+                if (!container) return;
+                const is2x = container.classList.contains('input-2x');
+                // In 1x keep original positions; in 2x place quick/edit at 276px from bottom
+                const quickBottom = is2x ? 276 : 90;
+                container.style.setProperty('--mobile-input-bottom', quickBottom + 'px');
+                this.log('mobile', `Floating controls bottom set to ${quickBottom}px`);
+
+                // Move mobile nav arrows to match quick/edit position in 2x
+                const leftArrow = document.getElementById('mobile-nav-left');
+                const rightArrow = document.getElementById('mobile-nav-right');
+                const navBottom = is2x ? 276 : 155;
+                if (leftArrow) leftArrow.style.bottom = navBottom + 'px';
+                if (rightArrow) rightArrow.style.bottom = navBottom + 'px';
+            } catch (e) {
+                this.log('mobile', 'updateMobileInputLift error:', e.message);
+            }
         },
 
         executeHotkeyAction(action) {
@@ -32685,6 +32944,18 @@ else
                 case 'retry': window.btn_retry?.(); break;
                 case 'fullscreen': this.toggleFullscreen(); break;
                 case 'tablet-sidepanel': this.toggleTabletSidepanel(); break;
+                case 'toggle-input-scale':
+                    // Toggle 2x/1x input height (mobile-only effect)
+                    this.state.inputScale2x = !this.state.inputScale2x;
+                    try {
+                        const container = document.getElementById('klite-container');
+                        container.classList.toggle('input-2x', this.state.inputScale2x);
+                        const b = document.getElementById('btn-input-scale-mobile');
+                        if (b) b.textContent = this.state.inputScale2x ? '1x' : '2x';
+                        // Recompute alignment to input top after layout settles
+                        setTimeout(() => { try { this.updateMobileInputLift(); } catch(_){} }, 0);
+                    } catch(_){}
+                    break;
                 case 'mode-1': return; // disabled
                     this.setMode(1); // Story mode + Classic UI
                     break;
@@ -32701,6 +32972,7 @@ else
                 case 'memory': this.switchTab('right', 'MEMORY'); break;
                 case 'images': window.add_media_btn_menu?.(); break;
                 case 'samplers': window.display_settings?.(); break;
+                case 'edit': this.toggleEdit(); break;
 
                 // Modal actions
                 case 'confirm-unified-char-selection':
@@ -34299,12 +34571,24 @@ else
 
             this.log('status', `updateStatus called - status element: ${status ? 'found' : 'missing'}, connEl: ${connEl ? 'found' : 'missing'}`);
 
-            if (status && connEl) {
-                const connectionText = status.textContent || 'Disconnected';
-                const hasDisconnectedClass = status.classList.contains('disconnected');
+            if (!status) {
+                this.log('status', 'No base connectstatus element yet');
+                return;
+            }
 
-                this.log('status', `Reading from connectstatus: "${connectionText}", disconnected class: ${hasDisconnectedClass}`);
+            const connectionText = status.textContent || 'Disconnected';
+            const hasDisconnectedClass = status.classList.contains('disconnected');
 
+            this.log('status', `Reading from connectstatus: "${connectionText}", disconnected class: ${hasDisconnectedClass}`);
+
+            // Mirror to RPmod topbar status if present, regardless of PLAY_RP render state
+            const rpmodStatus = document.getElementById('rpmod-connectstatus');
+            if (rpmodStatus) {
+                rpmodStatus.textContent = connectionText;
+            }
+
+            // Update in-panel connection indicator if present
+            if (connEl) {
                 connEl.textContent = connectionText;
                 const isConnected = !hasDisconnectedClass;
                 connEl.style.color = isConnected ? '#5cb85c' : '#d9534f';
@@ -34323,8 +34607,6 @@ else
                 }
 
                 this.log('status', `Updated connection span to: "${connectionText}", color: ${isConnected ? 'green' : 'red'}`);
-            } else {
-                this.log('status', 'Missing elements for status update');
             }
 
             // Queue and wait are handled by Horde hooks
@@ -34440,6 +34722,7 @@ else
                 group: this.panels.GROUP ? {
                     participants: Array.isArray(this.panels.GROUP.activeChars) ? this.panels.GROUP.activeChars.map(c => ({ name: c.name, image: c.image, isCustom: !!c.isCustom })) : [],
                     currentSpeaker: typeof this.panels.GROUP.currentSpeaker === 'number' ? this.panels.GROUP.currentSpeaker : 0,
+                    lastSpeaker: typeof this.panels.GROUP.lastSpeaker === 'number' ? this.panels.GROUP.lastSpeaker : -1,
                     speakerMode: this.panels.GROUP.speakerMode || 'manual',
                     removals: Array.isArray(window.groupchat_removals) ? [...window.groupchat_removals] : []
                 } : null,
@@ -34496,6 +34779,7 @@ else
                     this.panels.GROUP.activeChars = Array.isArray(bundle.group.participants) ? bundle.group.participants.map(c => ({ ...c })) : [];
                     this.panels.GROUP.currentSpeaker = typeof bundle.group.currentSpeaker === 'number' ? bundle.group.currentSpeaker : 0;
                     this.panels.GROUP.speakerMode = bundle.group.speakerMode || 'manual';
+                    if (typeof bundle.group.lastSpeaker === 'number') this.panels.GROUP.lastSpeaker = bundle.group.lastSpeaker;
                     window.groupchat_removals = Array.isArray(bundle.group.removals) ? [...bundle.group.removals] : [];
                 }
                 if (bundle.chat && this.panels.PLAY_CHAT) {
@@ -34572,7 +34856,7 @@ else
                     <div style="margin-bottom: 15px;">
                         <input type="text" id="unified-char-search" placeholder="Search characters..." 
                             style="width: 100%; padding: 8px; background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 4px; margin-bottom: 10px;">
-                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2px; margin-bottom: 10px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 2px; margin-bottom: 10px;">
                             <select id="unified-char-tag-filter" style="padding: 6px; background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 4px;">
                                 <option value="">All Tags</option>
                             </select>
@@ -34589,6 +34873,12 @@ else
                                 <option value="high">Very Talkative (80+)</option>
                                 <option value="medium">Moderate (40-79)</option>
                                 <option value="low">Quiet (10-39)</option>
+                            </select>
+                            <select id="unified-char-sort" style="padding: 6px; background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 4px;">
+                                <option value="name">Name</option>
+                                <option value="rating">Rating</option>
+                                <option value="talk">Talkativeness</option>
+                                <option value="created">Import Date</option>
                             </select>
                         </div>
                         <div style="margin-bottom: 15px;">
@@ -34681,7 +34971,56 @@ else
                 );
             }
 
-            const allCharacters = [...availableChars, ...wiCharacters];
+            let allCharacters = [...availableChars, ...wiCharacters];
+
+            // Apply filters
+            const searchInput = document.getElementById('unified-char-search');
+            const tagFilter = document.getElementById('unified-char-tag-filter');
+            const ratingFilter = document.getElementById('unified-char-rating-filter');
+            const talkFilter = document.getElementById('unified-char-talkativeness-filter');
+
+            const q = (searchInput?.value || '').trim().toLowerCase();
+            const tag = tagFilter?.value || '';
+            const ratingMin = parseInt(ratingFilter?.value || '0');
+            const talkBand = talkFilter?.value || '';
+            const sortMode = (document.getElementById('unified-char-sort')?.value || 'name');
+
+            if (q) {
+                allCharacters = allCharacters.filter(c => (
+                    (c.name || '').toLowerCase().includes(q) ||
+                    (c.description || c.content || '').toLowerCase().includes(q) ||
+                    (Array.isArray(c.tags) && c.tags.join(' ').toLowerCase().includes(q))
+                ));
+            }
+            if (tag) {
+                allCharacters = allCharacters.filter(c => Array.isArray(c.tags) && c.tags.includes(tag));
+            }
+            if (ratingMin > 0) {
+                allCharacters = allCharacters.filter(c => (c.rating || 0) >= ratingMin);
+            }
+            if (talkBand) {
+                allCharacters = allCharacters.filter(c => {
+                    const t = c.talkativeness || 50;
+                    if (talkBand === 'high') return t >= 80;
+                    if (talkBand === 'medium') return t >= 40 && t <= 79;
+                    if (talkBand === 'low') return t >= 10 && t <= 39;
+                    return true;
+                });
+            }
+
+            // Sort
+            allCharacters.sort((a, b) => {
+                switch (sortMode) {
+                    case 'rating':
+                        return (b.rating || 0) - (a.rating || 0);
+                    case 'talk':
+                        return (b.talkativeness || 0) - (a.talkativeness || 0);
+                    case 'created':
+                        return (b.created || 0) - (a.created || 0);
+                    default:
+                        return (a.name || '').localeCompare(b.name || '');
+                }
+            });
 
             // Populate tag filter
             this.populateUnifiedTagFilter(allCharacters);
@@ -34782,11 +35121,43 @@ else
             const ratingFilter = document.getElementById('unified-char-rating-filter');
             const talkFilter = document.getElementById('unified-char-talkativeness-filter');
             const wiCheckbox = document.getElementById('unified-include-wi');
+            const sortSelect = document.getElementById('unified-char-sort');
 
             const refreshList = () => {
                 const mode = this.currentUnifiedModal?.dataset.mode || 'multi-select';
                 this.loadUnifiedCharacterList(mode);
+                // Persist filter state
+                try {
+                    const payload = {
+                        q: searchInput?.value || '',
+                        tag: tagFilter?.value || '',
+                        rating: ratingFilter?.value || '',
+                        talk: talkFilter?.value || '',
+                        includeWI: wiCheckbox?.checked || false,
+                        sort: sortSelect?.value || 'name'
+                    };
+                    KLITE_RPMod.saveToLiteStorage('rpmod_unified_char_filters', JSON.stringify(payload));
+                } catch (_) {}
             };
+
+            // Load persisted filters
+            (async () => {
+                try {
+                    const raw = await KLITE_RPMod.loadFromLiteStorage('rpmod_unified_char_filters');
+                    if (raw && raw !== 'offload_to_indexeddb') {
+                        const payload = JSON.parse(raw);
+                        if (searchInput) searchInput.value = payload.q || '';
+                        if (tagFilter) tagFilter.value = payload.tag || '';
+                        if (ratingFilter) ratingFilter.value = payload.rating || '';
+                        if (talkFilter) talkFilter.value = payload.talk || '';
+                        if (wiCheckbox) wiCheckbox.checked = !!payload.includeWI;
+                        const sortEl = document.getElementById('unified-char-sort');
+                        if (sortEl && payload.sort) sortEl.value = payload.sort;
+                        const mode = this.currentUnifiedModal?.dataset.mode || 'multi-select';
+                        this.loadUnifiedCharacterList(mode);
+                    }
+                } catch (_) {}
+            })();
 
             if (searchInput) {
                 searchInput.addEventListener('input', refreshList);
@@ -34802,6 +35173,9 @@ else
             }
             if (wiCheckbox) {
                 wiCheckbox.addEventListener('change', refreshList);
+            }
+            if (sortSelect) {
+                sortSelect.addEventListener('change', refreshList);
             }
         },
 
@@ -34831,6 +35205,7 @@ else
                     });
 
                     KLITE_RPMod.panels.GROUP.refresh();
+                    try { KLITE_RPMod.panels.GROUP.saveSettings?.(); } catch (_) {}
                     // Character addition confirmed by visual update in group list
                 }
             } else {
@@ -35809,6 +36184,10 @@ else
         selectedPersona: null,
         selectedCharacter: null,
         storedModeBeforeEdit: null,
+        // Moved from PLAY_ADV: quick actions config for top of panel
+        quickActions: ['>Look Around', '>Search', '>Check Inventory', '>Rest', '>Continue'],
+        // Moved from PLAY_STORY: bookmarks/chapters list
+        chapters: [],
         autoSender: {
             enabled: false,
             interval: 30,
@@ -35827,14 +36206,23 @@ else
 
         render() {
             return `
-                <!-- System Prompt -->
-                ${t.section('System Prompt / Rules',
-                `<textarea id="rp-rules" class="klite-textarea" placeholder="SP / JB / Rules for the AI..." style="min-height: 120px;">${this.rules || ''}</textarea>
-                    <div class="klite-narrator-explanation" style="margin: 8px 0; padding: 6px; background: rgba(0,0,0,0.2); border-radius: 4px; font-size: 11px; color: var(--muted);">
-                        System prompt and rules for the AI get added after context to have the highest relevance before prompt.
+                <!-- Quick Actions (from ADV) -->
+                ${t.section('Quick Actions',
+                `<div style="display: grid; gap: 4px;">
+                        ${this.quickActions.map((action, i) => `
+                            <div class="klite-row" style="display: grid; grid-template-columns: 1fr auto; gap: 2px; align-items: center;">
+                                <input id="adv-quick-${i}" type="text" value="${action}" 
+                                       style="padding: 4px 8px; font-size: 12px; background: var(--bg3); border: 1px solid var(--border); border-radius: 4px; color: var(--text);"
+                                       placeholder="">
+                                <button class="klite-btn klite-btn-sm" data-action="quick-${i}" 
+                                        style="padding: 4px 12px; font-size: 12px; min-width: 32px;">
+                                    ${i + 1}
+                                </button>
+                            </div>
+                        `).join('')}
                     </div>`
             )}
-                
+
                 <!-- Auto-Save & Quick Save Slots -->
                 ${t.section('Auto-Save & Quick Save Slots',
                 `<div class="klite-save-controls">
@@ -35861,24 +36249,7 @@ else
                         </div>
                     </div>`
             )}
-                
-                <!-- Chat Settings -->
-                ${t.section('Chat Settings',
-                `<div style="display: grid; gap: 2px;">
-                        <div class="klite-row">
-                            ${t.checkbox('streaming-enabled', 'Enable Streaming', window.localsettings?.stream || false)}
-                        </div>
-                        <div class="klite-row">
-                            ${t.checkbox('auto-scroll', 'Auto Scroll', true)}
-                        </div>
-                    </div>`
-            )}
-                
-                <!-- Generation Control -->
-                ${t.section('Generation Control',
-                KLITE_RPMod.renderGenerationControl('rp')
-            )}
-                
+
                 <!-- Character & Persona Integration -->
                 ${t.section('Character & Persona Integration',
                 `<div class="klite-char-persona-controls">
@@ -35886,7 +36257,7 @@ else
                         ${this.renderCharacterControls()}
                     </div>`
             )}
-                
+
                 <!-- Narrator Controls -->
                 ${t.section('Narrator Controls',
                 `<div class="klite-narrator-controls">
@@ -35917,7 +36288,43 @@ else
                         </div>
                     </div>`
             )}
-                
+
+                <!-- Bookmarks (from STORY) -->
+                ${t.section('Bookmarks / Index',
+                `<div id="story-timeline" class="klite-timeline">
+                        ${this.chapters.length ? this.renderChapters() : '<div class="klite-center klite-muted">No bookmarks yet</div>'}
+                    </div>
+                    <div class="klite-buttons-fill klite-mt">
+                        ${t.button('Add Bookmark', '', 'add-chapter')}
+                        ${t.button('Delete All', 'danger', 'delete-chapters')}
+                    </div>`
+            )}
+
+                <!-- Generation Control -->
+                ${t.section('Generation Control',
+                KLITE_RPMod.renderGenerationControl('rp')
+            )}
+
+                <!-- Chat Settings -->
+                ${t.section('Chat Settings',
+                `<div style="display: grid; gap: 2px;">
+                        <div class="klite-row">
+                            ${t.checkbox('streaming-enabled', 'Enable Streaming', window.localsettings?.stream || false)}
+                        </div>
+                        <div class="klite-row">
+                            ${t.checkbox('auto-scroll', 'Auto Scroll', true)}
+                        </div>
+                    </div>`
+            )}
+
+                <!-- System Prompt -->
+                ${t.section('System Prompt / Rules',
+                `<textarea id="rp-rules" class="klite-textarea" placeholder="SP / JB / Rules for the AI..." style="min-height: 120px;">${this.rules || ''}</textarea>
+                    <div class="klite-narrator-explanation" style="margin: 8px 0; padding: 6px; background: rgba(0,0,0,0.2); border-radius: 4px; font-size: 11px; color: var(--muted);">
+                        System prompt and rules for the AI get added after context to have the highest relevance before prompt.
+                    </div>`
+            )}
+
                 <!-- Auto Sender -->
                 ${t.section('Auto Sender',
                 `<div class="klite-auto-sender">
@@ -35930,9 +36337,15 @@ else
 
         async init() {
             await this.setupAutoSave();
+            await this.loadSettings();
+            await this.loadSaveSlots();
             this.setupCharacterIntegration();
             await this.setupAutoSender();
-            this.setupQuickActions();
+            // Load and initialize moved features
+            await this.loadQuickActions();
+            this.initQuickActions();
+            await this.loadChapters();
+            this.updateTimeline();
         },
 
         actions: {
@@ -35957,6 +36370,20 @@ else
             'quick-send-3': () => KLITE_RPMod.panels.PLAY_RP.handleQuickSend(3),
             'quick-send-4': () => KLITE_RPMod.panels.PLAY_RP.handleQuickSend(4),
             'quick-send-5': () => KLITE_RPMod.panels.PLAY_RP.handleQuickSend(5),
+            // Quick Actions (from ADV)
+            'quick-0': () => KLITE_RPMod.panels.PLAY_RP.sendQuickAction(0),
+            'quick-1': () => KLITE_RPMod.panels.PLAY_RP.sendQuickAction(1),
+            'quick-2': () => KLITE_RPMod.panels.PLAY_RP.sendQuickAction(2),
+            'quick-3': () => KLITE_RPMod.panels.PLAY_RP.sendQuickAction(3),
+            'quick-4': () => KLITE_RPMod.panels.PLAY_RP.sendQuickAction(4),
+
+            // Bookmarks/Chapters (from STORY)
+            'add-chapter': () => KLITE_RPMod.panels.PLAY_RP.addChapter(),
+            'delete-chapters': () => KLITE_RPMod.panels.PLAY_RP.deleteAllChapters(),
+            'goto-chapter': (e) => {
+                const chapterIndex = parseInt(e.target.closest('[data-chapter]').dataset.chapter);
+                KLITE_RPMod.panels.PLAY_RP.goToChapter(chapterIndex);
+            },
 
             // Save/Load slot actions
             'save-slot-1': () => KLITE_RPMod.panels.PLAY_RP.handleSaveSlot(1),
@@ -36213,6 +36640,73 @@ else
             }
         },
 
+        async loadSettings() {
+            try {
+                const raw = await KLITE_RPMod.loadFromLiteStorage('rpmod_playrp_settings');
+                if (raw && raw !== 'offload_to_indexeddb') {
+                    const s = JSON.parse(raw);
+                    this.rules = typeof s.rules === 'string' ? s.rules : this.rules;
+                    this.selectedCharacter = s.selectedCharacter || this.selectedCharacter;
+                    this.characterEnabled = !!s.characterEnabled;
+                    this.selectedPersona = s.selectedPersona || this.selectedPersona;
+                    this.personaEnabled = !!s.personaEnabled;
+                    if (s.autoSender) this.autoSender = { ...this.autoSender, ...s.autoSender };
+                    KLITE_RPMod.log('panels', 'PLAY_RP settings loaded');
+                }
+            } catch (e) { KLITE_RPMod.error('Failed to load PLAY_RP settings', e); }
+        },
+
+        saveSettings() {
+            try {
+                const s = {
+                    rules: this.rules || '',
+                    selectedCharacter: this.selectedCharacter || null,
+                    characterEnabled: !!this.characterEnabled,
+                    selectedPersona: this.selectedPersona || null,
+                    personaEnabled: !!this.personaEnabled,
+                    autoSender: this.autoSender ? { enabled: !!this.autoSender.enabled, interval: this.autoSender.interval, message: this.autoSender.message } : null
+                };
+                KLITE_RPMod.saveToLiteStorage('rpmod_playrp_settings', JSON.stringify(s));
+                KLITE_RPMod.log('panels', 'PLAY_RP settings saved');
+            } catch (e) { KLITE_RPMod.error('Failed to save PLAY_RP settings', e); }
+        },
+
+        async loadSaveSlots() {
+            try {
+                const raw = await KLITE_RPMod.loadFromLiteStorage('rpmod_rp_saves');
+                if (raw && raw !== 'offload_to_indexeddb') {
+                    const slots = JSON.parse(raw);
+                    if (slots && Array.isArray(slots.saves)) {
+                        this.saveSlots = { ...this.saveSlots, ...slots };
+                        KLITE_RPMod.log('saves', 'PLAY_RP save slots loaded');
+                        // Auto-restore most recent save if chat is empty
+                        try {
+                            const hasChat = Array.isArray(window.gametext_arr) && window.gametext_arr.length > 0;
+                            if (!hasChat) {
+                                let latestIdx = -1;
+                                let latestTime = 0;
+                                this.saveSlots.saves.forEach((s, i) => {
+                                    const ts = s && s.timestamp ? Date.parse(s.timestamp) : 0;
+                                    if (ts && ts > latestTime) { latestTime = ts; latestIdx = i; }
+                                });
+                                if (latestIdx >= 0) {
+                                    KLITE_RPMod.log('saves', `Auto-restoring RP quick save slot ${latestIdx + 1}`);
+                                    this.handleLoadSlot(latestIdx + 1);
+                                }
+                            }
+                        } catch (_) {}
+                    }
+                }
+            } catch (e) { KLITE_RPMod.error('Failed to load PLAY_RP save slots', e); }
+        },
+
+        persistSaveSlots() {
+            try {
+                KLITE_RPMod.saveToLiteStorage('rpmod_rp_saves', JSON.stringify(this.saveSlots));
+                KLITE_RPMod.log('saves', 'PLAY_RP save slots saved');
+            } catch (e) { KLITE_RPMod.error('Failed to save PLAY_RP save slots', e); }
+        },
+
         saveRules() {
             KLITE_RPMod.saveToLiteStorage('rpmod_rp_rules', this.rules);
             KLITE_RPMod.log('panels', 'RP rules saved to storage');
@@ -36247,6 +36741,7 @@ else
                     window.save_settings?.();
                     KLITE_RPMod.log('panels', `User name changed to: ${e.target.value}`);
                 }
+                try { KLITE_RPMod.panels.PLAY_RP.saveSettings?.(); } catch (_) {}
             });
 
             document.getElementById('rp-ai-name')?.addEventListener('change', e => {
@@ -36255,7 +36750,22 @@ else
                     window.save_settings?.();
                     KLITE_RPMod.log('panels', `AI name changed to: ${e.target.value}`);
                 }
+                try { KLITE_RPMod.panels.PLAY_RP.saveSettings?.(); } catch (_) {}
             });
+
+            // Periodic autosave guard when enabled and not generating
+            try {
+                if (this._autosaveGuard) clearInterval(this._autosaveGuard);
+                const isGenerating = () => {
+                    try { return (window.pending_response_id && window.pending_response_id !== '') || (typeof window.synchro_pending_stream !== 'undefined' && window.synchro_pending_stream !== ''); } catch (_) { return false; }
+                };
+                this._autosaveGuard = setInterval(() => {
+                    const enabled = document.getElementById('rp-autosave')?.checked;
+                    if (!enabled) return;
+                    if (isGenerating()) return;
+                    try { window.autosave?.(); } catch (_) {}
+                }, 60000);
+            } catch (_) {}
         },
 
         triggerNarrator() {
@@ -36695,9 +37205,112 @@ else
             KLITE_RPMod.log('state', 'Saved auto-sender settings to storage');
         },
 
-        setupQuickActions() {
-            // These actions integrate with KoboldAI Lite's existing functions
-            // The actual implementation depends on Lite's API availability
+        // Quick Actions (moved from PLAY_ADV)
+        async loadQuickActions() {
+            const saved = await KLITE_RPMod.loadFromLiteStorage('rpmod_adv_actions');
+            if (saved) {
+                this.quickActions = JSON.parse(saved);
+                KLITE_RPMod.log('state', `Loaded ${this.quickActions.length} quick actions from storage`);
+            }
+        },
+
+        initQuickActions() {
+            this.quickActions.forEach((action, i) => {
+                const input = document.getElementById(`adv-quick-${i}`);
+                if (input) {
+                    input.value = action;
+                    input.addEventListener('input', () => {
+                        this.quickActions[i] = input.value;
+                        this.saveQuickActions();
+                    });
+                }
+            });
+        },
+
+        saveQuickActions() {
+            KLITE_RPMod.saveToLiteStorage('rpmod_adv_actions', JSON.stringify(this.quickActions));
+            KLITE_RPMod.log('state', `Saved ${this.quickActions.length} quick actions to storage`);
+        },
+
+        sendQuickAction(index) {
+            const action = this.quickActions[index];
+            if (action) {
+                const input = document.getElementById('input');
+                if (input) {
+                    input.value = action;
+                    KLITE_RPMod.log('panels', `Quick action sent: ${action}`);
+                    KLITE_RPMod.submit();
+                }
+            }
+        },
+
+        // Bookmarks/Chapters (moved from PLAY_STORY)
+        renderChapters() {
+            return this.chapters.map((ch, i) => `
+                <div class="klite-timeline-item" data-chapter="${i}" data-action="goto-chapter" style="cursor: pointer;">
+                    <strong>Chapter ${ch.number}:</strong> ${ch.title}
+                    <div style="font-size: 11px; color: #999;">${ch.wordCount} words</div>
+                </div>
+            `).join('');
+        },
+
+        async loadChapters() {
+            const saved = await KLITE_RPMod.loadFromLiteStorage('rpmod_story_chapters');
+            if (saved) {
+                this.chapters = JSON.parse(saved);
+                KLITE_RPMod.log('state', `Loaded ${this.chapters.length} chapters from storage`);
+            }
+        },
+
+        saveChapters() {
+            KLITE_RPMod.saveToLiteStorage('rpmod_story_chapters', JSON.stringify(this.chapters));
+            KLITE_RPMod.log('state', `Saved ${this.chapters.length} chapters to storage`);
+        },
+
+        addChapter() {
+            const title = prompt('Enter bookmark title:', `Bookmark ${this.chapters.length + 1}`);
+            if (!title) return;
+
+            const wordCount = window.gametext_arr ?
+                gametext_arr.join(' ').split(/\s+/).filter(w => w).length : 0;
+
+            this.chapters.push({
+                number: this.chapters.length + 1,
+                title: title,
+                wordCount: wordCount,
+                position: document.getElementById('chat-display')?.scrollTop || 0
+            });
+
+            this.saveChapters();
+            this.updateTimeline();
+            KLITE_RPMod.log('panels', `Bookmark added: ${title}`);
+        },
+
+        deleteAllChapters() {
+            if (confirm('Delete all bookmarks?')) {
+                this.chapters = [];
+                this.saveChapters();
+                this.updateTimeline();
+                KLITE_RPMod.log('panels', 'All bookmarks deleted');
+            }
+        },
+
+        updateTimeline() {
+            const timeline = document.getElementById('story-timeline');
+            if (timeline) {
+                timeline.innerHTML = this.chapters.length ? this.renderChapters() : '<div class="klite-center klite-muted">No bookmarks yet</div>';
+            }
+        },
+
+        goToChapter(index) {
+            const chapter = this.chapters[index];
+            if (chapter && typeof chapter.position === 'number') {
+                const chatDisplay = document.getElementById('chat-display');
+                if (chatDisplay) {
+                    chatDisplay.scrollTop = chapter.position;
+                    KLITE_RPMod.log('panels', `Scrolled to bookmark ${chapter.number} at position ${chapter.position}`);
+                }
+            }
         },
 
 
@@ -36816,6 +37429,8 @@ else
 
             if (personaData) {
                 this.selectedPersona = personaData;
+                this.personaEnabled = true;
+                this.saveSettings?.();
 
                 // Update the Applied Persona display immediately
                 const appliedPersonaName = document.getElementById('applied-persona-name');
@@ -36875,6 +37490,8 @@ else
 
             if (characterData) {
                 this.selectedCharacter = characterData;
+                this.characterEnabled = true;
+                this.saveSettings?.();
 
                 // Update the Applied Character display immediately
                 const appliedCharacterName = document.getElementById('applied-character-name');
@@ -36917,6 +37534,8 @@ else
         applyCharacterData(characterData) {
             if (characterData) {
                 this.selectedCharacter = characterData;
+                this.characterEnabled = true;
+                this.saveSettings?.();
 
                 // Update AI avatar using Character Manager (optimized cache)
                 const best = KLITE_RPMod.getBestCharacterAvatar(characterData);
@@ -36963,6 +37582,8 @@ else
 
         removePersona() {
             this.selectedPersona = null;
+            this.personaEnabled = false;
+            this.saveSettings?.();
 
             // Update the Applied Persona display immediately
             const appliedPersonaName = document.getElementById('applied-persona-name');
@@ -36991,6 +37612,8 @@ else
 
         removeCharacter() {
             this.selectedCharacter = null;
+            this.characterEnabled = false;
+            this.saveSettings?.();
 
             // Update the Applied Character display immediately
             const appliedCharacterName = document.getElementById('applied-character-name');
@@ -37242,6 +37865,7 @@ else
             // Save to slot
             this.saveSlots.saves[slotIndex] = saveData;
             this.saveSlots.current = slotIndex;
+            this.persistSaveSlots?.();
 
             // Refresh UI to show green slot
             KLITE_RPMod.switchTab('left', 'PLAY');
@@ -37353,6 +37977,8 @@ else
 
                 // Refresh UI
                 KLITE_RPMod.switchTab('left', 'PLAY_RP');
+                // Reformat chat content in RP view
+                try { setTimeout(() => KLITE_RPMod.formatRPContent?.(), 50); } catch (_) {}
                 // Loaded save: ${saveData.name}
 
             } catch (error) {
@@ -37932,6 +38558,15 @@ else
                 }
             };
 
+            // Also store a unified compressed artifact (identical to autosave/file)
+            try {
+                if (window.KLITE_RPMod && typeof KLITE_RPMod.buildUnifiedCompressed === 'function') {
+                    gameState.unified_b64 = KLITE_RPMod.buildUnifiedCompressed();
+                }
+            } catch (e) {
+                KLITE_RPMod.log('saves', 'Unified embed in chat slot failed:', e.message || e);
+            }
+
             this.saveSlots.saves[slotNumber - 1] = gameState;
 
             // Persist save slots to Lite storage
@@ -37948,6 +38583,23 @@ else
             if (!save) {
                 alert(`Slot ${slotNumber} is empty`);
                 return;
+            }
+
+            // Prefer unified artifact for exact parity with autosave/file
+            try {
+                if (save.unified_b64) {
+                    const obj = decompress_story(save.unified_b64);
+                    if (obj) {
+                        kai_json_load(obj, false);
+                        if (obj.rpmod && window.KLITE_RPMod && typeof KLITE_RPMod.importRpmodBlock === 'function') {
+                            KLITE_RPMod.importRpmodBlock(obj.rpmod);
+                        }
+                        KLITE_RPMod.log('saves', `Unified chat slot ${slotNumber} loaded`);
+                        return;
+                    }
+                }
+            } catch (e) {
+                KLITE_RPMod.log('saves', 'Unified slot load fallback path used:', e.message || e);
             }
 
             // Load comprehensive save data
@@ -39176,7 +39828,7 @@ Outline:`
     // SCENE PANEL
     KLITE_RPMod.panels.SCENE = {
         visualStyle: {
-            theme: 'dark',
+            theme: 'lite0',
             ambientColor: '#4a9eff',
             highlightColor: '#5cbc5c',
             lightness: 50,
@@ -39339,16 +39991,26 @@ Outline:`
                         <div class="klite-row" style="margin-bottom: 8px;">
                             <label style="margin-right: 8px; font-size: 12px; color: var(--text);">Theme:</label>
                             ${t.select('visual-theme', [
-                    { value: 'default', text: 'Default (No Colors)', selected: (this.visualStyle?.theme || 'default') === 'default' },
+                    // Custom first
                     { value: 'custom', text: 'Custom', selected: (this.visualStyle?.theme || 'default') === 'custom' },
+                    // Lite themes next
+                    { value: 'lite0', text: 'Lite Theme0 (Default)', selected: (this.visualStyle?.theme || 'default') === 'lite0' },
+                    { value: 'lite1', text: 'Lite Theme1', selected: (this.visualStyle?.theme || 'default') === 'lite1' },
+                    { value: 'lite2', text: 'Lite Theme2', selected: (this.visualStyle?.theme || 'default') === 'lite2' },
+                    { value: 'lite3', text: 'Lite Theme3', selected: (this.visualStyle?.theme || 'default') === 'lite3' },
+                    { value: 'lite4', text: 'Lite Theme4', selected: (this.visualStyle?.theme || 'default') === 'lite4' },
+                    { value: 'lite5', text: 'Lite Theme5', selected: (this.visualStyle?.theme || 'default') === 'lite5' },
+                    // Rest alphabetically by label
                     { value: 'blue', text: 'Blue/Dark', selected: (this.visualStyle?.theme || 'default') === 'blue' },
-                    { value: 'light', text: 'Sandstorm', selected: (this.visualStyle?.theme || 'default') === 'light' },
-                    { value: 'dark', text: 'Full Dark Mode', selected: (this.visualStyle?.theme || 'default') === 'dark' },
-                    { value: 'corpo', text: 'Corpo Mode', selected: (this.visualStyle?.theme || 'default') === 'corpo' },
-                    { value: 'coder', text: 'Coder (Matrix Green)', selected: (this.visualStyle?.theme || 'default') === 'coder' },
                     { value: 'rainbow', text: 'Candy UI', selected: (this.visualStyle?.theme || 'default') === 'rainbow' },
+                    { value: 'coder', text: 'Coder (Matrix Green)', selected: (this.visualStyle?.theme || 'default') === 'coder' },
+                    { value: 'corpo', text: 'Corpo color (light)', selected: (this.visualStyle?.theme || 'default') === 'corpo' },
+                    { value: 'dark', text: 'Full Dark Mode', selected: (this.visualStyle?.theme || 'default') === 'dark' },
+                    { value: 'default', text: 'Nostalgic Theme', selected: (this.visualStyle?.theme || 'default') === 'default' },
                     { value: 'pink', text: 'Pink Edition', selected: (this.visualStyle?.theme || 'default') === 'pink' },
-                    { value: 'transparent', text: 'Transparent Edition', selected: (this.visualStyle?.theme || 'default') === 'transparent' }
+                    { value: 'light', text: 'Sandstorm (light)', selected: (this.visualStyle?.theme || 'default') === 'light' },
+                    { value: 'transparent', text: 'Transparent Edition', selected: (this.visualStyle?.theme || 'default') === 'transparent' },
+                    { value: 'transparent_light', text: "Peter's (light)", selected: (this.visualStyle?.theme || 'default') === 'transparent_light' }
                 ])}
                         </div>
                         <div class="klite-row" style="margin-bottom: 8px;">
@@ -39436,7 +40098,7 @@ Outline:`
                 `<div style="margin-bottom: 12px; font-size: 11px; color: var(--muted);">
                         Presets below build a scene description here for your convenience.
                     </div>
-                    ${t.textarea('scene-desc', 'Scene description will auto-generate here...', 'min-height: 200px !important;')}
+                    <textarea id="scene-desc" class="klite-textarea" placeholder="Scene description will auto-generate here..." style="min-height: 200px !important;"></textarea>
                     <div class="klite-buttons-fill klite-mt">
                         ${t.button('Append to Memory', 'primary', 'append-scene')}
                         ${t.button('Append to Context', 'primary', 'apply-scene')}
@@ -39668,8 +40330,8 @@ Outline:`
             root.style.setProperty('--ambient-alpha', alpha.toString());
             root.style.setProperty('--accent', ambientColor);
 
-            // Only apply visual styling if not in 'default' theme
-            if (this.visualStyle.theme !== 'default') {
+            // Only apply visual styling if not in 'default' or 'lite1' (nostalgic) or 'transparent_light' (has own high-contrast CSS)
+            if (this.visualStyle.theme !== 'default' && this.visualStyle.theme !== 'lite1' && this.visualStyle.theme !== 'transparent_light') {
                 this.applyDualColorToAllElements(ambientColor, highlightColor, lightness);
             } else {
                 // Remove any existing color styling for default theme
@@ -39729,10 +40391,10 @@ Outline:`
                 }
                 
                 /* Navigation and Status Elements - Apply lightness */
-                #topmenu, .topmenu {
+                #topmenu, .topmenu, #rpmod-topbar {
                     background: rgba(${ambientRgb.r}, ${ambientRgb.g}, ${ambientRgb.b}, ${Math.max(alpha, 0.7)}) !important;
                 }
-                #topmenu .nav-link, .topmenu .nav-link,
+                #topmenu .nav-link, .topmenu .nav-link, #rpmod-topbar .nav-link,
                 #topmenu .navtoggler, .topmenu .navtoggler,
                 #topmenu .mainnav, .topmenu .mainnav,
                 .navbar-nav .nav-link,
@@ -39743,7 +40405,7 @@ Outline:`
                     background: rgba(${ambientRgb.r}, ${ambientRgb.g}, ${ambientRgb.b}, ${alpha}) !important;
                     border-color: rgba(${ambientRgb.r}, ${ambientRgb.g}, ${ambientRgb.b}, ${Math.min(alpha + 0.2, 1)}) !important;
                 }
-                #topmenu .nav-link:hover, .topmenu .nav-link:hover,
+                #topmenu .nav-link:hover, .topmenu .nav-link:hover, #rpmod-topbar .nav-link:hover,
                 #topmenu .navtoggler:hover, .topmenu .navtoggler:hover,
                 #topmenu .mainnav:hover, .topmenu .mainnav:hover,
                 .navbar-nav .nav-link:hover {
@@ -39867,28 +40529,91 @@ Outline:`
         applyTheme(theme) {
             this.visualStyle.theme = theme;
 
-            // Remove existing theme classes
-            document.body.classList.remove('theme-default', 'theme-light', 'theme-dark', 'theme-corpo');
+            // Remove existing theme classes (RPMod and Lite mappings)
+            document.body.classList.remove('theme-default', 'theme-light', 'theme-dark', 'theme-corpo', 'theme-blue', 'theme-coder', 'theme-rainbow', 'theme-pink', 'theme-transparent');
+            document.body.classList.remove('theme-1', 'theme-2', 'theme-3', 'theme-4', 'theme-5');
 
-            // Apply new theme class
+            // Handle Lite themes (map to existing KoboldAI Lite root presets)
+            // Lite Theme1 behaves as Nostalgic theme, but stays selected as 'lite1'
+            if (theme === 'lite1') {
+                // Do not add any Lite theme class; use default RPMod CSS
+                this.injectThemeCSS('default');
+
+                // Use default theme color defaults
+                const defaults = { ambientColor: '#4a9eff', highlightColor: '#5cbc5c', lightness: 50 };
+                this.visualStyle.ambientColor = defaults.ambientColor;
+                this.visualStyle.highlightColor = defaults.highlightColor;
+                this.visualStyle.lightness = defaults.lightness;
+
+                // Update UI controls to reflect values (keep dropdown showing 'lite1')
+                this.updateUIControls();
+
+                // Ensure no ambient overlay styling (nostalgic behavior)
+                this.removeColorStyling();
+
+                // Save
+                this.saveVisualStyle();
+                KLITE_RPMod.log('scene', `Applied Lite Theme1 as Nostalgic (no colors)`);
+                return;
+            }
+
+            if (theme.startsWith('lite')) {
+                // Determine which Lite theme to apply
+                const idx = theme.replace('lite', '');
+                if (idx === '0') {
+                    // Lite Theme0 (default root vars) -> no .theme-N class
+                } else if ([ '1','2','3','4','5' ].includes(idx)) {
+                    document.body.classList.add(`theme-${idx}`);
+                }
+
+                // Inject mapping CSS so RPMod UI uses Lite theme variables
+                this.injectThemeCSS('lite');
+
+                // Try to read actual CSS variables to reflect ambient/highlight in controls
+                const cs = getComputedStyle(document.body);
+                // Normalize possible 8-digit hex values (#RRGGBBAA) from theme-4, strip alpha
+                const normalizeHex = (val, fallback) => {
+                    if (!val) return fallback;
+                    let v = ('' + val).trim();
+                    if (v.startsWith('#') && v.length === 9) return v.slice(0, 7);
+                    return v;
+                };
+                const ambient = normalizeHex(cs.getPropertyValue('--theme_color_main') || '#4a9eff', '#4a9eff');
+                const highlight = normalizeHex(cs.getPropertyValue('--theme_color_highlight') || '#5cbc5c', '#5cbc5c');
+
+                this.visualStyle.ambientColor = ambient || '#4a9eff';
+                this.visualStyle.highlightColor = highlight || '#5cbc5c';
+                this.visualStyle.lightness = 50;
+
+                // Update controls and apply ambient/highlight styling
+                this.updateUIControls();
+                this.updateVisualColors(this.visualStyle.ambientColor, this.visualStyle.highlightColor, this.visualStyle.lightness);
+                this.saveVisualStyle();
+
+                KLITE_RPMod.log('scene', `Applied Lite theme: ${theme}`);
+                return;
+            }
+
+            // Apply new RPMod theme class
             document.body.classList.add(`theme-${theme}`);
 
             // Apply theme-specific CSS (this will override everything)
             this.injectThemeCSS(theme);
 
             // Update colors and lightness based on theme defaults
-            const themeDefaults = {
-                default: { ambientColor: '#4a9eff', highlightColor: '#5cbc5c', lightness: 50 }, // No styling applied
-                custom: this.visualStyle.customTheme, // Use saved custom settings
-                blue: { ambientColor: '#4a9eff', highlightColor: '#5cbc5c', lightness: 50 },    // Original blue theme
-                light: { ambientColor: '#b8860b', highlightColor: '#ffd700', lightness: 40 },  // Golden/Yellow
-                dark: { ambientColor: '#555555', highlightColor: '#888888', lightness: 30 },   // Subtle grays
-                corpo: { ambientColor: '#dc8b47', highlightColor: '#ff7f00', lightness: 45 },   // Orange theme
-                coder: { ambientColor: '#00ff00', highlightColor: '#7fff00', lightness: 60 },   // Matrix green
-                rainbow: { ambientColor: '#ff69b4', highlightColor: '#00bfff', lightness: 55 }, // Pink/Blue
-                pink: { ambientColor: '#ff1493', highlightColor: '#ffb6c1', lightness: 50 },    // Deep/Light pink
-                transparent: { ambientColor: '#ffffff', highlightColor: '#cccccc', lightness: 20 } // Low opacity white/gray
-            };
+                const themeDefaults = {
+                    default: { ambientColor: '#4a9eff', highlightColor: '#5cbc5c', lightness: 50 }, // No styling applied
+                    custom: this.visualStyle.customTheme, // Use saved custom settings
+                    blue: { ambientColor: '#4a9eff', highlightColor: '#5cbc5c', lightness: 50 },    // Original blue theme
+                    light: { ambientColor: '#D58400', highlightColor: '#FFC677', lightness: 60 },  // Sandstorm
+                    dark: { ambientColor: '#555555', highlightColor: '#888888', lightness: 30 },   // Subtle grays
+                    corpo: { ambientColor: '#dc8b47', highlightColor: '#ff7f00', lightness: 45 },   // Orange theme
+                    coder: { ambientColor: '#00ff00', highlightColor: '#7fff00', lightness: 60 },   // Matrix green
+                    rainbow: { ambientColor: '#ff69b4', highlightColor: '#00bfff', lightness: 55 }, // Pink/Blue
+                    pink: { ambientColor: '#ff1493', highlightColor: '#ffb6c1', lightness: 50 },    // Deep/Light pink
+                    transparent: { ambientColor: '#ffffff', highlightColor: '#cccccc', lightness: 20 }, // Low opacity white/gray
+                    transparent_light: { ambientColor: '#ffffff', highlightColor: '#cccccc', lightness: 20 } // Light variant (same defaults)
+                };
 
             const defaults = themeDefaults[theme];
             this.visualStyle.ambientColor = defaults.ambientColor;
@@ -39929,9 +40654,20 @@ Outline:`
                 case 'corpo':
                     themeCSS.textContent = this.getCorpoThemeCSS();
                     break;
-                default:
-                    // Default theme - reset everything to original RPmod styles
+                case 'transparent_light':
+                    // Light variant of Transparent Edition with improved contrast
+                    themeCSS.textContent = this.getTransparentLightThemeCSS();
+                    break;
+                case 'default':
+                    // Nostalgic theme (no-colors) with fixed rpmod-topbar styling
                     themeCSS.textContent = this.getDefaultThemeCSS();
+                    break;
+                case 'lite':
+                    themeCSS.textContent = this.getLiteThemeCSS();
+                    break;
+                default:
+                    // Base fallback CSS (no forced topbar color)
+                    themeCSS.textContent = this.getBaseThemeCSS();
                     break;
             }
 
@@ -39941,6 +40677,45 @@ Outline:`
         getDefaultThemeCSS() {
             return `
                 /* Default RPmod Theme Reset */
+                .klite-active {
+                    --bg: #1e1e1e !important;
+                    --bg2: #2a2a2a !important;
+                    --bg3: #3a3a3a !important;
+                    --text: #e0e0e0 !important;
+                    --muted: #888888 !important;
+                    --border: #444444 !important;
+                    --accent: #4a9eff !important;
+                }
+                .klite-active .klite-panel-left,
+                .klite-active .klite-panel-right,
+                .klite-active .klite-panel-top {
+                    background: #1e1e1e !important;
+                    color: #e0e0e0 !important;
+                }
+                /* RPMod topbar defaults (Nostalgic / Lite Theme 1) */
+                .klite-active #rpmod-topbar {
+                    background: rgb(51, 122, 183) !important; /* #337ab7 */
+                    color: #ffffff !important;
+                }
+                .klite-active #rpmod-topbar .nav-link {
+                    color: #ffffff !important;
+                    background: transparent !important;
+                    border-color: transparent !important;
+                }
+                .klite-active .klite-panel-header h3 {
+                    color: #4a9eff !important;
+                }
+                .klite-active .klite-section-header {
+                    background: #2a2a2a !important;
+                    color: #4a9eff !important;
+                }
+            `;
+        },
+
+        // Base fallback CSS for themes that don't need fixed topbar (e.g., coder, rainbow, pink)
+        getBaseThemeCSS() {
+            return `
+                /* Base RPmod Theme Reset (no fixed topbar color) */
                 .klite-active {
                     --bg: #1e1e1e !important;
                     --bg2: #2a2a2a !important;
@@ -39968,7 +40743,7 @@ Outline:`
 
         getLightThemeCSS() {
             return `
-                /* Light Theme CSS - Clean & Neutral */
+                /* Light Theme CSS - Sandstorm */
                 .klite-active {
                     --bg: #f8f9fa !important;
                     --bg2: #ffffff !important;
@@ -39976,7 +40751,7 @@ Outline:`
                     --text: #202124 !important;
                     --muted: #5f6368 !important;
                     --border: #dadce0 !important;
-                    --accent: #b8860b !important;
+                    --accent: #D58400 !important;
                 }
                 .klite-active .klite-panel-left,
                 .klite-active .klite-panel-right,
@@ -39989,8 +40764,11 @@ Outline:`
                     color: #b8860b !important;
                 }
                 .klite-active .klite-section-header {
-                    background: #f1f3f4 !important;
-                    color: #b8860b !important;
+                    background: #cfd4da !important; /* darker for higher contrast */
+                    color: #D58400 !important;
+                }
+                .klite-active .klite-section-header:hover {
+                    background: #bfc6cc !important; /* even darker on hover */
                 }
                 .klite-active input, .klite-active textarea, .klite-active select {
                     background: #ffffff !important;
@@ -39999,6 +40777,75 @@ Outline:`
                 }
                 .klite-active .klite-maincontent {
                     background: #ffffff !important;
+                }
+            `;
+        },
+
+        getTransparentLightThemeCSS() {
+            return `
+                /* Transparent Edition (light) - high contrast light base */
+                .klite-active {
+                    --bg: #f8f9fa !important;
+                    --bg2: #ffffff !important;
+                    --bg3: #e9ecef !important;
+                    --text: #202124 !important;
+                    --muted: #5f6368 !important;
+                    --border: #cfd4da !important;
+                    --accent: #6c757d !important; /* neutral accent for good contrast */
+                }
+                .klite-active .klite-panel-left,
+                .klite-active .klite-panel-right,
+                .klite-active .klite-panel-top {
+                    background: #f8f9fa !important;
+                    color: #202124 !important;
+                    border-color: #cfd4da !important;
+                }
+                .klite-active .klite-panel-header h3 {
+                    color: #6c757d !important;
+                }
+                /* Darker headers with white text for readability */
+                .klite-active .klite-section-header {
+                    background: #495057 !important;
+                    color: #ffffff !important;
+                }
+                .klite-active .klite-section-header:hover {
+                    background: #3f474f !important;
+                }
+                /* Buttons */
+                .klite-active .klite-btn,
+                .klite-active .klite-btn-primary,
+                .klite-active .klite-submit-btn {
+                    background: #6c757d !important;
+                    border-color: #6c757d !important;
+                    color: #ffffff !important;
+                }
+                .klite-active .klite-btn:hover,
+                .klite-active .klite-btn-primary:hover,
+                .klite-active .klite-submit-btn:hover {
+                    background: #5a6268 !important;
+                    border-color: #5a6268 !important;
+                }
+                /* Inputs */
+                .klite-active input, .klite-active textarea, .klite-active select {
+                    background: #ffffff !important;
+                    color: #202124 !important;
+                    border-color: #cfd4da !important;
+                }
+                .klite-active .klite-maincontent {
+                    background: #ffffff !important;
+                }
+                /* RPMod topbar in light transparent: darker bar and white links */
+                .klite-active #rpmod-topbar {
+                    background: #495057 !important;
+                    color: #ffffff !important;
+                }
+                .klite-active #rpmod-topbar .nav-link {
+                    background: #6c757d !important;
+                    border-color: #495057 !important;
+                    color: #ffffff !important;
+                }
+                .klite-active #rpmod-topbar .nav-link:hover {
+                    background: #5a6268 !important;
                 }
             `;
         },
@@ -40065,9 +40912,13 @@ Outline:`
                 .klite-active .klite-panel-header h3 {
                     color: #dc8b47 !important;
                 }
+                /* Darker headers for better contrast in Corpo */
                 .klite-active .klite-section-header {
-                    background: #f5f5f5 !important;
+                    background: #cfd4da !important;
                     color: #dc8b47 !important;
+                }
+                .klite-active .klite-section-header:hover {
+                    background: #bfc6cc !important;
                 }
                 .klite-active input, .klite-active textarea, .klite-active select {
                     background: #ffffff !important;
@@ -40089,8 +40940,66 @@ Outline:`
             `;
         },
 
+        getLiteThemeCSS() {
+            // Map KoboldAI Lite background/text variables to RPMod UI variables.
+            // Note: Do NOT force --accent here so color pickers and ambient overlays can update it dynamically.
+            return `
+                .klite-active {
+                    --bg: var(--theme_color_bg_outer) !important;
+                    --bg2: var(--theme_color_bg) !important;
+                    --bg3: var(--theme_color_bg_dark) !important;
+                    --text: var(--theme_color_text) !important;
+                    --muted: var(--theme_color_placeholder_text) !important;
+                    --border: var(--theme_color_border) !important;
+                }
+                .klite-active .klite-panel-left,
+                .klite-active .klite-panel-right,
+                .klite-active .klite-panel-top {
+                    background: var(--bg) !important;
+                    color: var(--text) !important;
+                    border-color: var(--border) !important;
+                }
+                /* Improve contrast for section headers under Lite themes */
+                .klite-active .klite-section-header {
+                    background: var(--theme_color_tabs, var(--bg3)) !important;
+                    color: var(--theme_color_tabs_text, #ffffff) !important;
+                }
+                .klite-active .klite-section-header:hover {
+                    background: var(--theme_color_tabs_highlight, var(--bg2)) !important;
+                }
+                .klite-active .klite-panel-header h3 {
+                    color: var(--accent) !important;
+                }
+                .klite-active input, .klite-active textarea, .klite-active select {
+                    background: var(--bg2) !important;
+                    color: var(--text) !important;
+                    border-color: var(--border) !important;
+                }
+                .klite-active .klite-maincontent {
+                    background: var(--bg) !important;
+                }
+            `;
+        },
+
         hexToRgb(hex) {
-            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            if (!hex) return null;
+            let h = ('' + hex).trim();
+            // Normalize rgba()/rgb() strings to hex-ish by extracting numbers
+            if (h.startsWith('rgb')) {
+                try {
+                    const nums = h.replace(/rgba?\(|\)|\s/g, '').split(',').map(n => parseFloat(n));
+                    if (nums.length >= 3) {
+                        return { r: nums[0] | 0, g: nums[1] | 0, b: nums[2] | 0 };
+                    }
+                } catch (_) { /* fallthrough */ }
+                return null;
+            }
+            if (h[0] === '#') h = h.slice(1);
+            // Support 8-digit hex (#RRGGBBAA) by ignoring alpha
+            if (h.length === 8) h = h.slice(0, 6);
+            // Support 3-digit hex (#RGB)
+            if (h.length === 3) h = h.split('').map(c => c + c).join('');
+            const result = /^([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(h);
             return result ? {
                 r: parseInt(result[1], 16),
                 g: parseInt(result[2], 16),
@@ -40099,7 +41008,7 @@ Outline:`
         },
 
         autoGenerateAmbientColor() {
-            if (!this.visualStyle.autoGenerate || this.visualStyle.theme === 'default') return;
+            if (!this.visualStyle.autoGenerate || this.visualStyle.theme === 'default' || this.visualStyle.theme === 'lite1' || this.visualStyle.theme === 'transparent_light') return;
 
             const detectedEnvironment = this.detectEnvironment();
             if (detectedEnvironment && this.environmentColors[detectedEnvironment]) {
@@ -40515,7 +41424,10 @@ Outline:`
     KLITE_RPMod.panels.GROUP = {
         enabled: false,
         activeChars: [],
+        // Next speaker index
         currentSpeaker: 0,
+        // Last speaker index (-1 = none yet)
+        lastSpeaker: -1,
         speakerHistory: [],
 
         // Auto-response system
@@ -40544,10 +41456,9 @@ Outline:`
         render() {
             return `
                 ${t.section('Group Chat Control',
-                `<div class=\"klite-muted klite-mt\" style=\"color:#ff7967; font-weight:bold;\">Groupchat is currently disabled due to a major bug.</div>
-                    <label>
-                        <input type=\"checkbox\" id=\"group-enabled\" disabled>
-                        Enable Group Chat Mode (disabled)
+                `<label>
+                        <input type=\"checkbox\" id=\"group-enabled\" ${this.enabled ? 'checked' : ''}>
+                        Enable Group Chat Mode
                     </label>`
             )}
                 
@@ -40637,9 +41548,10 @@ Outline:`
                     </div>`
             )}
                 
-                ${t.section('Current Status',
-                `<div class="klite-muted">
-                        Current Speaker: <strong>${this.getCurrentSpeaker()?.name || '—'}</strong>
+                ${t.section('Character selection',
+                `<div class="klite-muted" style="display: flex; gap: 12px; align-items: center;">
+                        <span>Last: <strong style="color: #e0b400;">${(this.lastSpeaker >= 0 ? (this.activeChars[this.lastSpeaker]?.name) : '—') || '—'}</strong></span>
+                        <span>Next: <strong style="color: #2aa84a;">${this.getCurrentSpeaker()?.name || '—'}</strong></span>
                     </div>
                     <div class="klite-mt">
                         <label>Next Speaker Selection:</label>
@@ -40665,11 +41577,11 @@ Outline:`
             )}
                 
                 ${this.speakerHistory.length > 0 ? t.section('Speaker History',
-                `<div style="max-height: 120px; overflow-y: auto; font-size: 11px;">
-                        ${this.speakerHistory.slice(-10).reverse().map((entry, i) => `
-                            <div style="padding: 2px 4px; margin: 1px 0; background: rgba(0,0,0,0.1); border-radius: 3px; display: flex; justify-content: space-between;">
+                `<div style="max-height: 140px; overflow-y: auto; font-size: 11px;">
+                        ${this.speakerHistory.slice(-20).map((entry, i) => `
+                            <div data-action="goto-history" data-index="${i}" style="padding: 4px 6px; margin: 2px 0; background: rgba(0,0,0,0.1); border-radius: 3px; display: flex; justify-content: space-between; cursor: pointer;">
                                 <span>${entry.name}</span>
-                                <span style="color: var(--muted);">${this.formatTime(entry.timestamp)}</span>
+                                <span style="color: var(--muted);">${typeof entry.tokens === 'number' ? entry.tokens : '—'}</span>
                             </div>
                         `).join('')}
                     </div>`
@@ -40741,8 +41653,10 @@ Outline:`
 
             return this.activeChars.map((char, i) => {
                 const avatar = char.image || '';
+                const isNext = (i === this.currentSpeaker);
+                const isLast = (i === this.lastSpeaker);
                 return `
-                    <div style="display: flex; align-items: center; gap: 10px; padding: 8px; border: 1px solid var(--border); border-radius: 4px; margin-bottom: 8px; background: var(--bg2); ${i === this.currentSpeaker ? 'border-color: var(--accent); background: rgba(74, 158, 255, 0.1);' : ''}">
+                    <div style="display: flex; align-items: center; gap: 10px; padding: 8px; border: 1px solid var(--border); border-radius: 4px; margin-bottom: 8px; background: var(--bg2); ${isNext ? 'border-color: var(--accent); background: rgba(42, 168, 74, 0.12);' : isLast ? 'border-color: #e0b400; background: rgba(224, 180, 0, 0.12);' : ''}">
                         ${avatar ? `
                             <div style="width: 40px; height: 40px; border-radius: 20px; overflow: hidden; flex-shrink: 0; border: 1px solid var(--border);">
                                 <img src="${avatar}" alt="${char.name}" style="width: 100%; height: 100%; object-fit: cover;">
@@ -40753,10 +41667,14 @@ Outline:`
                             </div>
                         `}
                         <div style="flex: 1; min-width: 0;">
-                            <div style="font-weight: bold; color: var(--text); ${i === this.currentSpeaker ? 'color: var(--accent);' : ''}">${char.name}${i === this.currentSpeaker ? ' (Current)' : ''}</div>
+                            <div style="font-weight: bold; color: var(--text);">
+                                ${char.name}
+                                ${isLast ? '<span style="margin-left:6px; padding:1px 4px; font-size:10px; border-radius:3px; background:#e0b400; color:#000;">Last</span>' : ''}
+                                ${isNext ? '<span style="margin-left:6px; padding:1px 4px; font-size:10px; border-radius:3px; background:#2aa84a; color:#fff;">Next</span>' : ''}
+                            </div>
                         </div>
                         <div style="display: flex; gap: 4px; flex-shrink: 0;">
-                            <button class="klite-btn" data-action="set-speaker" data-index="${i}" style="padding: 4px 8px; font-size: 11px;">Set</button>
+                            <button class="klite-btn" data-action="set-speaker" data-index="${i}" style="padding: 4px 8px; font-size: 11px;">Set Next</button>
                             <button class="klite-btn danger" data-action="remove-from-group" data-index="${i}" style="padding: 4px 8px; font-size: 11px;"> -->
                         </div>
                     </div>
@@ -40885,10 +41803,9 @@ Outline:`
                     return null;
             }
 
-            // Update current speaker and UI if requested
+            // Update Next speaker and UI if requested (no history change; trigger handles history)
             if (updateCurrent && nextSpeaker !== null) {
                 this.currentSpeaker = nextSpeaker;
-                this.addToSpeakerHistory(this.currentSpeaker);
                 this.refresh();
                 KLITE_RPMod.log('panels', `Speaker selection (${mode}): ${this.activeChars[this.currentSpeaker]?.name} (index ${this.currentSpeaker})`);
             }
@@ -40913,26 +41830,46 @@ Outline:`
                 }
             },
 
+            'goto-history': (e) => {
+                try {
+                    const target = e.target.closest('[data-index]');
+                    if (!target) return;
+                    const idx = parseInt(target.dataset.index);
+                    KLITE_RPMod.panels.GROUP.gotoHistory(idx);
+                } catch (_) {}
+            },
+
 
             'set-speaker': (e) => {
                 const groupPanel = KLITE_RPMod.panels.GROUP;
                 groupPanel.currentSpeaker = parseInt(e.target.dataset.index);
                 groupPanel.refresh();
+                groupPanel.saveSettings?.();
             },
 
             'next-speaker': () => {
                 const groupPanel = KLITE_RPMod.panels.GROUP;
-                groupPanel.advanceSpeaker();
+                const next = groupPanel.selectNextSpeaker(groupPanel.speakerMode, false);
+                if (next !== null && typeof next === 'number') {
+                    groupPanel.currentSpeaker = next;
+                    groupPanel.refresh();
+                    KLITE_RPMod.log('panels', `Selected next speaker: ${groupPanel.getCurrentSpeaker()?.name}`);
+                    groupPanel.saveSettings?.();
+                }
             },
 
             'trigger-response': () => {
                 const groupPanel = KLITE_RPMod.panels.GROUP;
-                KLITE_RPMod.log('group', `Trigger Speaker clicked; current speaker: ${groupPanel.getCurrentSpeaker()?.name || 'none'}`);
+                KLITE_RPMod.log('group', `Trigger Speaker clicked; next speaker: ${groupPanel.getCurrentSpeaker()?.name || 'none'}`);
                 // Ensure backend knows we are in chat group mode and participants are synced
                 if (window.localsettings) {
                     window.localsettings.opmode = 3; // chat
                 }
                 groupPanel.updateKoboldSettings();
+                try {
+                    const chatDisplay = document.getElementById('chat-display');
+                    groupPanel._preTriggerScroll = chatDisplay ? chatDisplay.scrollTop : 0;
+                } catch (_) {}
                 groupPanel.triggerCurrentSpeaker();
 
                 // Auto advance if enabled
@@ -40958,10 +41895,16 @@ Outline:`
 
                 groupPanel.activeChars.splice(index, 1);
                 if (groupPanel.currentSpeaker >= groupPanel.activeChars.length) {
-                    groupPanel.currentSpeaker = 0;
+                    groupPanel.currentSpeaker = Math.max(0, groupPanel.activeChars.length - 1);
+                }
+                if (groupPanel.lastSpeaker === index) {
+                    groupPanel.lastSpeaker = -1;
+                } else if (groupPanel.lastSpeaker > index) {
+                    groupPanel.lastSpeaker -= 1;
                 }
                 groupPanel.refresh();
                 groupPanel.updateKoboldSettings();
+                groupPanel.saveSettings?.();
             },
 
 
@@ -41025,7 +41968,10 @@ Outline:`
             }
 
             // Trigger generation in Lite: align with narrator flow
-            if (typeof window.chat_submit_generation === 'function') {
+            // If same speaker as last turn, prefer a fresh turn routine
+            if (this.lastSpeaker === this.currentSpeaker && typeof window.submit_generation === 'function') {
+                window.submit_generation('');
+            } else if (typeof window.chat_submit_generation === 'function') {
                 // Let Lite handle text piping to input_text and submission
                 window.chat_submit_generation();
             } else if (typeof window.submit_generation === 'function') {
@@ -41035,6 +41981,16 @@ Outline:`
             } else {
                 KLITE_RPMod.log('panels', 'Generation function unavailable');
             }
+
+            // Update Last marker and history entry
+            try {
+                const idx = this.currentSpeaker;
+                this.lastSpeaker = idx;
+                const chatDisplay = document.getElementById('chat-display');
+                const scrollPos = typeof this._preTriggerScroll === 'number' ? this._preTriggerScroll : (chatDisplay ? chatDisplay.scrollTop : 0);
+                this.addToSpeakerHistory(idx, { scrollPos });
+                this.saveSettings?.();
+            } catch (_) {}
 
             // Restore settings shortly after dispatching so future turns are normal
             setTimeout(() => {
@@ -41049,9 +42005,11 @@ Outline:`
         advanceSpeaker() {
             if (this.activeChars.length <= 1) return;
 
-            const next = this.selectNextSpeaker(this.speakerMode, true);
-            if (next !== null) {
-                KLITE_RPMod.log('panels', `Advanced to next speaker: ${this.getCurrentSpeaker()?.name}`);
+            const next = this.selectNextSpeaker(this.speakerMode, false);
+            if (next !== null && typeof next === 'number') {
+                this.currentSpeaker = next;
+                this.refresh();
+                KLITE_RPMod.log('panels', `Selected next speaker: ${this.getCurrentSpeaker()?.name}`);
             }
         },
 
@@ -41565,11 +42523,17 @@ Outline:`
             }
         },
 
-        addToSpeakerHistory(speakerIndex) {
+        addToSpeakerHistory(speakerIndex, meta = {}) {
+            // Estimate a content index similar to Bookmarks/Index: use word count as proxy
+            let approxWords = 0;
+            try {
+                approxWords = window.gametext_arr ? gametext_arr.join(' ').split(/\s+/).filter(w => w).length : 0;
+            } catch (_) {}
             this.speakerHistory.push({
                 index: speakerIndex,
                 name: this.activeChars[speakerIndex]?.name,
-                timestamp: Date.now()
+                tokens: typeof meta.tokens === 'number' ? meta.tokens : approxWords,
+                scrollPos: typeof meta.scrollPos === 'number' ? meta.scrollPos : 0,
             });
 
             // Keep only last 20 entries
@@ -41577,20 +42541,13 @@ Outline:`
                 this.speakerHistory = this.speakerHistory.slice(-20);
             }
         },
-        
 
-        formatTime(timestamp) {
-            const now = Date.now();
-            const diff = now - timestamp;
-
-            if (diff < 60000) { // Less than 1 minute
-                return `${Math.floor(diff / 1000)}s ago`;
-            } else if (diff < 3600000) { // Less than 1 hour
-                return `${Math.floor(diff / 60000)}m ago`;
-            } else if (diff < 86400000) { // Less than 1 day
-                return `${Math.floor(diff / 3600000)}h ago`;
-            } else {
-                return new Date(timestamp).toLocaleDateString();
+        gotoHistory(index) {
+            const entry = this.speakerHistory[index];
+            if (!entry) return;
+            const chatDisplay = document.getElementById('chat-display');
+            if (chatDisplay && typeof entry.scrollPos === 'number') {
+                chatDisplay.scrollTop = entry.scrollPos;
             }
         },
 
@@ -41616,6 +42573,21 @@ Outline:`
                 if (settings.autoResponses) {
                     Object.assign(this.autoResponses, settings.autoResponses);
                 }
+                if (typeof settings.currentSpeaker === 'number') {
+                    this.currentSpeaker = settings.currentSpeaker;
+                }
+                if (typeof settings.lastSpeaker === 'number') {
+                    this.lastSpeaker = settings.lastSpeaker;
+                }
+                if (Array.isArray(settings.participants)) {
+                    this.activeChars = settings.participants.map(c => ({ name: c.name, image: c.image, isCustom: !!c.isCustom }));
+                    // Update chatopponent to reflect group
+                    try { this.updateKoboldSettings(); } catch (_) {}
+                }
+                // Restore history if present
+                if (Array.isArray(settings.speakerHistory)) {
+                    this.speakerHistory = settings.speakerHistory.slice(-20);
+                }
                 KLITE_RPMod.log('panels', `Loaded GROUP settings: speakerMode=${this.speakerMode}`);
             }
         },
@@ -41623,7 +42595,11 @@ Outline:`
         saveSettings() {
             const settings = {
                 speakerMode: this.speakerMode,
-                autoResponses: this.autoResponses
+                autoResponses: this.autoResponses,
+                currentSpeaker: this.currentSpeaker,
+                lastSpeaker: this.lastSpeaker,
+                participants: Array.isArray(this.activeChars) ? this.activeChars.map(c => ({ name: c.name, image: c.image, isCustom: !!c.isCustom })) : [],
+                speakerHistory: Array.isArray(this.speakerHistory) ? this.speakerHistory.slice(-20) : []
             };
             KLITE_RPMod.saveToLiteStorage('rpmod_group_settings', JSON.stringify(settings));
             KLITE_RPMod.log('panels', `Saved GROUP settings: speakerMode=${this.speakerMode}`);
@@ -44404,6 +45380,42 @@ Pacing Notes: `
         tagFilter: '',
         starFilter: '',
 
+        // Basic HTML escaping helpers to prevent HTML/JS injection when rendering
+        escapeHTML(str = '') {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        },
+        // Escape content specifically for placement inside <textarea> ... </textarea>
+        escapeTextarea(str = '') {
+            // Also break any closing tag sequence
+            return this.escapeHTML(String(str)).replace(/<\/textarea/gi, '&lt;/textarea');
+        },
+        // Attempt to fix common UTF-8 mojibake (e.g., “ — ” becoming â / â)
+        fixMojibake(str = '') {
+            const s = String(str);
+            // Heuristic: if it contains common mojibake markers (C1 controls/Latin-1 noise + sequences like Ã/Â/â), try latin1->utf8 roundtrip
+            const looksMojibake = /[\u0080-\u00FF]/.test(s) && /(Ã|Â|â)/.test(s);
+            if (looksMojibake) {
+                try {
+                    const bytes = new Uint8Array(Array.from(s, ch => ch.charCodeAt(0) & 0xFF));
+                    const decoded = new TextDecoder('utf-8', { fatal: false }).decode(bytes);
+                    return decoded.normalize('NFC');
+                } catch (_) { /* fall through */ }
+            }
+            return s.normalize('NFC');
+        },
+        // Sanitize imported text fields: fix encoding, normalize, strip unsafe control chars
+        sanitizeImportedString(str = '') {
+            let out = this.fixMojibake(str);
+            // Normalize line endings and remove non-text control chars except tab/newline
+            out = out.replace(/\r\n?/g, '\n').replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+            return out;
+        },
+
         render() {
             const charCount = KLITE_RPMod.characters.length;
             const filteredChars = this.getFilteredCharacters();
@@ -44738,15 +45750,15 @@ Pacing Notes: `
                      data-char-id="${char.id}" data-action="view-char">
                     ${(char.images?.thumbnail || char.image) ? `
                         <div style="width: 60px; height: 60px; border-radius: 30px; overflow: hidden; margin-bottom: 6px; border: 1px solid var(--border);">
-                            <img src="${char.images?.thumbnail || char.image}" alt="${char.name}" style="width: 100%; height: 100%; object-fit: cover;" loading="lazy">
+                            <img src="${char.images?.thumbnail || char.image}" alt="${KLITE_RPMod.panels.CHARS.escapeHTML(char.name || '')}" style="width: 100%; height: 100%; object-fit: cover;" loading="lazy">
                         </div>
                     ` : `
                         <div style="width: 60px; height: 60px; border-radius: 30px; background: var(--bg3); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; margin-bottom: 6px;">
-                            <span style="font-size: 24px;">${char.name.charAt(0)}</span>
+                            <span style="font-size: 24px;">${KLITE_RPMod.panels.CHARS.escapeHTML((char.name || '?').charAt(0))}</span>
                         </div>
                     `}
                     <div style="font-size: 12px; font-weight: bold; color: var(--text); line-height: 1.2; word-wrap: break-word; max-width: 100%;">
-                        ${char.name.length > 12 ? char.name.substring(0, 12) + '...' : char.name}
+                        ${(KLITE_RPMod.panels.CHARS.escapeHTML(char.name || '')).length > 12 ? KLITE_RPMod.panels.CHARS.escapeHTML(char.name || '').substring(0, 12) + '...' : KLITE_RPMod.panels.CHARS.escapeHTML(char.name || '')}
                     </div>
                 </div>
             `;
@@ -44758,10 +45770,10 @@ Pacing Notes: `
             return `
                 <div class="klite-char-card" data-char-id="${char.id}" data-action="view-char" style="cursor: pointer;">
                     <div class="klite-char-image">
-                        ${(char.images?.preview || char.image) ? `<img src="${char.images?.preview || char.image}" alt="${char.name}" loading="lazy">` : '<div class="klite-char-placeholder">👤</div>'}
+                        ${(char.images?.preview || char.image) ? `<img src="${char.images?.preview || char.image}" alt="${KLITE_RPMod.panels.CHARS.escapeHTML(char.name || '')}" loading="lazy">` : '<div class="klite-char-placeholder">👤</div>'}
                     </div>
-                    <div class="klite-char-name">${char.name}</div>
-                    <div class="klite-char-creator">by ${char.creator || 'Unknown'}</div>
+                    <div class="klite-char-name">${KLITE_RPMod.panels.CHARS.escapeHTML(char.name || '')}</div>
+                    <div class="klite-char-creator">by ${KLITE_RPMod.panels.CHARS.escapeHTML(char.creator || 'Unknown')}</div>
                     <div class="klite-char-stats" style="text-align: center; margin-top: 8px;">
                         <select class="klite-select" style="font-size: 10px; padding: 2px 4px;" onchange="KLITE_RPMod.panels.CHARS.updateCharacterRating(${char.id}, this.value)" onclick="event.stopPropagation();">
                             <option value="0" ${rating === 0 ? 'selected' : ''}>☆ Unrated</option>
@@ -44784,17 +45796,17 @@ Pacing Notes: `
                      data-char-id="${char.id}" data-action="view-char">
                     ${char.image ? `
                         <div style="width: 40px; height: 40px; border-radius: 20px; overflow: hidden; flex-shrink: 0; border: 1px solid var(--border);">
-                            <img src="${char.image}" alt="${char.name}" style="width: 100%; height: 100%; object-fit: cover;">
+                            <img src="${char.image}" alt="${KLITE_RPMod.panels.CHARS.escapeHTML(char.name || '')}" style="width: 100%; height: 100%; object-fit: cover;">
                         </div>
                     ` : `
                         <div style="width: 40px; height: 40px; border-radius: 20px; background: var(--bg3); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                            <span style="font-size: 18px;">${char.name.charAt(0)}</span>
+                            <span style="font-size: 18px;">${KLITE_RPMod.panels.CHARS.escapeHTML((char.name || '?').charAt(0))}</span>
                         </div>
                     `}
                     <div style="flex: 1; min-width: 0;">
-                        <div style="font-weight: bold; color: var(--text); margin-bottom: 2px;">${char.name}</div>
+                        <div style="font-weight: bold; color: var(--text); margin-bottom: 2px;">${KLITE_RPMod.panels.CHARS.escapeHTML(char.name || '')}</div>
                         <div style="font-size: 10px; color: var(--muted); display: flex; gap: 8px; align-items: center;">
-                            <span>by ${char.creator || 'Unknown'}</span>
+                            <span>by ${KLITE_RPMod.panels.CHARS.escapeHTML(char.creator || 'Unknown')}</span>
                             <select class="klite-select" style="font-size: 9px; padding: 2px 4px;" onchange="KLITE_RPMod.panels.CHARS.updateCharacterRating(${char.id}, this.value)" onclick="event.stopPropagation();">
                                 <option value="0" ${rating === 0 ? 'selected' : ''}>☆ Unrated</option>
                                 <option value="1" ${rating === 1 ? 'selected' : ''}>★☆☆☆☆</option>
@@ -44817,10 +45829,10 @@ Pacing Notes: `
             return `
                 <div style="margin-bottom: 20px; border: 1px solid var(--border); border-radius: 8px; padding: 15px; background: var(--bg2);" data-char-id="${char.id}" data-action="view-char">
                     <div style="width: 100%; margin-bottom: 15px; border-radius: 8px; overflow: hidden; border: 1px solid var(--border);">
-                        ${char.image ? `<img src="${char.image}" alt="${char.name}" style="width: 100%; height: auto; display: block;">` : '<div style="width: 100%; height: 200px; background: var(--bg3); display: flex; align-items: center; justify-content: center; font-size: 48px;">👤</div>'}
+                        ${char.image ? `<img src="${char.image}" alt="${KLITE_RPMod.panels.CHARS.escapeHTML(char.name || '')}" style="width: 100%; height: auto; display: block;">` : '<div style="width: 100%; height: 200px; background: var(--bg3); display: flex; align-items: center; justify-content: center; font-size: 48px;">👤</div>'}
                     </div>
                     <div style="text-align: center;">
-                        <div style="font-size: 18px; font-weight: bold; color: var(--text); margin-bottom: 8px;">${char.name}</div>
+                        <div style="font-size: 18px; font-weight: bold; color: var(--text); margin-bottom: 8px;">${KLITE_RPMod.panels.CHARS.escapeHTML(char.name || '')}</div>
                         <div style="margin-bottom: 12px;">
                             <select class="klite-select" style="margin: 0 auto;" onchange="KLITE_RPMod.panels.CHARS.updateCharacterRating(${char.id}, this.value)">
                                 <option value="0" ${rating === 0 ? 'selected' : ''}>☆ Unrated</option>
@@ -44831,15 +45843,13 @@ Pacing Notes: `
                                 <option value="5" ${rating === 5 ? 'selected' : ''}>★★★★★</option>
                             </select>
                         </div>
-                        <div style="color: var(--muted); margin-bottom: 12px;">by ${char.creator || 'Unknown'}</div>
-                        <div style="text-align: left; margin-bottom: 12px; color: var(--text); line-height: 1.4;">
-                            ${(char.description || 'No description available').substring(0, 300)}${(char.description || '').length > 300 ? '...' : ''}
-                        </div>
+                        <div style="color: var(--muted); margin-bottom: 12px;">by ${KLITE_RPMod.panels.CHARS.escapeHTML(char.creator || 'Unknown')}</div>
+                        <div style="text-align: left; margin-bottom: 12px; color: var(--text); line-height: 1.4;">${KLITE_RPMod.panels.CHARS.escapeHTML((char.description || 'No description available').substring(0, 300) + ((char.description || '').length > 300 ? '...' : ''))}</div>
                         <div style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 12px; color: var(--muted);">
                             <span>Talk: ${talkLevel} (${char.talkativeness || 0})</span>
                             <span>Keywords: ${char.keywords ? char.keywords.length : 0}</span>
                         </div>
-                        <div style="margin-bottom: 15px;">${tags}</div>
+                        <div style="margin-bottom: 15px;">${char.tags && char.tags.length > 0 ? char.tags.map(tag => `<span class=\"klite-tag\">${KLITE_RPMod.panels.CHARS.escapeHTML(tag)}</span>`).join('') : '<span class=\"klite-tag-empty\">No tags</span>'}</div>
                     </div>
                 </div>
                 <hr style="border: none; border-top: 1px solid var(--border); margin: 20px 0;">
@@ -45205,6 +46215,14 @@ Pacing Notes: `
                 keywords: this.extractCharacterKeywords(characterData),
                 responseStyle: this.analyzeResponseStyle(characterData)
             };
+
+            // Sanitize/normalize common text fields to preserve emojis and smart quotes correctly
+            ['name','description','personality','scenario','first_mes','mes_example','creator','system_prompt','post_history_instructions','creator_notes']
+                .forEach(k => { if (k in normalized && typeof normalized[k] === 'string') normalized[k] = this.sanitizeImportedString(normalized[k]); });
+            // Sanitize alternate greetings if present
+            if (Array.isArray(normalized.alternate_greetings)) {
+                normalized.alternate_greetings = normalized.alternate_greetings.map(g => this.sanitizeImportedString(g));
+            }
 
             KLITE_RPMod.log('panels', `Enhanced character analysis - Talkativeness: ${normalized.talkativeness}, Keywords: ${normalized.keywords.length}, Style: ${JSON.stringify(normalized.responseStyle)}`);
 
@@ -47383,44 +48401,44 @@ Pacing Notes: `
         <h3>${d.id ? 'Edit Character' : charData ? 'Clone Character' : 'Create New Character'}</h3>
 
         <label>Name:</label>
-        <input class="klite-input" value="${d.name}" oninput="KLITE_RPMod.panels.CHARS.editData.name=this.value"><br>
+        <input class="klite-input" value="${KLITE_RPMod.panels.CHARS.escapeHTML(d.name)}" oninput="KLITE_RPMod.panels.CHARS.editData.name=this.value"><br>
 
         <label>Description:</label>
-        <textarea class="klite-input" oninput="KLITE_RPMod.panels.CHARS.editData.description=this.value">${d.description}</textarea><br>
+        <textarea class="klite-input" oninput="KLITE_RPMod.panels.CHARS.editData.description=this.value">${KLITE_RPMod.panels.CHARS.escapeTextarea(d.description)}</textarea><br>
 
         <label>Personality:</label>
-        <textarea class="klite-input" oninput="KLITE_RPMod.panels.CHARS.editData.personality=this.value">${d.personality}</textarea><br>
+        <textarea class="klite-input" oninput="KLITE_RPMod.panels.CHARS.editData.personality=this.value">${KLITE_RPMod.panels.CHARS.escapeTextarea(d.personality)}</textarea><br>
 
         <label>Scenario:</label>
-        <textarea class="klite-input" oninput="KLITE_RPMod.panels.CHARS.editData.scenario=this.value">${d.scenario}</textarea><br>
+        <textarea class="klite-input" oninput="KLITE_RPMod.panels.CHARS.editData.scenario=this.value">${KLITE_RPMod.panels.CHARS.escapeTextarea(d.scenario)}</textarea><br>
 
         <label>Greeting (first message):</label>
-        <textarea class="klite-input" oninput="KLITE_RPMod.panels.CHARS.editData.first_mes=this.value">${d.first_mes}</textarea><br>
+        <textarea class="klite-input" oninput="KLITE_RPMod.panels.CHARS.editData.first_mes=this.value">${KLITE_RPMod.panels.CHARS.escapeTextarea(d.first_mes)}</textarea><br>
 
         <label>Example Dialogue:</label>
-        <textarea class="klite-input" oninput="KLITE_RPMod.panels.CHARS.editData.mes_example=this.value">${d.mes_example}</textarea><br>
+        <textarea class="klite-input" oninput="KLITE_RPMod.panels.CHARS.editData.mes_example=this.value">${KLITE_RPMod.panels.CHARS.escapeTextarea(d.mes_example)}</textarea><br>
 
         <label>Tags (comma-separated):</label>
-        <input class="klite-input" value="${d.tags.join(', ')}" oninput="KLITE_RPMod.panels.CHARS.editData.tags=this.value.split(',').map(t=>t.trim())"><br>
+        <input class="klite-input" value="${KLITE_RPMod.panels.CHARS.escapeHTML(d.tags.join(', '))}" oninput="KLITE_RPMod.panels.CHARS.editData.tags=this.value.split(',').map(t=>t.trim())"><br>
 
         <label>Creator:</label>
-        <input class="klite-input" value="${d.creator}" oninput="KLITE_RPMod.panels.CHARS.editData.creator=this.value"><br>
+        <input class="klite-input" value="${KLITE_RPMod.panels.CHARS.escapeHTML(d.creator)}" oninput="KLITE_RPMod.panels.CHARS.editData.creator=this.value"><br>
 
         <label>Character Version:</label>
-        <input class="klite-input" value="${d.character_version}" oninput="KLITE_RPMod.panels.CHARS.editData.character_version=this.value"><br>
+        <input class="klite-input" value="${KLITE_RPMod.panels.CHARS.escapeHTML(d.character_version)}" oninput="KLITE_RPMod.panels.CHARS.editData.character_version=this.value"><br>
 
         <label>Creator Notes (not shown to AI):</label>
-        <textarea class="klite-input" rows="3" oninput="KLITE_RPMod.panels.CHARS.editData.creator_notes=this.value">${d.creator_notes}</textarea><br>
+        <textarea class="klite-input" rows="3" oninput="KLITE_RPMod.panels.CHARS.editData.creator_notes=this.value">${KLITE_RPMod.panels.CHARS.escapeTextarea(d.creator_notes)}</textarea><br>
 
         <label>System Prompt Override:</label>
-        <textarea class="klite-input" rows="3" oninput="KLITE_RPMod.panels.CHARS.editData.system_prompt=this.value">${d.system_prompt}</textarea><br>
+        <textarea class="klite-input" rows="3" oninput="KLITE_RPMod.panels.CHARS.editData.system_prompt=this.value">${KLITE_RPMod.panels.CHARS.escapeTextarea(d.system_prompt)}</textarea><br>
 
         <label>Post-History Instructions:</label>
-        <textarea class="klite-input" rows="3" oninput="KLITE_RPMod.panels.CHARS.editData.post_history_instructions=this.value">${d.post_history_instructions}</textarea><br>
+        <textarea class="klite-input" rows="3" oninput="KLITE_RPMod.panels.CHARS.editData.post_history_instructions=this.value">${KLITE_RPMod.panels.CHARS.escapeTextarea(d.post_history_instructions)}</textarea><br>
 
         <label>Alternate Greetings (one per line):</label>
         <textarea class="klite-input" rows="3"
-            oninput="KLITE_RPMod.panels.CHARS.editData.alternate_greetings = this.value.split('\\n').map(l => l.trim()).filter(Boolean)">${(d.alternate_greetings || []).join('\\n')}</textarea><br>
+            oninput="KLITE_RPMod.panels.CHARS.editData.alternate_greetings = this.value.split('\\n').map(l => l.trim()).filter(Boolean)">${KLITE_RPMod.panels.CHARS.escapeTextarea((d.alternate_greetings || []).join('\\n'))}</textarea><br>
 
         <label>Upload Avatar:</label>
         <input type="file" accept="image/*" onchange="KLITE_RPMod.panels.CHARS.uploadImage(event)">
@@ -47572,4 +48590,57 @@ Pacing Notes: `
 })();
 </script>
 <!-- End RPMod inline -->
+
+<!-- Startup notice popup -->
+<script id="rp-lite-startup-notice">
+(function(){
+	try {
+		if (document.getElementById('rp-lite-startup-popup')) return;
+		const overlay = document.createElement('div');
+		overlay.id = 'rp-lite-startup-popup';
+		overlay.style.position = 'fixed';
+		overlay.style.inset = '0';
+		overlay.style.background = 'rgba(0,0,0,0.7)';
+		overlay.style.zIndex = '999998';
+		const box = document.createElement('div');
+		box.style.maxWidth = '720px';
+		box.style.margin = '8% auto';
+		box.style.background = '#222';
+		box.style.color = '#eee';
+		box.style.border = '1px solid #555';
+		box.style.borderRadius = '8px';
+		box.style.padding = '16px';
+		box.style.fontFamily = 'system-ui, -apple-system, Segoe UI, Roboto, sans-serif';
+		box.style.boxShadow = '0 8px 24px rgba(0,0,0,0.5)';
+		box.innerHTML = (
+			'<div style="font-size:18px;font-weight:600;margin-bottom:8px;">Role Play in Lite - Beta Notice</div>'+
+			'<div style="font-size:14px;line-height:1.5;">'+
+				'Role Play in Lite stores additional state in browser storage and saves.<br>'+
+				'Back up your stories periodically and expect increased save sizes.<br>'+
+				'Saves stay vanilla Lite compatible, but the additional data gets lost on load.'+
+				'<br><br>'+
+				'This fork is still in development. Expect Bugs!<br>'+
+				'Known Bugs:'+
+				'<ul style="margin:6px 0 0 18px;">'+
+					'<li>\'Groupchat\' isn\'t working, yet</li>'+
+					'<li>Manual \'SCENE\' generation isn\'t working at the moment</li>'+
+					'<li>Author\'s Note smart depth detection fall to story mode although in RP mode</li>'+
+					'<li>User\'s persona sometimes unloads when changing characters</li>'+
+				'</ul>'+
+				'<br>'+
+				'This instance is for testing, if you find bugs please help by telling Peter on the discord in '+
+				'<a href="https://discord.com/channels/849937185893384223/1421612957892083894" target="_blank" rel="noopener noreferrer" style="color:#9cf;">this channel</a>.'+
+			'</div>'+
+			'<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px;">'+
+				'<button id="rp-lite-startup-dismiss" style="background:#2a6b2a;border:1px solid #6ad26a;color:#fff;padding:6px 10px;border-radius:4px;cursor:pointer;">OK, got it</button>'+
+			'</div>'
+		);
+		overlay.appendChild(box);
+		document.body.appendChild(overlay);
+		const btn = box.querySelector('#rp-lite-startup-dismiss');
+		btn?.addEventListener('click', function(){ overlay.remove(); });
+	} catch (_) {}
+})();
+</script>
+
 </html>
