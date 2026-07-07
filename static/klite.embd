@@ -33243,7 +33243,5 @@ Current version indicated by LITEVER below.
 <script src="static/js/embeddedContentViewer.js"></script>
 <script src="static/js/treeSitterGrammarLoader.js" type="module"></script>
 <script src="static/js/editorPopup.js" type="module"></script>
-<!-- KLITE RPmod (auto-loaded after Esolite init) -->
-<script>(function(){function boot(){var s=document.createElement('script');s.src='KLITE-RPmod.js';document.head.appendChild(s);}if(document.readyState==='complete')setTimeout(boot,0);else window.addEventListener('load',boot);})();</script>
 <!-- EsoLite modifications end -->
 </html>
