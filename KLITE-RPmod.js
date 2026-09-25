@@ -430,6 +430,16 @@ button.rpm-chip, .rpm-chip[role=button] { cursor: pointer; }
 .rpm-map-exitrow .rpm-map-go { flex: 1 1 auto; min-width: 0; }
 .rpm-map-door-btn.rpm-btn { flex: 0 0 auto; }
 .rpm-map-unseen .rpm-map-roomrect { opacity: .5; }
+.rpm-map-quick { display: inline-flex; align-items: center; gap: 5px; font-size: var(--rpm-fs-sm); color: var(--rpm-fg-muted); cursor: pointer; }
+.rpm-map-placelink { stroke: var(--rpm-border-hi); }
+.rpm-map-placelink.rpm-map-fog { stroke-dasharray: 6 5; opacity: .6; }
+.rpm-map-place .rpm-map-dot { fill: var(--rpm-accent-bg-hi); stroke: var(--rpm-border-hi); stroke-width: 2; }
+.rpm-map-place.rpm-map-fog .rpm-map-dot { fill: transparent; stroke-dasharray: 4 3; }
+.rpm-map-place.rpm-here .rpm-map-dot { fill: var(--rpm-quest); stroke: var(--rpm-fg-hi); }
+.rpm-map-place .rpm-map-name { fill: var(--rpm-fg); }
+.rpm-map-place.rpm-map-fog .rpm-map-name { fill: var(--rpm-fg-muted); }
+.rpm-map-place.rpm-map-reach { cursor: pointer; }
+.rpm-map-place.rpm-map-reach:hover .rpm-map-dot { stroke: var(--rpm-fg-hi); stroke-width: 3; }
 .rpm-map-dark .rpm-map-roomrect { fill: color-mix(in srgb, var(--map-ground) 60%, #000); }
 
 /* ---- character sheet (window "sheet") + dice log ---- */
@@ -22711,7 +22721,9 @@ Spells: ${chosen}` : "") + (sp.spells ? `${chosen ? "; " : "\nSpells: "}${sp.spe
     }
     function markVisitedRoom(locId) {
       const r = rt();
-      if (!r || !mapOf(locId)) return false;
+      if (!r) return false;
+      if (locId && !asArray5(r.visitedLocationIds).includes(locId)) r.visitedLocationIds = [...asArray5(r.visitedLocationIds), locId];
+      if (!mapOf(locId)) return false;
       normalizeExploration(r);
       let changed = raiseExplored(r.explored, locId, "visited");
       for (const e of playerExits(locId)) if (mapOf(e.to)) changed = raiseExplored(r.explored, e.to, seeThrough(e, doorState(e, r.doorState)) ? "discovered" : "known") || changed;
@@ -22948,6 +22960,7 @@ Spells: ${chosen}` : "") + (sp.spells ? `${chosen ? "; " : "\nSpells: "}${sp.spe
       passiveNotice(dest.id);
       const dir = ex && ex.dir ? dirName(ex.dir) : "";
       if (opts.source === "ui") gameLog(`${opened ? "Opens the door and goes" : "Goes"}${dir ? " " + dir : ""} to ${placeName(dest.id, curId)}.`, "map");
+      if (opts.source === "quicktravel") gameLog(`Quick travel: the player skipped the journey and is now at ${placeName(dest.id, curId)}${opened ? " (a door was opened on the way)" : ""}. Describe the arrival briefly.`, "map");
       try {
         fireTriggers("enter:" + dest.id);
       } catch (_) {
@@ -23628,6 +23641,15 @@ Spells: ${chosen}` : "") + (sp.spells ? `${chosen ? "; " : "\nSpells: "}${sp.spe
         const ph = phasedEntity(f);
         return { id: f.id, name: norm5(ph.name), value, tier, next: pr.next, into: pr.into, span: pr.span, effect: tierEffect(tier), hostile: isHostileTier(tier), gone: !!ph.gone, phase: ph.phase || null };
       });
+    }
+    function factionEncountered(f) {
+      const r = rt();
+      if (!r || !f) return false;
+      if (r.reputation && r.reputation[f.id] != null) return true;
+      const w = activeWorld();
+      if (asArray5(w.npcs).some((p) => p.factionId === f.id && asArray5(r.knownNpcIds).includes(p.id))) return true;
+      if (f.hqLocationId && asArray5(r.visitedLocationIds).some((id) => id === f.hqLocationId || isInsideLocation(id, f.hqLocationId))) return true;
+      return asArray5(w.encounters).some((e) => e.factionId === f.id && asArray5(r.startedEncounters).includes(e.id));
     }
     function personAttitude(npc) {
       if (!npc || !npc.factionId) return null;
@@ -25025,7 +25047,7 @@ The player's purse: ${formatPrice(wealthCp(purse()))}. When the player buys or s
         });
         if (cb.wipe) {
           const r = rt();
-          const names = party.map((o) => combatantName(o.id));
+          const names = [...party].sort((a, b) => (b.isPlayer ? 1 : 0) - (a.isPlayer ? 1 : 0)).map((o) => combatantName(o.id));
           if (r) r.gameOver = { day: r.clock && r.clock.day, time: r.clock && r.clock.time, locationId: r.playerLocationId, persona: cb.persona || "", fallen: names };
           combatLog(`Game over. ${names.length > 1 ? "Everyone in the party has died" : "You have died"}: ${names.join(", ")}.`);
           try {
@@ -25774,11 +25796,11 @@ ${recent}` : "");
       if (!loc) return { place: null, ways: [], people: [], quests: [], trade: false };
       const mode2 = aiMode();
       const ways = [];
-      const add = (id, name, dir) => {
+      const add = (id, name, dir, door) => {
         name = norm5(name);
-        if (id && name && id !== loc.id && !ways.some((x) => x.id === id)) ways.push({ id, name, dir: dir || null });
+        if (id && name && id !== loc.id && !ways.some((x) => x.id === id)) ways.push({ id, name, dir: dir || null, door: door || null });
       };
-      for (const e of playerExits(loc.id)) add(e.to, playerPlaceName(e.to, loc.id), e.dir);
+      for (const e of playerExits(loc.id)) add(e.to, playerPlaceName(e.to, loc.id), e.dir, e.type === "door" || e.type === "secret" ? doorState(e, rt().doorState) : null);
       if (!mapOf(loc.id)) {
         for (const l of connectedLocations(w, loc, 1)) add(l.id, placeName(l.id, loc.id));
         for (const l of innerPlaces(loc)) add(l.id, phasedEntity(l).name);
@@ -25790,7 +25812,8 @@ ${recent}` : "");
       }
       const seen = /* @__PURE__ */ new Set();
       const here2 = asArray5(w.npcs).filter((n) => (resolveNpcLocationId(n) === loc.id || asArray5(loc.npcIds).includes(n.id)) && !seen.has(n.id) && seen.add(n.id) && !phasedEntity(n).gone);
-      const people = here2.map((n) => ({ id: n.id, name: personName(n), marker: personQuestMarker(n.id, mode2) }));
+      const party = asArray5(rt().party);
+      const people = here2.map((n) => ({ id: n.id, name: personName(n), marker: personQuestMarker(n.id, mode2), inParty: party.includes(n.id), canJoin: !!n.canJoin && !n.isMonster && !party.includes(n.id) }));
       const ids = new Set(here2.map((n) => n.id));
       const quests = [];
       for (const q of asArray5(w.quests)) {
@@ -26681,7 +26704,10 @@ ${xl.join("\n")}`;
       const st = world2 && world2.start && typeof world2.start === "object" ? world2.start : null;
       const snap = c.working;
       if (st) {
-        if (st.locationId && findById(world2.locations, st.locationId)) snap.playerLocationId = st.locationId;
+        if (st.locationId && findById(world2.locations, st.locationId)) {
+          snap.playerLocationId = st.locationId;
+          snap.visitedLocationIds = [st.locationId];
+        }
         if (st.clock && typeof st.clock === "object") {
           Object.assign(snap.clock, st.clock);
           if (st.clock.month != null && st.clock.season == null) snap.clock.season = deriveSeason(snap.clock.month);
@@ -26899,7 +26925,13 @@ ${xl.join("\n")}`;
       },
       questLocks: (id) => questLocks(questById(id)),
       reputationTiers: () => TIERS.map((t) => t.name),
-      reputation: () => reputationList(),
+      // opts.encountered: only factions the player has met (the player's Reputation window)
+      reputation: (opts) => {
+        const list3 = reputationList();
+        if (!(opts && opts.encountered)) return list3;
+        const fs = asArray5(activeWorld() && activeWorld().factions);
+        return list3.filter((r) => factionEncountered(fs.find((f) => f.id === r.id)));
+      },
       setLocationParent(id, parentId) {
         const ok = setLocationParent(id, parentId);
         syncLive();
@@ -29374,7 +29406,8 @@ ${xl.join("\n")}`;
 
   // src/map/minimap.js
   var MINIMAP_VIEWS = ["minimap", "map"];
-  var U3 = { last: null, ok: false, at: null };
+  var U3 = { last: null, at: null };
+  var QT_KEY = "KLITE.map.quickTravel";
   function API2() {
     return window.KLITE_RPMod_Worlds;
   }
@@ -29389,27 +29422,106 @@ ${xl.join("\n")}`;
     } catch (_) {
     }
   }
+  function quickTravel() {
+    try {
+      return localStorage.getItem(QT_KEY) === "1";
+    } catch (_) {
+      return false;
+    }
+  }
+  function setQuickTravel(on) {
+    try {
+      localStorage.setItem(QT_KEY, on ? "1" : "0");
+    } catch (_) {
+    }
+    refresh();
+  }
   function doGo(targetId) {
-    const A = API2();
-    const r = A.go(targetId, { source: "ui" });
+    if (!quickTravel()) return null;
+    const r = API2().go(targetId, { source: "quicktravel" });
     U3.last = r.ok ? null : r.reason;
-    U3.ok = false;
     refresh();
     return r;
   }
-  function doDoor(action, exitId) {
-    const r = API2().door(action, exitId, { source: "ui" });
-    U3.last = r.ok ? r.text || null : r.reason;
-    U3.ok = !!r.ok;
-    refresh();
-    return r;
-  }
-  function doSearch() {
-    const r = API2().search({ source: "ui" });
-    U3.last = r.ok ? r.text : r.reason;
-    U3.ok = !!r.ok;
-    refresh();
-    return r;
+  function renderPlaces(A, hereId, large, quick) {
+    const g = A.getGraph();
+    const around = new Set((A.zonePath(hereId) || []).map((z) => z.id));
+    const places = g.nodes.filter((n) => n.type === "location" && !n.mapId && !around.has(n.id));
+    const byId = new Map(places.map((n) => [n.id, n]));
+    const rt = A.runtime || {};
+    const visited = new Set((rt.visitedLocationIds || []).filter((id) => byId.has(id)));
+    const anchorOf = (id) => {
+      const n = g.nodes.find((x) => x.id === id);
+      return n && n.graphId ? n.graphId : id;
+    };
+    const cur = anchorOf(hereId);
+    const near = new Set(((A.here() || {}).ways || []).map((w2) => anchorOf(w2.id)).filter((id) => byId.has(id) && id !== cur));
+    const shown = places.filter((n) => n.id === cur || visited.has(n.id) || near.has(n.id));
+    if (!shown.length) return null;
+    let pos = /* @__PURE__ */ new Map();
+    if (shown.every((n) => n.x != null && n.y != null)) for (const n of shown) pos.set(n.id, { x: n.x, y: n.y });
+    else {
+      const links = new Map(shown.map((n) => [n.id, /* @__PURE__ */ new Set()]));
+      for (const e of g.edges) if (e.kind === "exit" && links.has(e.from) && links.has(e.to)) {
+        links.get(e.from).add(e.to);
+        links.get(e.to).add(e.from);
+      }
+      const depth = /* @__PURE__ */ new Map([[cur, 0]]);
+      const todo = [cur];
+      while (todo.length) {
+        const id = todo.shift();
+        for (const n of links.get(id) || []) if (!depth.has(n)) {
+          depth.set(n, depth.get(id) + 1);
+          todo.push(n);
+        }
+      }
+      const rings = /* @__PURE__ */ new Map();
+      for (const n of shown) {
+        const d = depth.has(n.id) ? depth.get(n.id) : 3;
+        if (!rings.has(d)) rings.set(d, []);
+        rings.get(d).push(n.id);
+      }
+      for (const [d, ids] of rings) ids.forEach((id, i) => {
+        const a = i / ids.length * Math.PI * 2 + d;
+        pos.set(id, d === 0 ? { x: 0, y: 0 } : { x: Math.cos(a) * 160 * d, y: Math.sin(a) * 110 * d });
+      });
+    }
+    const xs = [...pos.values()].map((p) => p.x), ys = [...pos.values()].map((p) => p.y);
+    const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
+    const pad = 70, w = Math.max(maxX - minX, 1) + pad * 2, h = Math.max(maxY - minY, 1) + pad * 2;
+    const s = svg2("svg", { class: "rpm-map-board rpm-map-places", role: "img", "aria-label": "Map of the places you know", viewBox: `${minX - pad} ${minY - pad} ${w} ${h}`, preserveAspectRatio: "xMidYMid meet" });
+    const scale = Math.max(w / (large ? 560 : 240), h / (large ? 420 : 200), 0.5);
+    const gl = svg2("g"), gn = svg2("g");
+    s.appendChild(gl);
+    s.appendChild(gn);
+    const drawn = /* @__PURE__ */ new Set();
+    for (const e of g.edges) {
+      if (e.kind !== "exit" || !pos.has(e.from) || !pos.has(e.to)) continue;
+      const key = [e.from, e.to].sort().join("|");
+      if (drawn.has(key)) continue;
+      drawn.add(key);
+      const a = pos.get(e.from), b = pos.get(e.to);
+      gl.appendChild(svg2("line", { x1: a.x, y1: a.y, x2: b.x, y2: b.y, class: "rpm-map-placelink" + (visited.has(e.from) && visited.has(e.to) ? "" : " rpm-map-fog"), "stroke-width": 2 * scale }));
+    }
+    for (const n of shown) {
+      const p = pos.get(n.id);
+      const isHere = n.id === cur;
+      const reach = quick && near.has(n.id);
+      const kind = (A.entityById(n.id) || {}).kind || "location";
+      const cls = "rpm-map-place" + (isHere ? " rpm-here" : "") + (visited.has(n.id) || isHere ? "" : " rpm-map-fog") + (reach ? " rpm-map-reach" : "");
+      const gp = svg2("g", { class: cls, "data-place": n.id, "data-kind": kind });
+      const r = (isHere ? 12 : 9) * scale;
+      gp.appendChild(kind === "location" ? svg2("circle", { cx: p.x, cy: p.y, r, class: "rpm-map-dot" }) : svg2("rect", { x: p.x - r, y: p.y - r, width: r * 2, height: r * 2, rx: 3 * scale, class: "rpm-map-dot" }));
+      const t = svg2("text", { x: p.x, y: p.y + r + 17 * scale, "text-anchor": "middle", class: "rpm-map-name", "font-size": 16 * scale });
+      t.textContent = (A.phased(n.id) || {}).name || n.name;
+      gp.appendChild(t);
+      if (reach) gp.addEventListener("click", (ev) => {
+        ev.stopPropagation();
+        doGo(n.id);
+      });
+      gn.appendChild(gp);
+    }
+    return s;
   }
   function renderMap(box, large) {
     const A = API2();
@@ -29419,66 +29531,44 @@ ${xl.join("\n")}`;
       root.appendChild(el("div", { class: "rpm-muted", text: "No world loaded. Load one (or the example) in the World tab." }));
       return;
     }
-    const here2 = A.runtime && A.runtime.playerLocationId;
-    if (!here2 || !A.entityById(here2)) {
+    const hereId = A.runtime && A.runtime.playerLocationId;
+    if (!hereId || !A.entityById(hereId)) {
       root.appendChild(el("div", { class: "rpm-muted", text: "Nowhere yet — choose a starting place in the World tab." }));
       return;
     }
     const R = A.mapRules;
-    const mapId = A.mapOf(here2);
-    const exits = A.exitsOf(here2, { player: true });
-    const path = (A.zonePath(here2) || []).map((z) => z.name);
+    const mapId = A.mapOf(hereId);
+    const quick = quickTravel();
+    const path = (A.zonePath(hereId) || []).map((z) => z.name);
+    const qt = el("input", { type: "checkbox", "data-map-quick": "1" });
+    qt.checked = quick;
+    qt.addEventListener("change", () => setQuickTravel(qt.checked));
     root.appendChild(el("div", { class: "rpm-map-where" }, [
-      el("span", { class: "rpm-grow" }, [el("strong", { text: (A.phased(here2) || {}).name || A.entityById(here2).name }), path.length ? el("span", { class: "rpm-muted", text: " · " + path.join(" › ") }) : null]),
+      el("span", { class: "rpm-grow" }, [el("strong", { text: (A.phased(hereId) || {}).name || A.entityById(hereId).name }), path.length ? el("span", { class: "rpm-muted", text: " · " + path.join(" › ") }) : null]),
       large ? null : el("button", { type: "button", class: "rpm-iconbtn", title: "Open the map", "aria-label": "Open the map", "data-map-open": "1", onclick: () => window.KLITE_RPMod_Shell?.open("map") }, [iconText("map", "", 16)])
     ]));
+    let drawing = null;
     if (mapId) {
       const board = A.mapBoard(mapId, { player: true });
       root.setAttribute("data-kind", board.kind);
       root.setAttribute("data-style", board.style);
-      const reachable2 = new Set(exits.filter((e) => board.rooms.some((r) => r.id === e.to)).map((e) => e.to));
-      const sv = renderPlayerBoard(board, { R, cell: large ? 28 : 16, reachable: reachable2, onRoom: doGo });
-      const wrap = el("div", { class: "rpm-map-boardwrap", title: large ? null : "Click a neighbouring room to go there; click elsewhere to open the map" });
-      wrap.appendChild(sv);
+      const exits = A.exitsOf(hereId, { player: true });
+      const reachable2 = quick ? new Set(exits.filter((e) => board.rooms.some((r) => r.id === e.to)).map((e) => e.to)) : /* @__PURE__ */ new Set();
+      drawing = renderPlayerBoard(board, { R, cell: large ? 28 : 16, reachable: reachable2, onRoom: doGo });
+    } else drawing = renderPlaces(A, hereId, large, quick);
+    if (drawing) {
+      const wrap = el("div", { class: "rpm-map-boardwrap", title: large ? null : quick ? "Quick travel: click a neighbouring place to go there; click elsewhere to open the map" : "Click to open the map" });
+      wrap.appendChild(drawing);
       if (!large) wrap.addEventListener("click", () => window.KLITE_RPMod_Shell?.open("map"));
       root.appendChild(wrap);
     }
-    if (mapId || A.hiddenIn && exits.length) {
-      const light = A.roomLight ? A.roomLight(here2) : null;
-      root.appendChild(el("div", { class: "rpm-map-actions" }, [
-        el("button", { type: "button", class: "btn btn-primary rpm-btn", "data-map-search": "1", title: "Search this room (d20 + Perception or Investigation)", onclick: doSearch }, [iconText("search", "Search", 14)]),
-        light ? el("span", { class: "rpm-chip", "data-map-light": light, text: light === "bright" ? "bright light" : light === "dim" ? "dim light" : "darkness" }) : null
-      ]));
-    }
-    if (U3.last && U3.at === here2) root.appendChild(el("div", { class: U3.ok ? "rpm-map-result" : "rpm-map-refused", role: "status", text: U3.last }));
-    const list3 = el("div", { class: "rpm-map-exits" });
-    if (!exits.length) list3.appendChild(el("div", { class: "rpm-muted", text: "No known way on from here." }));
-    for (const e of exits) {
-      const st = e.type === "door" || e.type === "secret" ? A.doorState(e.id) : null;
-      const label2 = `${e.dir ? R.dirName(e.dir) + ": " : ""}${(A.playerPlaceName || A.placeName)(e.to, here2)}`;
-      const b = el("button", { type: "button", class: "btn btn-primary rpm-btn rpm-map-go", "data-go": e.to, title: st ? `Door: ${st}` : "Go there", onclick: () => doGo(e.to) }, [
-        el("span", { class: "rpm-grow", text: label2 }),
-        st && st !== "open" ? el("span", { class: "rpm-chip" + (R.blocksMove(st) ? " rpm-chip-danger" : ""), text: st }) : null
-      ]);
-      if (!st) {
-        list3.appendChild(b);
-        continue;
-      }
-      const act = st === "open" ? ["close", "Close"] : st === "closed" ? ["open", "Open"] : st === "locked" ? ["unlock", "Unlock"] : null;
-      list3.appendChild(el("div", { class: "rpm-map-exitrow" }, [
-        b,
-        act ? el("button", {
-          type: "button",
-          class: "btn btn-primary rpm-btn rpm-map-door-btn",
-          "data-door": act[0],
-          "data-exit": e.id,
-          title: `${act[1]} the door`,
-          onclick: () => doDoor(act[0], e.id)
-        }, [el("span", { text: act[1] })]) : null
-      ]));
-    }
-    root.appendChild(list3);
-    if (large && mapId) root.appendChild(el("div", { class: "rpm-muted", style: "margin-top:6px", text: 'Dashed rooms are seen but not yet visited; "?" marks a room behind a closed door. Unknown rooms and undiscovered secrets are not shown.' }));
+    const light = mapId && A.roomLight ? A.roomLight(hereId) : null;
+    root.appendChild(el("div", { class: "rpm-map-actions" }, [
+      el("label", { class: "rpm-map-quick", title: "Click the map to move at once. The AI is told you skipped the journey. Off: walk, search and open doors with the quick replies or in the chat, and the AI narrates it." }, [qt, el("span", { text: "Quick travel" })]),
+      light ? el("span", { class: "rpm-chip", "data-map-light": light, text: light === "bright" ? "bright light" : light === "dim" ? "dim light" : "darkness" }) : null
+    ]));
+    if (U3.last && U3.at === hereId) root.appendChild(el("div", { class: "rpm-map-refused", role: "status", text: U3.last }));
+    if (large) root.appendChild(el("div", { class: "rpm-muted", style: "margin-top:6px", text: mapId ? 'Dashed rooms are seen but not yet visited; "?" marks a room behind a closed door. Unknown rooms and undiscovered secrets are not shown.' : 'Dashed places are known but not yet visited. Walk with the quick replies ("Here") or in the chat; tick Quick travel to move by clicking.' }));
   }
   function registerMinimap(sh) {
     sh.registerView({
@@ -30997,6 +31087,12 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
       }
       if (sh) sh.open("editor");
     }
+    function openEditorAt(id) {
+      openEditor();
+      setTimeout(() => {
+        if (S2.root && API3().entityById(id)) select2(id);
+      }, 0);
+    }
     function closeEditor() {
       const sh = Shell2();
       if (sh) sh.close("editor");
@@ -31106,7 +31202,7 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
     }
     let panelEl = null;
     const TIME_SLOTS_UI = ["morning", "noon", "afternoon", "evening", "night"];
-    const VIEW_IDS = ["world", "party", "quest-tracker", "questlog", "combat", "shop", ...MINIMAP_VIEWS];
+    const VIEW_IDS = ["world", "party", "quest-tracker", "questlog", "reputation", "questeditor", "combat", "shop", ...MINIMAP_VIEWS];
     function uiBtn(text, onclick, opts) {
       opts = opts || {};
       const cls = "btn btn-primary rpm-btn" + (opts.block ? " rpm-block" : "") + (opts.grow ? " rpm-grow" : "") + (opts.variant ? " rpm-" + opts.variant : "") + (opts.lg ? " rpm-lg" : "") + (opts.icon ? " rpm-btn-icon" : "");
@@ -31239,10 +31335,14 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
         return;
       }
       body.appendChild(row2([
-        uiBtn("Quest log", () => openView("questlog"), { icon: "scroll-text", grow: true }),
+        uiBtn("Quest log", () => openView("questlog"), { icon: "scroll-text", grow: true, id: "open-questlog", title: "Your accepted quests" }),
+        uiBtn("Reputation", () => openView("reputation"), { icon: "shield", grow: true, id: "open-reputation", title: "Your standing with the factions you have met" })
+      ]));
+      body.appendChild(row2([
         uiBtn("Combat", () => openView("combat"), { icon: "swords", grow: true }),
         uiBtn("Editor", () => openEditor(), { icon: "workflow", grow: true, title: "Build your world as a node graph" })
-      ]));
+      ], "margin-top:4px"));
+      if (uiMode() === "creator") body.appendChild(uiBtn("Quest editor", () => openView("questeditor"), { icon: "pencil", block: true, id: "open-questeditor", style: "margin-top:4px", title: "Every quest of the world: states, details, edit (Creator view)" }));
       body.appendChild(el2("hr", { class: "rpm-divider" }));
       renderPlayTab(body);
     }
@@ -31371,25 +31471,35 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
       }
       box.appendChild(uiBtn("Open quest log", () => openView("questlog"), { icon: "scroll-text", block: true, style: "margin-top:8px" }));
     }
-    function renderQuestsTab(box) {
+    const QSTATE_LABEL = { available: "Available", active: "Active", complete: "Ready to turn in", turnedin: "Completed", failed: "Failed" };
+    function renderQuestsTab(box, opts = {}) {
       const A = API3();
-      const mode2 = uiMode() === "player" ? "player" : "creator";
-      const aiSel = uiSelect({ "aria-label": "What the AI sees", style: "width:auto" });
-      for (const [v, t] of [["gm", "GM (all)"], ["player", "Player (visible only)"]]) {
-        const o = el2("option", { value: v, text: t });
-        if (A.getAiMode() === v) o.selected = true;
-        aiSel.appendChild(o);
+      const editor = !!opts.editor;
+      const mode2 = editor ? "creator" : uiMode() === "player" ? "player" : "creator";
+      if (editor) {
+        const aiSel = uiSelect({ "aria-label": "What the AI sees", style: "width:auto" });
+        for (const [v, t] of [["gm", "GM (all)"], ["player", "Player (visible only)"]]) {
+          const o = el2("option", { value: v, text: t });
+          if (A.getAiMode() === v) o.selected = true;
+          aiSel.appendChild(o);
+        }
+        aiSel.addEventListener("change", () => {
+          A.setAiMode(aiSel.value);
+        });
+        box.appendChild(row2([el2("span", { class: "rpm-muted rpm-grow", text: "AI sees hidden content:" }), aiSel], "margin-bottom:8px"));
+        box.appendChild(uiBtn("New quest", () => {
+          const q = A.addEntity("quest", { name: "New quest" });
+          if (q) openEditorAt(q.id);
+        }, { icon: "plus", block: true, id: "new-quest", style: "margin-bottom:8px", title: "Adds a quest and opens it in the editor" }));
       }
-      aiSel.addEventListener("change", () => {
-        A.setAiMode(aiSel.value);
-      });
-      box.appendChild(row2([el2("span", { class: "rpm-muted rpm-grow", text: "AI sees hidden content:" }), aiSel], "margin-bottom:8px"));
-      const quests = A.listQuests(mode2);
+      const all = A.listQuests(mode2);
+      const offered = new Set(editor ? [] : ((A.here() || {}).quests || []).filter((q) => q.action === "accept").map((q) => q.id));
+      const quests = editor ? all : all.filter((q) => q.state !== "available" || offered.has(q.id));
       if (!quests.length) {
-        box.appendChild(muted2("No quests visible. Add Quest nodes in the editor."));
+        box.appendChild(muted2(editor ? 'No quests yet. Add one with "New quest" or a Quest node in the editor.' : "No quests yet. People with a yellow ! offer you one — talk to them."));
         return;
       }
-      const groups = [["available", "Available"], ["active", "Active"], ["complete", "Ready to turn in"], ["turnedin", "Completed"], ["failed", "Failed"]];
+      const groups = editor ? [["available", "Available"], ["active", "Active"], ["complete", "Ready to turn in"], ["turnedin", "Completed"], ["failed", "Failed"]] : [["available", "Offered here"], ["active", "Active"], ["complete", "Ready to turn in"], ["turnedin", "Completed"], ["failed", "Failed"]];
       for (const [st, label2] of groups) {
         const inGroup = quests.filter((q) => q.state === st);
         if (!inGroup.length) continue;
@@ -31482,7 +31592,21 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
               if (confirm(`Abandon "${q.title}"?`)) A.abandonQuest(q.id);
             }));
           }
-          if (mode2 === "creator" && q.hidden) ctl.appendChild(act("Reveal to player", () => A.discoverQuest(q.id)));
+          if (editor && q.hidden) ctl.appendChild(act("Reveal to player", () => A.discoverQuest(q.id)));
+          if (editor) {
+            const ssel = uiSelect({ "aria-label": "Quest state", "data-qstate": q.id, style: "width:auto" });
+            for (const [v, t] of Object.entries(QSTATE_LABEL)) {
+              const o = el2("option", { value: v, text: t });
+              if (st === v) o.selected = true;
+              ssel.appendChild(o);
+            }
+            ssel.addEventListener("change", () => {
+              A.setQuestState(q.id, ssel.value);
+              refreshPanel();
+            });
+            ctl.appendChild(ssel);
+            ctl.appendChild(uiBtn("Edit in the editor", () => openEditorAt(q.id), { icon: "workflow", id: "edit-quest" }));
+          }
           if (ctl.childNodes.length) card.appendChild(ctl);
           box.appendChild(card);
         }
@@ -31490,9 +31614,13 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
     }
     function renderReputation(box) {
       const A = API3();
-      const list3 = A.reputation();
-      if (!list3.length) return;
-      box.appendChild(lbl2("Reputation"));
+      const creator = uiMode() !== "player";
+      const list3 = A.reputation(creator ? void 0 : { encountered: true });
+      if (!list3.length) {
+        box.appendChild(muted2(creator ? "This world has no factions yet." : "You have not met any faction yet."));
+        return;
+      }
+      box.appendChild(muted2(creator ? "Creator view: every faction of the world. The Player view shows only those you have met." : "The factions you have met.", { style: "margin-bottom:6px" }));
       for (const r of list3) {
         const pct = r.span ? Math.max(0, Math.min(100, Math.round(r.into / r.span * 100))) : 100;
         const card = el2("div", { class: "rpm-card", "data-rep": r.id }, [
@@ -31755,10 +31883,16 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
       sh.registerView(Object.assign({ id: "party", title: "Party", place: "left", order: 10 }, view(renderParty)));
       sh.registerView(Object.assign({ id: "quest-tracker", title: "Quests", place: "left", order: 20 }, view(renderQuestTracker)));
       sh.registerView(Object.assign({ id: "questlog", title: "Quest log", place: "window", window: { width: 380, height: 520 } }, view((c) => {
-        if (API3().activeWorld()) {
-          renderQuestsTab(c);
-          renderReputation(c);
-        } else c.appendChild(el2("div", { class: "rpm-muted", text: "No world loaded." }));
+        if (API3().activeWorld()) renderQuestsTab(c);
+        else c.appendChild(el2("div", { class: "rpm-muted", text: "No world loaded." }));
+      })));
+      sh.registerView(Object.assign({ id: "reputation", title: "Reputation", place: "window", window: { width: 360, height: 460 } }, view((c) => {
+        if (API3().activeWorld()) renderReputation(c);
+        else c.appendChild(el2("div", { class: "rpm-muted", text: "No world loaded." }));
+      })));
+      sh.registerView(Object.assign({ id: "questeditor", title: "Quest editor", place: "window", window: { width: 420, height: 600 } }, view((c) => {
+        if (API3().activeWorld()) renderQuestsTab(c, { editor: true });
+        else c.appendChild(el2("div", { class: "rpm-muted", text: "No world loaded." }));
       })));
       sh.registerView(Object.assign({ id: "shop", title: "Shop", place: "window", window: { width: 400, height: 520, minWidth: 300 } }, view((c) => {
         if (API3().activeWorld()) renderShop(c, () => refreshPanel());
@@ -31928,7 +32062,7 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
         { list: [
           'Pick or load a world in the World tab, then "Enable for this story".',
           "Set your current location and the time of day; RPmod tracks both as you play.",
-          "The Map section on the left shows where you are. In a dungeon or town, click a neighbouring room to go there; locked doors refuse the move and the AI hears why.",
+          `The Map section on the left shows where you are: the places you know as points, or the rooms of a dungeon or town. Walk, search and open doors with the quick replies' "Here" row, so the AI narrates it. Tick Quick travel to move by clicking the map instead.`,
           "Game state: RPmod keeps the live game and a start state you can go back to (next chapter)."
         ] }
       ],
@@ -31972,9 +32106,9 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
       blocks: [
         { p: 'People in the world give quests, like in an MMO: a yellow ! marks someone with a quest for you, a yellow ? someone you can hand a finished quest to. Grey marks mean "later" (level too low) or "in progress".' },
         { list: [
-          'The Quest log lists available, active and finished quests: accept, track, turn in, abandon — with objectives like "Defeat 3 Wolf (1/3)" that count by themselves.',
+          'The Quest log (World tab) lists the quests you accepted — track, turn in, abandon — with objectives like "Defeat 3 Wolf (1/3)" that count by themselves. Quests offered by the people where you are show there too, to accept.',
           "Rewards (XP, gold, items, reputation) go to your persona's character sheet when you turn a quest in; some let you choose one item.",
-          "Your standing with each faction (Hated … Exalted) is at the bottom of the Quest log.",
+          "Your standing with each faction you have met (Hated … Exalted) is in the Reputation window (World tab). Creators find every quest in the Quest editor.",
           "The Quests section on the left shows what you are working on.",
           'Hidden quests read "???" until you discover them.'
         ] }
@@ -36177,12 +36311,18 @@ OK = save and close · Cancel = close and discard them`);
       const n = safeName(w.name);
       if (!n) continue;
       const d = DIR_WORD[w.dir];
+      if (w.door === "locked") {
+        out.push({ label: `Unlock: ${d || n}`, text: `/unlock ${d || n} | I try to unlock the ${d ? d + " " : ""}door.`, send: true, kind: "door" });
+        continue;
+      }
+      if (w.door === "barred") continue;
       out.push({ label: d ? `${d}: ${n}` : "→ " + n, text: `/go ${d || n} | I go to ${n}.`, send: true, kind: "go" });
     }
     for (const p of info.people || []) {
       const n = safeName(p.name);
       if (!n) continue;
       out.push({ label: (p.marker ? p.marker + " " : "") + "Talk: " + n, text: `/talk ${n} | I talk to ${n}.`, send: true, kind: "talk" });
+      if (p.canJoin) out.push({ label: "Ask to join: " + n, text: `/join ${n} | I ask ${n} to travel with me.`, send: true, kind: "join" });
     }
     if (info.trade) out.push({ label: "Shop", text: "/shop", send: false, kind: "shop" });
     if (info.inMap) out.push({ label: "Search", text: "/search | I search the room.", send: true, kind: "search" });
@@ -37388,7 +37528,7 @@ ${g.lines.join("\n")}`).join("\n\n") + "\n\nSeveral commands and a message in on
 
   // src/adventures/content/drowned-lantern.js
   var ID = "drowned-lantern";
-  var VERSION = 1;
+  var VERSION = 2;
   var place = (id, name, description, extra = {}) => Object.assign({ id, name, description }, extra);
   var room = (id, name, parentId, [x, y], description, extra = {}) => Object.assign({ id, name, parentId, map: { x, y, w: 4, h: 3 }, description }, extra);
   var exit = (id, to, dir, type = "open", extra = {}) => Object.assign({ id, to, dir, type }, extra);
@@ -37561,7 +37701,7 @@ ${g.lines.join("\n")}`).join("\n\n") + "\n\nSeveral commands and a message in on
           "The old trade road east of Brindlewick, under oak and beech. Ferns crowd the verges; the ruts are deep from carts that no longer come. A side track runs north to a huge dead oak, and the sound of the river comes from the south.",
           {
             atmosphere: "tense",
-            connectedLocationIds: ["loc_brindlewick", "loc_hollow_oak", "loc_river_ford"],
+            connectedLocationIds: ["loc_brindlewick", "loc_hollow_oak", "loc_river_ford", "loc_gravel_road"],
             ui: { x: 600, y: 300 },
             localLore: [{ id: "ll_cart", content: "Liu Wen's cart lies overturned in the ferns a mile out of the village: the grain sacks are gone, the mule cut loose, and small bare footprints lead north towards the Hollow Oak.", keys: ["cart", "tracks", "footprints"] }]
           }
@@ -37576,7 +37716,7 @@ ${g.lines.join("\n")}`).join("\n\n") + "\n\nSeveral commands and a message in on
           "loc_river_ford",
           "River Ford",
           "Where the Forest Road meets the Brindle river: a ford of flat stones for dry summers and Odo's rope ferry for the rest of the year. Reeds, herons, and now and then a green old coin washed out of the gravel.",
-          { atmosphere: "calm", connectedLocationIds: ["loc_forest_road"], ui: { x: 600, y: 490 } }
+          { atmosphere: "calm", connectedLocationIds: ["loc_forest_road", "loc_meadow_road"], ui: { x: 600, y: 490 } }
         ),
         // --- Brindlewick (town map) ---
         room(
@@ -37828,7 +37968,7 @@ ${g.lines.join("\n")}`).join("\n\n") + "\n\nSeveral commands and a message in on
         }
       ],
       encounters: [
-        { id: "enc_road_ambush", name: "Goblin ambush on the road", monsters: [{ key: "goblin-warrior", count: 2 }], personIds: [], locationId: "loc_forest_road", start: "near", ui: { x: 760, y: 300 } },
+        { id: "enc_road_ambush", name: "Goblin ambush on the road", monsters: [{ key: "goblin-warrior", count: 2 }], personIds: [], start: "near", ui: { x: 760, y: 300 } },
         { id: "enc_mill_rats", name: "Rats in the mill cellar", monsters: [{ key: "swarm-of-rats", count: 1 }], personIds: [], locationId: "bw_mill_cellar", start: "same" },
         { id: "enc_den_wolves", name: "Goblin wolves", monsters: [{ key: "wolf", count: 2 }], personIds: [], locationId: "ho_wolfpen", start: "auto" },
         { id: "enc_den_lookout", name: "Lookouts in the trunk", monsters: [{ key: "goblin-warrior", count: 2 }], personIds: [], locationId: "ho_trunk", start: "auto" },
@@ -37856,6 +37996,386 @@ ${g.lines.join("\n")}`).join("\n\n") + "\n\nSeveral commands and a message in on
       ]
     };
   }
+  function layer2(w) {
+    w.locations.push(
+      // --- the world graph ---
+      place(
+        "loc_gravel_road",
+        "Gravel Road",
+        "The mountain road climbs out of the forest in loose grey switchbacks. Halfway up there is an old campfire ring under a leaning pine — the only flat, sheltered spot before the pass, and everyone who uses this road has slept there. It is the quicker way to Lanternport, about a day, if the weather holds.",
+        { atmosphere: "lonely", connectedLocationIds: ["loc_forest_road", "loc_windgap"], ui: { x: 900, y: 180 } }
+      ),
+      place(
+        "loc_windgap",
+        "Windgap Pass",
+        "A notch between two bare peaks where the wind never stops. Far below, Stillwater Mere shines like a sheet of tin, and on the far shore the roofs of Lanternport. A broken watchtower stands on the crag above the road; a shepherds' trail drops steeply towards the meadows.",
+        { atmosphere: "windswept", connectedLocationIds: ["loc_gravel_road", "loc_watchtower", "loc_lanternport", "loc_shepherds_trail"], ui: { x: 1200, y: 180 } }
+      ),
+      place(
+        "loc_watchtower",
+        "Watchtower Ruin",
+        "A square tower from the days of the old dam, half its roof gone. Harpies nest at the top, and lately someone has been using the rooms below.",
+        { kind: "dungeon", mapStyle: "stone", atmosphere: "eerie", connectedLocationIds: ["loc_windgap", "loc_shepherds_trail"], ui: { x: 1200, y: 30 } }
+      ),
+      place(
+        "loc_shepherds_trail",
+        "Shepherds' Trail",
+        "A steep, narrow trail between the pass and the meadows, marked with cairns. Sheep use it; carts cannot.",
+        { atmosphere: "quiet", connectedLocationIds: ["loc_windgap", "loc_watchtower", "loc_outpost"], ui: { x: 1200, y: 370 } }
+      ),
+      place(
+        "loc_meadow_road",
+        "Meadow Road",
+        "The valley road: wide, flat and slow, through flowering meadows along the Brindle river — two easy days to Lanternport. Old Harrowfield's hut stands by a sheepfold; wild garlic and feverfew grow thick along the ditches. A trampled path leads into a thicket to the south.",
+        { atmosphere: "peaceful", connectedLocationIds: ["loc_river_ford", "loc_outpost", "loc_owlbear_hollow"], ui: { x: 900, y: 560 } }
+      ),
+      place(
+        "loc_owlbear_hollow",
+        "Owlbear Hollow",
+        "A hollow in a thorn thicket, littered with wool and feathers. Something big lives here.",
+        { kind: "dungeon", mapStyle: "stone", atmosphere: "menacing", connectedLocationIds: ["loc_meadow_road"], ui: { x: 900, y: 740 } }
+      ),
+      place(
+        "loc_outpost",
+        "Traveler's Outpost",
+        "A walled waystation where the Meadow Road meets the lake road: an inn, stables, a smithy corner and a lantern that burns all night over the gate. Carters, drovers and pilgrims to the Lantern Fair stop here.",
+        { kind: "town", mapStyle: "plots", atmosphere: "busy", hub: true, connectedLocationIds: ["loc_meadow_road", "loc_lanternport", "loc_shepherds_trail"], ui: { x: 1200, y: 560 } }
+      ),
+      place(
+        "loc_lanternport",
+        "Lanternport",
+        "The market town on the far shore of Stillwater Mere: stone quays, tall narrow houses and lanterns on every corner. In spring it prepares for its famous Lantern Fair. (Its streets open with the next part of the adventure.)",
+        { kind: "town", mapStyle: "streets", atmosphere: "lively", connectedLocationIds: ["loc_windgap", "loc_outpost"], ui: { x: 1500, y: 370 } }
+      ),
+      // --- the Traveler's Outpost (town map) ---
+      room(
+        "op_yard",
+        "Outpost Yard",
+        "loc_outpost",
+        [5, 4],
+        "A cobbled yard with a well, a mounting block and the all-night lantern over the gate. Carts come in from the Meadow Road and leave for Lanternport.",
+        { exits: [exit("ex_op_yard_common", "op_common", "n"), exit("ex_op_yard_stables", "op_stables", "s"), exit("ex_op_out_meadow", "loc_meadow_road", "w"), exit("ex_op_out_lanternport", "loc_lanternport", "e")] }
+      ),
+      room(
+        "op_common",
+        "Common Room",
+        "loc_outpost",
+        [5, 0],
+        "Long tables, a roaring hearth, travellers from everywhere and a board of rooms for rent. It smells of stew and wet wool.",
+        { light: "bright", exits: [exit("ex_op_common_kitchen", "op_kitchen", "e"), exit("ex_op_common_rooms", "op_rooms", "w")] }
+      ),
+      room(
+        "op_kitchen",
+        "Kitchen",
+        "loc_outpost",
+        [10, 0],
+        "Baba Okafor's kingdom: copper pots, strings of onions, and a cook who tastes everything twice.",
+        { light: "bright", exits: [exit("ex_op_kitchen_cellar", "op_cellar", "down", "stairs", { door: { state: "closed", material: "oak trapdoor" } })] }
+      ),
+      room("op_rooms", "Guest Rooms", "loc_outpost", [0, 0], "A narrow upstairs corridor of small clean rooms, each with a bed, a basin and a shutter over the meadows."),
+      room(
+        "op_stables",
+        "Stables",
+        "loc_outpost",
+        [5, 8],
+        "Two rows of stalls, hay to the rafters, and a tack room. The horses are restless lately, and the mare in the end stall is ill.",
+        { exits: [exit("ex_op_stables_trail", "loc_shepherds_trail", "s")] }
+      ),
+      room(
+        "op_cellar",
+        "Outpost Cellar",
+        "loc_outpost",
+        [10, 4],
+        "Barrels, sacks and a cold store. Baba's stores are running low: the carts from Brindlewick have stopped.",
+        { light: "dark" }
+      ),
+      // --- Watchtower Ruin (dungeon map) ---
+      room(
+        "wt_gate",
+        "Broken Gate",
+        "loc_watchtower",
+        [0, 4],
+        "The gate arch still stands; its door lies rotting in the grass. Fresh boot prints lead inside.",
+        { exits: [exit("ex_wt_out", "loc_windgap", "w"), exit("ex_wt_gate_hall", "wt_hall", "e")] }
+      ),
+      room(
+        "wt_hall",
+        "Fallen Hall",
+        "loc_watchtower",
+        [5, 4],
+        "The ground floor, open to the sky where the upper floors fell in. Rubble, nettles and a gap in the east wall towards the shepherds' trail.",
+        { light: "dim", hazards: ["rubble underfoot"], exits: [exit("ex_wt_hall_stairs", "wt_stairs", "n", "corridor"), exit("ex_wt_hall_guard", "wt_guard", "s", "door", { door: { state: "closed", material: "patched plank" } }), exit("ex_wt_out_trail", "loc_shepherds_trail", "e")] }
+      ),
+      room(
+        "wt_stairs",
+        "Spiral Stair",
+        "loc_watchtower",
+        [5, 0],
+        "A stone stair winding up inside the wall; some steps are missing, others only look safe. Bats hang in the dark above.",
+        { light: "dark", exits: [exit("ex_wt_stairs_top", "wt_top", "e", "stairs")] }
+      ),
+      room(
+        "wt_top",
+        "Harpies' Roost",
+        "loc_watchtower",
+        [10, 0],
+        "The open top of the tower, ringed by broken battlements. A nest of stolen cloth, bones and shiny things. The view reaches from the pass to the lake.",
+        { light: "bright" }
+      ),
+      room(
+        "wt_guard",
+        "Guardroom",
+        "loc_watchtower",
+        [5, 8],
+        "Someone lives here now: bedrolls, a cold brazier, dice, and cloaks the green of lake reeds hung on pegs.",
+        { light: "dim", exits: [exit("ex_wt_guard_cellar", "wt_cellar", "e", "door", { door: { state: "locked", material: "iron-bound trapdoor", lockDC: 14, keyItem: "Iron Key" } })] }
+      ),
+      room(
+        "wt_cellar",
+        "Cellar",
+        "loc_watchtower",
+        [10, 8],
+        "A damp cellar with one barred window slit. A man in torn stable clothes sits chained to the wall — and he has the face of the Outpost's stablemaster.",
+        { light: "dark" }
+      ),
+      // --- Owlbear Hollow (dungeon map) ---
+      room(
+        "oh_thicket",
+        "Thorn Thicket",
+        "loc_owlbear_hollow",
+        [0, 4],
+        "A tunnel through thorns, snagged with wool. Deep claw marks on the trees.",
+        { light: "dim", exits: [exit("ex_oh_out", "loc_meadow_road", "w"), exit("ex_oh_thicket_den", "oh_den", "e", "corridor")] }
+      ),
+      room(
+        "oh_den",
+        "The Den",
+        "loc_owlbear_hollow",
+        [5, 4],
+        "A hollow of flattened grass and bones under an overhanging rock. The air is thick with musk.",
+        { light: "dim", exits: [exit("ex_oh_den_back", "oh_back", "e", "corridor")] }
+      ),
+      room(
+        "oh_back",
+        "Back Cave",
+        "loc_owlbear_hollow",
+        [10, 4],
+        "A low cave behind the den. Something small bleats in the dark.",
+        { light: "dark" }
+      )
+    );
+    w.objects.push(
+      { id: "obj_campfire", name: "Old campfire ring", desc: "Blackened stones, a stack of dry wood someone left for the next traveller. A good place to rest — if you keep watch.", locationId: "loc_gravel_road", kind: "furniture" },
+      { id: "obj_herbs", name: "Wild garlic and feverfew", desc: "Thick along the ditches of the Meadow Road; easy to gather.", locationId: "loc_meadow_road", kind: "container", contains: ["Wild Garlic x3", "Feverfew x2"] },
+      { id: "obj_room_board", name: "Board of rooms", desc: 'Chalk: "Beds 5 sp · Meals 3 sp · Stable & feed 5 sp · NO fighting in the yard — H. Morrow."', locationId: "op_common", kind: "furniture" },
+      { id: "obj_loose_steps", name: "Loose steps", desc: "Three steps that tip under weight over a long drop.", locationId: "wt_stairs", kind: "trap", trapDC: 13 },
+      { id: "obj_nest", name: "Harpy nest", desc: "Cloth, bones and glittering things.", locationId: "wt_top", kind: "container", contains: ["Potion of Healing", "32 gp", "Silver Mirror"] },
+      { id: "obj_guard_chest", name: "Chest under the bedrolls", desc: "Unlocked; the guards trusted each other.", locationId: "wt_guard", kind: "container", contains: ["Iron Key", "Reed-green Cloak", "11 gp"] },
+      { id: "obj_brazier", name: "Cold brazier", desc: "Heavy iron; good cover.", locationId: "wt_guard", kind: "furniture", cover: "half" },
+      { id: "obj_lamb", name: "A lamb in the dark", desc: "A muddy, frightened lamb with a notched ear, wedged behind a rock — alive.", locationId: "oh_back", kind: "container", contains: ["Lost Lamb"] },
+      { id: "obj_bones", name: "Old bones", desc: "Sheep bones — and a shepherd's crook with a carved ram's head.", locationId: "oh_den", kind: "container", contains: ["Harrowfield's Crook", "8 sp"] }
+    );
+    w.factions.push(
+      {
+        id: "fac_outpost",
+        name: "Traveler's Outpost",
+        description: "Hedda Morrow's waystation and the people who work there.",
+        hqLocationId: "loc_outpost",
+        startReputation: 100,
+        ui: { x: 1380, y: 700 },
+        goals: "Keep the road open and the beds full for the Lantern Fair."
+      },
+      {
+        id: "fac_reedcloaks",
+        name: "The Reedcloaks",
+        description: "Smugglers in reed-green cloaks who move goods across Stillwater Mere at night.",
+        startReputation: -100,
+        killReputation: -25,
+        ui: { x: 1380, y: 40 },
+        goals: "Move the cargo, pay no tolls, and keep the lake road quiet."
+      }
+    );
+    w.npcs.push(
+      {
+        id: "npc_hedda",
+        name: "Hedda Morrow",
+        personality: "Keeper of the Outpost (she/her): tall, grey-haired, speaks like a quartermaster and misses nothing. Proud of her waystation and worried about the empty roads.",
+        factionId: "fac_outpost",
+        homeLocationId: "op_common",
+        mood: "watchful",
+        ui: { x: 1380, y: 520 },
+        shop: { items: [{ item: "Hot meal", price: "3 sp" }, { item: "Rations", price: "" }, { item: "Rope", price: "" }, { item: "Torch", price: "" }, { item: "Oil", price: "" }, { item: "Tinderbox", price: "" }, { item: "Healer's Kit", price: "" }, { item: "Potion of Healing", price: "", stock: 2 }], buys: true, note: "A bed is 5 sp a night; friends of the Outpost stay for free." }
+      },
+      { id: "npc_baba", name: 'Babajide "Baba" Okafor', personality: "The Outpost's cook (he/him): large, cheerful, sings to his stew, and takes food far more seriously than danger. Enters the Lantern Fair's cook-off every year.", factionId: "fac_outpost", homeLocationId: "op_kitchen", mood: "busy", ui: { x: 1480, y: 520 } },
+      {
+        id: "npc_pip",
+        name: "Pip",
+        personality: 'Stable hand, fourteen (she/her): fearless with horses, shy with people, notices everything. She is sure the stablemaster "came back wrong" from the pass.',
+        factionId: "fac_outpost",
+        homeLocationId: "op_stables",
+        mood: "uneasy",
+        ui: { x: 1380, y: 620 },
+        phases: [{ id: "ph_relieved", label: "Mr Lark is back", conditions: [questIs("q_stablemaster", "turnedin")], mood: "happy, talkative for once" }]
+      },
+      {
+        id: "npc_corwin",
+        name: "Corwin Lark",
+        personality: "The Outpost's stablemaster (he/him): friendly, helpful, a little too interested in which carts leave when — and oddly forgetful about horses he has known for years.",
+        factionId: "fac_outpost",
+        homeLocationId: "op_stables",
+        mood: "friendly",
+        ui: { x: 1480, y: 620 },
+        phases: [{ id: "ph_unmasked", label: "Unmasked", conditions: [flagIs("corwin_unmasked")], gone: true }]
+      },
+      {
+        id: "npc_prisoner",
+        name: "Chained prisoner",
+        personality: 'A man in torn stable clothes (he/him), thin and bruised, chained in the tower cellar for weeks. He says he is Corwin Lark, stablemaster of the Outpost, taken on the pass by men in green cloaks and "a thing that stole my face".',
+        homeLocationId: "wt_cellar",
+        mood: "weak, desperate",
+        canJoin: true,
+        ui: { x: 1480, y: 40 },
+        phases: [{ id: "ph_home", label: "Home again", conditions: [questIs("q_stablemaster", "turnedin")], name: "Corwin Lark", homeLocationId: "op_stables", mood: "grateful, recovering" }]
+      },
+      { id: "npc_harrowfield", name: "Old Harrowfield", personality: 'A shepherd (he/him), eighty if a day, who has lost six sheep and a lamb to "a bear with a beak" and will tell you all their names.', homeLocationId: "loc_meadow_road", mood: "grieving, stubborn", ui: { x: 1e3, y: 640 } }
+    );
+    w.quests.push(
+      {
+        id: "q_kitchen_stores",
+        title: "Kitchen Stores",
+        giverPersonId: "npc_baba",
+        turninPersonId: "npc_baba",
+        repeat: "daily",
+        ui: { x: 1560, y: 460 },
+        description: "The carts have stopped and Baba's stores are low. Wild garlic grows along the Meadow Road.",
+        offerText: "No carts, no stores, no stew! Bring me wild garlic from the meadow ditches — three good bunches — and you eat like lords tonight.",
+        progressText: "Garlic?",
+        completionText: "Now THIS is garlic. Sit, sit — the stew will be ready when you have washed.",
+        objectives: [{ id: "o1", kind: "collect", target: "Wild Garlic", count: 3, text: "Gather wild garlic on the Meadow Road" }],
+        rewards: [{ type: "xp", xp: 50 }, { type: "reputation", factionId: "fac_outpost", amount: 25 }, { type: "item", item: "Rations", qty: 2 }]
+      },
+      {
+        id: "q_sick_mare",
+        title: "The Sick Mare",
+        giverPersonId: "npc_pip",
+        turninPersonId: "npc_pip",
+        ui: { x: 1560, y: 620 },
+        description: "The mare in the end stall has a fever. Pip knows feverfew helps, but she cannot leave the horses.",
+        offerText: "She is burning up. Feverfew — the little white daisies by the road ditches. Two handfuls. Please? Mr Lark says leave her, but… Mr Lark would never say that.",
+        progressText: "Did you find the flowers?",
+        completionText: "She is drinking! Thank you. …Mr Lark did not even come to look at her.",
+        objectives: [{ id: "o1", kind: "collect", target: "Feverfew", count: 2, text: "Bring feverfew from the Meadow Road" }],
+        rewards: [{ type: "xp", xp: 75 }, { type: "reputation", factionId: "fac_outpost", amount: 50 }]
+      },
+      {
+        id: "q_night_raid",
+        title: "Night Raid",
+        giverPersonId: "npc_hedda",
+        turninPersonId: "npc_hedda",
+        prerequisites: { quests: ["q_kitchen_stores"] },
+        ui: { x: 1560, y: 540 },
+        description: "Someone has been creeping into the Outpost yard at night. Hedda wants them caught.",
+        offerText: "Twice now someone has been in my yard after dark, looking at the carts and the stable doors. Stay tonight and keep watch. Catch whoever leads them.",
+        progressText: "Anything in the yard last night?",
+        completionText: "Green cloaks. Reed green. Those are lake smugglers — this far up the road? Somebody is telling them which carts to watch.",
+        objectives: [{ id: "o1", kind: "kill", target: "Scout", count: 1, text: "Stop the night raiders' leader in the Outpost yard" }],
+        rewards: [{ type: "xp", xp: 100 }, { type: "gold", gold: 15 }, { type: "reputation", factionId: "fac_outpost", amount: 100 }]
+      },
+      {
+        id: "q_lost_sheep",
+        title: "Harrowfield's Sheep",
+        giverPersonId: "npc_harrowfield",
+        turninPersonId: "npc_harrowfield",
+        ui: { x: 1e3, y: 800 },
+        description: "Something is taking Old Harrowfield's sheep. The trail leads into the thorn thicket south of the Meadow Road.",
+        offerText: "Dilly, Brannoch, Old Margery, the twins, Soot — and now the lamb. A bear, it was, with an owl's beak, I swear it. In the thorns. Get my lamb back, if she lives.",
+        progressText: "My lamb?",
+        completionText: "Little Nettle! Oh, you brave, stupid lot. Here — it is not much, but it is yours.",
+        objectives: [{ id: "o1", kind: "kill", target: "Owlbear", count: 1, text: "Deal with the beast in the thorn thicket" }, { id: "o2", kind: "collect", target: "Lost Lamb", count: 1, consume: true, text: "Bring back the lamb" }],
+        rewards: [{ type: "xp", xp: 200 }, { type: "gold", gold: 30 }, { type: "choice", options: [{ item: "Potion of Healing", qty: 2 }, { item: "Shortbow", qty: 1 }, { item: "Chain Shirt", qty: 1 }] }]
+      },
+      {
+        id: "q_watchtower",
+        title: "The Old Watchtower",
+        giverPersonId: "npc_pip",
+        turninPersonId: "npc_pip",
+        prerequisites: { quests: ["q_sick_mare"] },
+        ui: { x: 1560, y: 700 },
+        description: 'Pip saw lights in the ruined watchtower on Windgap Pass — the week Mr Lark "came back wrong" from there.',
+        offerText: "Mr Lark went up to the pass in winter to buy a horse. He came back without one, and… wrong. He calls the horses by the wrong names. And there are lights in the old tower at night. Would you look? Please don't tell him I asked.",
+        progressText: "The tower?",
+        completionText: "He is ALIVE? Then the man in our stables… oh. Oh no. Hedda has to know — we have to do something.",
+        objectives: [{ id: "o1", kind: "visit", target: "wt_hall", text: "Search the Watchtower Ruin on Windgap Pass" }, { id: "o2", kind: "talk", target: "npc_prisoner", text: "Find out who is held in the cellar" }],
+        rewards: [{ type: "xp", xp: 150 }, { type: "reputation", factionId: "fac_outpost", amount: 50 }]
+      },
+      {
+        id: "q_stablemaster",
+        title: "The Stablemaster",
+        giverPersonId: "npc_hedda",
+        turninPersonId: "npc_hedda",
+        prerequisites: { quests: ["q_watchtower"] },
+        ui: { x: 1560, y: 780 },
+        description: "The real Corwin Lark was chained in the watchtower. Something wearing his face works in the Outpost stables.",
+        offerText: "Pip told me. If Corwin is in that tower, then what is in my stables? …I have a crossbow and a very bad temper. Go and face it with me.",
+        progressText: "It is still in the stables.",
+        completionText: "A shapechanger. In my stables, for a whole season, telling smugglers our carts. Corwin is home now — and you have a room here for as long as you live.",
+        objectives: [{ id: "o1", kind: "kill", target: "Doppelganger", count: 1, text: "Unmask the false stablemaster" }],
+        rewards: [
+          { type: "xp", xp: 300 },
+          { type: "gold", gold: 50 },
+          { type: "reputation", factionId: "fac_outpost", amount: 200 },
+          { type: "reputation", factionId: "fac_reedcloaks", amount: -100 },
+          { type: "choice", options: [{ item: "Cloak of Protection", qty: 1 }, { item: "Potion of Healing", qty: 3 }] }
+        ]
+      }
+    );
+    w.encounters.push(
+      { id: "enc_campfire_wolves", name: "Wolves at the campfire", monsters: [{ key: "dire-wolf", count: 1 }, { key: "wolf", count: 2 }], personIds: [], start: "near" },
+      { id: "enc_tower_bats", name: "Bats on the stair", monsters: [{ key: "swarm-of-bats", count: 1 }], personIds: [], locationId: "wt_stairs", start: "same" },
+      { id: "enc_tower_harpies", name: "Harpies on the roost", monsters: [{ key: "harpy", count: 2 }], personIds: [], locationId: "wt_top", start: "auto" },
+      { id: "enc_tower_guards", name: "Reedcloak guards", monsters: [{ key: "bandit", count: 3 }, { key: "scout", count: 1 }], personIds: [], locationId: "wt_guard", start: "auto", factionId: "fac_reedcloaks" },
+      { id: "enc_night_raid", name: "Night raiders in the yard", monsters: [{ key: "bandit", count: 3 }, { key: "scout", count: 1 }], personIds: [], start: "near", factionId: "fac_reedcloaks" },
+      { id: "enc_owlbear", name: "The owlbear", monsters: [{ key: "owlbear", count: 1 }], personIds: [], locationId: "oh_den", start: "auto" },
+      { id: "enc_doppelganger", name: "The false stablemaster", monsters: [{ key: "doppelganger", count: 1 }], personIds: [], start: "same", factionId: "fac_reedcloaks" }
+    );
+    w.events.push(
+      {
+        id: "ev_campfire_night",
+        name: "Eyes beyond the firelight",
+        description: "Eyes gleam beyond the firelight: a big grey wolf and two smaller ones, circling the camp.",
+        triggers: [{ type: "onEnterLocation", locationId: "loc_gravel_road" }],
+        conditions: [{ field: "time", op: "==", value: "night" }],
+        effects: [{ type: "encounter", value: "enc_campfire_wolves" }],
+        repeatable: false,
+        ui: { x: 900, y: 60 }
+      },
+      {
+        id: "ev_night_raid",
+        name: "Raiders in the yard",
+        description: "Shadows in reed-green cloaks slip over the Outpost wall and make for the carts.",
+        triggers: [{ type: "onEnterLocation", locationId: "op_yard" }, { type: "onTime" }],
+        conditions: [questIs("q_night_raid", "active"), { field: "time", op: "==", value: "night" }, { field: "location", op: "==", value: "op_yard" }],
+        effects: [{ type: "encounter", value: "enc_night_raid" }],
+        repeatable: false,
+        ui: { x: 1560, y: 380 }
+      },
+      {
+        id: "ev_unmask",
+        name: "The mask slips",
+        description: "Corwin Lark turns from the horses — and his face runs like wax into something grey and smooth.",
+        triggers: [{ type: "onEnterLocation", locationId: "op_stables" }],
+        conditions: [questIs("q_stablemaster", "active")],
+        effects: [{ type: "flag", key: "corwin_unmasked", value: true }, { type: "encounter", value: "enc_doppelganger" }],
+        repeatable: false,
+        ui: { x: 1560, y: 860 }
+      }
+    );
+    w.globalLore.push(
+      { id: "gl_reedcloaks", label: "The Reedcloaks", content: "On the lake they speak of smugglers who wear cloaks the green of lake reeds and row at night without lights.", keys: ["Reedcloak", "green cloak", "smuggler"] },
+      { id: "gl_watchtower", label: "The old watchtower", content: "The watchtower on Windgap Pass was built with the old dam, to watch the road and the water. It has stood empty for a century.", keys: ["watchtower", "tower", "Windgap"] }
+    );
+    return w;
+  }
   var OPENING = [
     "Mist lies over Stillwater Mere this spring morning, and it creeps up the lane into Brindlewick, beading on the thatch of the Tipsy Heron.",
     "Inside, the fire crackles, Ada Fenn is slicing bread faster than anyone can eat it, and the stuffed heron over the bar leans a little further to the left than yesterday.",
@@ -37871,7 +38391,7 @@ ${g.lines.join("\n")}`).join("\n\n") + "\n\nSeveral commands and a message in on
       summary: "Supply carts keep vanishing between the village of Brindlewick and the lakeside town of Lanternport. Follow the trail from goblin raiders to smugglers on Stillwater Mere, and to what lies under the lake. A starter adventure for one character and a companion.",
       levels: [1, 5],
       credits: [SRD.attribution],
-      world: world(),
+      world: layer2(world()),
       characters: PREGENS.map(pregenCard),
       start: { view: "player", pregens: PREGENS.map((p) => p.id), opening: OPENING }
     };
