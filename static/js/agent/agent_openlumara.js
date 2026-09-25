@@ -62,38 +62,200 @@ export const buildOpenlumaraCommands = (ctx) => {
 
 	let streamLumaraResponse = async (message) => {
 		let payload = { role: "user", content: message }
+		let socketMessageText = `${payload?.content || ""}`
 
-		let stripDuplicatedPrefix = (existingText, incomingText) => {
-			let existing = `${existingText || ""}`
-			let incoming = `${incomingText || ""}`
-			if (!incoming) {
-				return ""
-			}
-			if (existing.length > 0 && incoming.startsWith(existing)) {
-				return incoming.substring(existing.length)
-			}
-			return incoming
+		let getThinkTagPair = () => {
+			let start = `${localsettings?.start_thinking_tag || "<think>"}`
+			let stop = `${localsettings?.stop_thinking_tag || "</think>"}`
+			return { start, stop }
 		}
 
-		let extractStreamToken = (socketPayload) => {
-			let source = socketPayload?.message && typeof socketPayload.message === "object" ? socketPayload.message : socketPayload
-			
-			// Handle tool call deltas
-			if (source?.type === "tool_call_delta" && Array.isArray(source?.tool_calls) && source.tool_calls.length > 0) {
-				let parts = []
-				source.tool_calls.forEach(tc => {
-					if (tc?.function?.name) {
-						parts.push(`[${tc.function.name}]`)
-					}
-					if (tc?.function?.arguments) {
-						parts.push(`${tc.function.arguments}`)
-					}
-				})
-				return parts.join(" ")
+		let normalizeLumaraValue = (value) => {
+			if (value === null || value === undefined) {
+				return ""
 			}
-			
-			// Handle regular content
-			return `${source?.content || source?.text || source?.token || ""}`
+			if (typeof value === "string") {
+				return value
+			}
+			if (typeof value === "object" && typeof value?.content === "string") {
+				return value.content
+			}
+			try {
+				return JSON.stringify(value)
+			} catch (_err) {
+				return `${value}`
+			}
+		}
+
+		let getLumaraContentText = (value) => {
+			return normalizeLumaraValue(value).trim()
+		}
+
+		let formatLumaraToolCallRequests = (toolCalls) => {
+			if (!Array.isArray(toolCalls) || toolCalls.length === 0) {
+				return ""
+			}
+			let lines = ["[Lumara tool calls]"]
+			toolCalls.forEach((call, idx) => {
+				let fnName = `${call?.function?.name || call?.name || `tool_${idx + 1}`}`
+				let fnArgs = normalizeLumaraValue(call?.function?.arguments ?? call?.arguments).trim()
+				lines.push(`${idx + 1}. ${fnName}${fnArgs ? `(${fnArgs})` : "()"}`)
+			})
+			return lines.join("\n")
+		}
+
+		let formatLumaraToolCallResponses = (toolCalls) => {
+			if (!Array.isArray(toolCalls) || toolCalls.length === 0) {
+				return ""
+			}
+
+			let responseLines = []
+			toolCalls.forEach((call, idx) => {
+				let fnName = `${call?.function?.name || call?.name || `tool_${idx + 1}`}`
+				let fnResp = normalizeLumaraValue(call?.response ?? call?.result ?? call?.output)
+				if (!fnResp.trim()) {
+					return
+				}
+				responseLines.push(`${idx + 1}. ${fnName}: ${fnResp}`)
+			})
+
+			if (responseLines.length === 0) {
+				return ""
+			}
+
+			return ["[Lumara tool responses]", ...responseLines].join("\n")
+		}
+
+		let createTurnSnapshot = () => {
+			return {
+				role: "assistant",
+				turn_id: "",
+				reasoning_content: "",
+				content: "",
+				tool_calls: [],
+			}
+		}
+
+		let applyTurnToSnapshot = (snapshot, turnObj) => {
+			if (!snapshot || !turnObj || typeof turnObj !== "object") {
+				return
+			}
+
+			let segments = Array.isArray(turnObj?.messages) ? turnObj.messages : [turnObj]
+			segments.forEach(seg => {
+				if (!seg || typeof seg !== "object") {
+					return
+				}
+
+				if (`${seg?.role || ""}`) {
+					snapshot.role = `${seg.role}`
+				}
+				if (`${seg?.turn_id || ""}`) {
+					snapshot.turn_id = `${seg.turn_id}`
+				}
+
+				let segType = `${seg?.type || ""}`.toLowerCase()
+				if (segType === "reasoning") {
+					let text = normalizeLumaraValue(seg?.reasoning_content ?? seg?.content)
+					if (text) {
+						snapshot.reasoning_content = text
+					}
+					return
+				}
+				if (segType === "content") {
+					let text = getLumaraContentText(seg?.content)
+					if (text) {
+						snapshot.content = text
+					}
+					return
+				}
+				if (segType === "tool_calls") {
+					if (Array.isArray(seg?.tool_calls)) {
+						snapshot.tool_calls = seg.tool_calls
+					}
+					return
+				}
+
+				// Snapshot-style payloads can omit type and include direct fields.
+				let snapshotReasoning = normalizeLumaraValue(seg?.reasoning_content)
+				if (snapshotReasoning) {
+					snapshot.reasoning_content = snapshotReasoning
+				}
+
+				let snapshotContent = getLumaraContentText(seg?.content)
+				if (snapshotContent) {
+					snapshot.content = snapshotContent
+				}
+
+				if (Array.isArray(seg?.tool_calls)) {
+					snapshot.tool_calls = seg.tool_calls
+				}
+			})
+		}
+
+		let extractTurnFromSocketPayload = (socketPayload) => {
+			let turn = socketPayload?.turn
+			if (turn && typeof turn === "object") {
+				return turn
+			}
+
+			turn = socketPayload?.turns
+			if (turn && typeof turn === "object") {
+				return turn
+			}
+
+			turn = socketPayload?.raw?.turn
+			if (turn && typeof turn === "object") {
+				return turn
+			}
+
+			turn = socketPayload?.raw?.turns
+			if (turn && typeof turn === "object") {
+				return turn
+			}
+
+			return null
+		}
+
+		let renderTurnSnapshotToBlocks = (snapshot) => {
+			let { start, stop } = getThinkTagPair()
+			let blocks = []
+
+			let reasoning = `${snapshot?.reasoning_content || ""}`.trim()
+			if (reasoning) {
+				blocks.push(`${start}${reasoning}${stop}`)
+			}
+
+			let toolCallSection = formatLumaraToolCallRequests(snapshot?.tool_calls || [])
+			if (toolCallSection) {
+				blocks.push(toolCallSection)
+			}
+
+			let toolResponseSection = formatLumaraToolCallResponses(snapshot?.tool_calls || [])
+			if (toolResponseSection) {
+				blocks.push(toolResponseSection)
+			}
+
+			let content = `${snapshot?.content || ""}`.trim()
+			if (content) {
+				blocks.push(content)
+			}
+
+			return blocks.filter(block => `${block || ""}`.trim().length > 0)
+		}
+
+		let renderTurnStreamToBlocks = (turnObj) => {
+			if (!turnObj || typeof turnObj !== "object") {
+				return []
+			}
+
+			let snapshot = createTurnSnapshot()
+			applyTurnToSnapshot(snapshot, turnObj)
+			return renderTurnSnapshotToBlocks(snapshot)
+		}
+
+		let renderTurnStreamToText = (turnObj) => {
+			return renderTurnStreamToBlocks(turnObj).join("\n\n").trim()
 		}
 
 		let streamViaSocket = async () => {
@@ -139,7 +301,10 @@ export const buildOpenlumaraCommands = (ctx) => {
 				return socket
 			}
 
-			let responseText = "", lastToken = ""
+			let responseText = ""
+			let responseBlocks = []
+			let latestTurnSnapshot = createTurnSnapshot()
+			let sawTurnStream = false
 			let socket = await ensureOpenSocket()
 
 			await new Promise((resolve, reject) => {
@@ -148,14 +313,16 @@ export const buildOpenlumaraCommands = (ctx) => {
 					reject(new Error("OpenLumara WebSocket stream timed out"))
 				}, 120000)
 
-				let onToken = (socketPayload) => {
-					let token = extractStreamToken(socketPayload)
-					let delta = stripDuplicatedPrefix(lastToken, token)
-					if (delta.length > 0) {
-						responseText += delta
-						updateAgentStreamingDisplay(responseText)
+				let onTurnStream = (socketPayload) => {
+					let turn = extractTurnFromSocketPayload(socketPayload)
+					if (!turn) {
+						return
 					}
-					lastToken = token
+					sawTurnStream = true
+					applyTurnToSnapshot(latestTurnSnapshot, turn)
+					responseBlocks = renderTurnSnapshotToBlocks(latestTurnSnapshot)
+					responseText = responseBlocks.join("\n\n").trim()
+					updateAgentStreamingDisplay(responseText)
 				}
 
 				let onComplete = () => {
@@ -176,26 +343,34 @@ export const buildOpenlumaraCommands = (ctx) => {
 
 				let cleanup = () => {
 					clearTimeout(timeout)
-					ol.offSocket("token", onToken)
+					ol.offSocket("turn_stream", onTurnStream)
 					ol.offSocket("stream_complete", onComplete)
 					ol.offSocket("error", onError)
 					ol.offSocket("close", onClose)
 				}
 
-				ol.onSocket("token", onToken)
+				ol.onSocket("turn_stream", onTurnStream)
 				ol.onSocket("stream_complete", onComplete)
 				ol.onSocket("error", onError)
 				ol.onSocket("close", onClose)
 
 				try {
-					socket.send(JSON.stringify({ type: "user_message", content: payload }))
+					socket.send(JSON.stringify({ type: "user_message", content: socketMessageText }))
 				} catch (err) {
 					cleanup()
 					reject(err)
 				}
 			})
 
-			return responseText
+			if ((!responseText || responseText.trim().length === 0) && sawTurnStream) {
+				responseBlocks = renderTurnSnapshotToBlocks(latestTurnSnapshot)
+				responseText = responseBlocks.join("\n\n").trim()
+			}
+
+			return {
+				text: responseText,
+				blocks: responseBlocks,
+			}
 		}
 
 		try {
@@ -239,6 +414,94 @@ export const buildOpenlumaraCommands = (ctx) => {
 			"outputVisibleToUser": true,
 			"executor": async (action) => {
                 const getMessagesSinceLastUserMessageAndShow = async () => {
+					let thinkStart = `${localsettings?.start_thinking_tag || "<think>"}`
+					let thinkStop = `${localsettings?.stop_thinking_tag || "</think>"}`
+
+					let normalizeTextValue = (value) => {
+						if (value === null || value === undefined) {
+							return ""
+						}
+						if (typeof value === "string") {
+							return value
+						}
+						if (typeof value === "object" && typeof value?.content === "string") {
+							return value.content
+						}
+						try {
+							return JSON.stringify(value)
+						} catch (_err) {
+							return `${value}`
+						}
+					}
+
+					let getNormalizedContentText = (value) => {
+						return normalizeTextValue(value).trim()
+					}
+
+					let formatHistoryToolCallRequestBlock = (toolCalls) => {
+						if (!Array.isArray(toolCalls) || toolCalls.length === 0) {
+							return ""
+						}
+						let lines = ["[Lumara tool calls]"]
+						toolCalls.forEach((call, idx) => {
+							let fnName = `${call?.function?.name || call?.name || `tool_${idx + 1}`}`
+							let fnArgs = normalizeTextValue(call?.function?.arguments ?? call?.arguments).trim()
+							lines.push(`${idx + 1}. ${fnName}${fnArgs ? `(${fnArgs})` : "()"}`)
+						})
+						return lines.join("\n")
+					}
+
+					let formatHistoryToolCallResponseBlock = (toolCalls, toolResponsesById) => {
+						if (!Array.isArray(toolCalls) || toolCalls.length === 0) {
+							return ""
+						}
+
+						let lines = []
+						toolCalls.forEach((call, idx) => {
+							let fnName = `${call?.function?.name || call?.name || `tool_${idx + 1}`}`
+							let toolCallId = `${call?.id || ""}`.trim()
+							let responseFromToolMessage = ""
+							if (toolCallId) {
+								responseFromToolMessage = normalizeTextValue(toolResponsesById.get(toolCallId)?.content)
+							}
+							let responseFromCall = normalizeTextValue(call?.response ?? call?.result ?? call?.output)
+							let finalResponse = `${responseFromToolMessage || responseFromCall || ""}`.trim()
+							if (!finalResponse) {
+								return
+							}
+							lines.push(`${idx + 1}. ${fnName}: ${finalResponse}`)
+						})
+
+						if (lines.length === 0) {
+							return ""
+						}
+						return ["[Lumara tool responses]", ...lines].join("\n")
+					}
+
+					let buildAssistantBlocks = (msg, toolResponsesById) => {
+						let blocks = []
+						let reasoning = normalizeTextValue(msg?.reasoning_content).trim()
+						if (reasoning) {
+							blocks.push(`${thinkStart}${reasoning}${thinkStop}`)
+						}
+
+						let requestBlock = formatHistoryToolCallRequestBlock(msg?.tool_calls || [])
+						if (requestBlock) {
+							blocks.push(requestBlock)
+						}
+
+						let responseBlock = formatHistoryToolCallResponseBlock(msg?.tool_calls || [], toolResponsesById)
+						if (responseBlock) {
+							blocks.push(responseBlock)
+						}
+
+						let content = getNormalizedContentText(msg?.content)
+						if (content) {
+							blocks.push(content)
+						}
+						return blocks.filter(block => `${block || ""}`.trim().length > 0)
+					}
+
 					let collapseMessagesByIndex = (messageList) => {
 						let byIndex = new Map()
 						let noIndex = []
@@ -267,34 +530,38 @@ export const buildOpenlumaraCommands = (ctx) => {
                         if (startPoint !== null && Number.isInteger(startPoint)) {
 							let messagesToShow = messageHistory.filter(msg => Number.isInteger(msg?.index) && msg.index > startPoint).sort((a, b) => a.index > b.index ? 1 : -1)
                             if (messagesToShow.length > 0) {
+								let toolResponsesById = new Map()
+								messagesToShow.forEach(msg => {
+									if (`${msg?.role || ""}` === "tool" && !!msg?.tool_call_id) {
+										toolResponsesById.set(`${msg.tool_call_id}`, msg)
+									}
+								})
                                 messagesToShow.forEach(msg => {
-                                    if (!!msg?.content) {
-                                        if (msg.role === "user") {
+									if (`${msg?.role || ""}` === "user" && !!msg?.content) {
                                             addThought(currentChainOfThought, createInstructPrompt, `Lumara - user: ${msg.content || ""}`)
-                                        } else if (msg.role === "assistant") {
-                                            addThought(currentChainOfThought, createAIPrompt, `Lumara: ${msg.content || ""}`)
-                                        }
-                                    }
-                                    if (!!msg?.tool_calls && Array.isArray(msg.tool_calls)) {
-                                        msg.tool_calls.forEach(call => {
-                                            let toolCallId = call.id;
-                                            let toolDetails = `tool call: ${objToText(call?.function || call)}`
-                                            if (!!toolCallId) {
-                                                let toolResp = messagesToShow.find(m => m.role === "tool" && m.tool_call_id === toolCallId);
-                                                if (!!toolResp) {
-                                                    let respContent = `${toolResp.content || ""}`
-                                                    try {
-                                                        respContent = objToText(JSON.parse(toolResp.content))
-                                                    }
-                                                    catch (_err) { }
-                                                    toolDetails += `\n\ntool response: ${respContent}`
-                                                }
-                                            }
-                                            addThought(currentChainOfThought, createSysPrompt, formatLumaraMessage(toolDetails))
-                                        })
-                                    }
+										displayHandled = true
+										return
+									}
+
+									if (`${msg?.role || ""}` === "assistant") {
+										let assistantBlocks = buildAssistantBlocks(msg, toolResponsesById)
+										assistantBlocks.forEach(block => {
+											addThought(currentChainOfThought, createAIPrompt, `Lumara: ${block}`)
+											displayHandled = true
+										})
+										return
+									}
+
+									if (`${msg?.role || ""}` === "tool" && !msg?.tool_call_id) {
+										let fallbackName = `${msg?.name || "lumara_tool"}`
+										let fallbackContent = getNormalizedContentText(msg?.content)
+										if (fallbackContent) {
+											let fallbackBlock = `[Lumara tool responses]\n1. ${fallbackName}: ${fallbackContent}`
+											addThought(currentChainOfThought, createAIPrompt, `Lumara: ${fallbackBlock}`)
+											displayHandled = true
+										}
+									}
                                 })
-                                displayHandled = true;
                             }
 							localsettings.lastMessageProcessedFromLumara = messagesToShow.reduce((a, c) => {
 								return !!c?.index && c.index > a ? c.index : a
@@ -314,14 +581,28 @@ export const buildOpenlumaraCommands = (ctx) => {
     			window.eso.currentlyProcessingFromLumara = window.eso.currentlyProcessingFromLumara.then(async () => {
 					try {
 						if (!!localsettings?.agentStreamThinking) {
-							let responseText = await runAndReport("stream", () => streamLumaraResponse(message))
-							if (responseText === null) return
+							let streamResult = await runAndReport("stream", () => streamLumaraResponse(message))
+							if (streamResult === null) return
+
+							let responseText = typeof streamResult === "string"
+								? streamResult
+								: `${streamResult?.text || ""}`
+							let responseBlocks = Array.isArray(streamResult?.blocks)
+								? streamResult.blocks.filter(block => `${block || ""}`.trim().length > 0)
+								: []
+							if (`${responseText}`.trim().length === 0 && responseBlocks.length > 0) {
+								responseText = responseBlocks.join("\n\n")
+							}
 							if (`${responseText}`.trim().length === 0) {
 								responseText = "[empty response]"
+								responseBlocks = [responseText]
 							}
 							let displayHandled = await getMessagesSinceLastUserMessageAndShow()
 							if (!displayHandled) {
-								addThought(currentChainOfThought, createAIPrompt, `Lumara: ${responseText}`)
+								let blocksToWrite = responseBlocks.length > 0 ? responseBlocks : [responseText]
+								blocksToWrite.forEach(block => {
+									addThought(currentChainOfThought, createAIPrompt, `Lumara: ${block}`)
+								})
 							}
 						}
 						else {

@@ -253,7 +253,32 @@ let renderEsoboldAgentTools = () => {
     orderedGroups.forEach(groupKey => refreshGroupState(groupKey))
 }
 
+// Tabs added by mods (SettingsExtension, see modHooks.js). Built lazily so extensions registered after page load
+// still get their tab; the tab of an unregistered extension is removed.
+let settingsExtensionTabs = new Map()
+let syncSettingsExtensionTabs = () => {
+    let ui = window.eso.settingsUi
+    if (!ui) {
+        return
+    }
+    let extensions = window.eso.extensions.getByType(EsoExtensionType.SETTINGS)
+    settingsExtensionTabs.forEach((tab, id) => {
+        if (!extensions.includes(tab.ext)) {
+            tab.sectionButton.remove()
+            tab.sectionBody.remove()
+            settingsExtensionTabs.delete(id)
+        }
+    })
+    extensions.filter(ext => !settingsExtensionTabs.has(ext.getId())).forEach(ext => {
+        let section = ui.section(`ext_${String(ext.getId()).replace(/[^\w-]/g, "_")}`, ext.getLabel())
+        section.sectionBody.dataset.settingsExtension = ext.getId()
+        ext.render(section.settingsBox, ui)
+        settingsExtensionTabs.set(ext.getId(), { ext, sectionButton: section.sectionButton, sectionBody: section.sectionBody })
+    })
+}
+
 display_settings = () => {
+    syncSettingsExtensionTabs()
     originalDisplaySettings()
     document.getElementById("agentBehaviour").checked = localsettings.agentBehaviour;
     document.getElementById("agentHideCOT").checked = localsettings.agentHideCOT;
@@ -273,6 +298,7 @@ display_settings = () => {
     document.getElementById("agentFsContentCharLimit").value = localsettings.agentFsContentCharLimit || 5000;
     document.getElementById("agentFsContentCharLimitnumeric").value = localsettings.agentFsContentCharLimit || 5000;
     document.getElementById("agentLumaraPollingRate").checked = !!localsettings.agentLumaraPollingRate;
+    document.getElementById("agentBlockWriteOnSyntaxError").checked = !!localsettings.agentBlockWriteOnSyntaxError;
     document.getElementById("disableSaveCompressionLocally").checked = localsettings.disableSaveCompressionLocally;
     document.getElementById("enableRunningMemory").checked = localsettings.enableRunningMemory;
     document.getElementById("worldTreePrune").checked = localsettings.worldTreePrune;
@@ -280,12 +306,17 @@ display_settings = () => {
     document.getElementById("worldTreeShowAll").checked = localsettings.worldTreeShowAll;
     document.getElementById("useNewEditor").checked = localsettings.useNewEditor;
     document.getElementById("legacySaveMechanisms").checked = localsettings.legacySaveMechanisms;
+    document.getElementById("overwriteCharacterOnNameCollision").checked = !!localsettings.overwriteCharacterOnNameCollision;
     document.getElementById("showContextUsageChart").checked = localsettings.showContextUsageChart;
     document.getElementById("fullScreenEditorForInputs").checked = localsettings.fullScreenEditorForInputs;
     document.getElementById("corpoHideLeftPanel").checked = localsettings.corpoHideLeftPanel;
     document.getElementById("agentSavedMacros").value = JSON.stringify(localsettings?.agentSavedMacros || window.eso.agentMacros, null, 2)
+    document.getElementById("turnsMaxContent").value = localsettings.turnsMaxContent;
+    document.getElementById("turnsOldContentRatio").value = localsettings.turnsOldContentRatio;
+    document.getElementById("hearthfireContext").checked = !!localsettings.hearthfireContext;
     renderEsoboldAgentTools()
     window.updateLumaraListenerStatusIndicator()
+    settingsExtensionTabs.forEach(tab => tab.ext.load())
 }
 
 updateLegacySaveButtonState = () => {
@@ -314,6 +345,7 @@ confirm_settings = () => {
     localsettings.agentStreamThinking = (document.getElementById("agentStreamThinking").checked ? true : false);
     localsettings.agentFsContentCharLimit = document.getElementById("agentFsContentCharLimit").value || 5000;
     localsettings.agentLumaraPollingRate = (document.getElementById("agentLumaraPollingRate").checked ? true : false);
+    localsettings.agentBlockWriteOnSyntaxError = (document.getElementById("agentBlockWriteOnSyntaxError").checked ? true : false);
     localsettings.disableSaveCompressionLocally = (document.getElementById("disableSaveCompressionLocally").checked ? true : false);
     localsettings.enableRunningMemory = (document.getElementById("enableRunningMemory").checked ? true : false);
     localsettings.worldTreePrune = (document.getElementById("worldTreePrune").checked ? true : false);
@@ -321,9 +353,13 @@ confirm_settings = () => {
     localsettings.worldTreeShowAll = (document.getElementById("worldTreeShowAll").checked ? true : false);
     localsettings.useNewEditor = (document.getElementById("useNewEditor").checked ? true : false);
     localsettings.legacySaveMechanisms = (document.getElementById("legacySaveMechanisms").checked ? true : false);
+    localsettings.overwriteCharacterOnNameCollision = (document.getElementById("overwriteCharacterOnNameCollision").checked ? true : false);
     localsettings.showContextUsageChart = (document.getElementById("showContextUsageChart").checked ? true : false);
     localsettings.fullScreenEditorForInputs = (document.getElementById("fullScreenEditorForInputs").checked ? true : false);
     localsettings.corpoHideLeftPanel = (document.getElementById("corpoHideLeftPanel").checked ? true : false);
+    localsettings.turnsMaxContent = document.getElementById("turnsMaxContent").value;
+    localsettings.turnsOldContentRatio = document.getElementById("turnsOldContentRatio").value;
+    localsettings.hearthfireContext = (document.getElementById("hearthfireContext").checked ? true : false);
     try
     {
         localsettings.disabled_agent_tools = [...document.querySelectorAll("#esobold_agent_tools_list_container input[data-agent-tool-checkbox='true']")].filter(elem => !elem.checked).map(elem => elem.value)
@@ -337,6 +373,8 @@ confirm_settings = () => {
             let obj = JSON.parse(document.getElementById("agentSavedMacros").value)
             localsettings.agentSavedMacros = obj;
         }
+
+        settingsExtensionTabs.forEach(tab => tab.ext.save())
 
         updateEditorState();
         originalConfirmSettings();
@@ -409,6 +447,9 @@ window.addEventListener('load', () => {
     } else if (typeof localsettings.agentLumaraPollingRate !== "boolean") {
         localsettings.agentLumaraPollingRate = Number(localsettings.agentLumaraPollingRate) > 0
     }
+    if (localsettings?.agentBlockWriteOnSyntaxError == undefined) {
+        localsettings.agentBlockWriteOnSyntaxError = false
+    }
     if (localsettings?.disableSaveCompressionLocally == undefined) {
         localsettings.disableSaveCompressionLocally = true
     }
@@ -433,6 +474,9 @@ window.addEventListener('load', () => {
     if (localsettings?.legacySaveMechanisms == undefined) {
         localsettings.legacySaveMechanisms = false
     }
+    if (localsettings?.overwriteCharacterOnNameCollision == undefined) {
+        localsettings.overwriteCharacterOnNameCollision = false
+    }
     if (localsettings?.showContextUsageChart == undefined) {
         localsettings.showContextUsageChart = true
     }
@@ -451,7 +495,15 @@ window.addEventListener('load', () => {
     if (localsettings?.lastMessageProcessedFromLumara == undefined) {
         localsettings.lastMessageProcessedFromLumara = 0
     }
-
+    if (localsettings?.turnsMaxContent == undefined) {
+        localsettings.turnsMaxContent = 0
+    }
+    if (localsettings?.turnsOldContentRatio == undefined) {
+        localsettings.turnsOldContentRatio = 0.5
+    }
+    if (localsettings?.hearthfireContext == undefined) {
+        localsettings.hearthfireContext = false
+    }
     // Overwrite the switching to handle new dynamically added menus
     window.display_settings_tab = (tabIndex) => {
         let settingNav = document.querySelector("#settingscontainer .settingsnav"), settingBody = document.querySelector("#settingscontainer .settingsbody")
@@ -464,6 +516,9 @@ window.addEventListener('load', () => {
         })
 
 
+        if (!settingNav.children[tabIndex]) {
+            tabIndex = 0
+        }
         current_settings_tab_idx = tabIndex
         let sectionButton = document.querySelector(`#settingscontainer .settingsnav :nth-child(${tabIndex + 1})`), sectionBody = document.querySelector(`#${sectionButton.id.replace(/_tab$/, "")}`)
         sectionBody.classList.remove("hidden")
@@ -491,8 +546,7 @@ window.addEventListener('load', () => {
         let sectionLink = document.createElement("a")
         sectionLink.innerText = buttonText
         sectionLink.title = buttonText
-        let currentNumberOfTabs = settingNav.querySelectorAll("li").length
-        sectionLink.onclick = () => display_settings_tab(currentNumberOfTabs - 1)
+        sectionLink.onclick = () => display_settings_tab([...settingNav.children].indexOf(sectionButton))
         sectionButton.appendChild(sectionLink)
 
         return { sectionButton, sectionBody, settingsBox }
@@ -705,13 +759,13 @@ window.addEventListener('load', () => {
     ])
     agentElems.push(settingLabelElem)
 
-    settingLabelElem = createSettingElemBool("agentUseOAITools", "Use OpenAI tools for command selection", "When enabled, the agent uses the OpenAI-compatible /v1/chat/completions endpoint with tool calling to select commands, instead of grammar-constrained generation. Requires a KoboldCpp endpoint that supports the OpenAI tools API. The agent performs a planning step (using plan_actions as a tool) followed by executing each planned step.")
+    settingLabelElem = createSettingElemBool("agentUseOAITools", "Use OpenAI tools for command selection", "When enabled, the agent uses the OpenAI-compatible /v1/chat/completions endpoint with tool calling to select commands, instead of grammar-constrained generation. Requires a KoboldCpp endpoint that supports the OpenAI tools API. Stream rendering supports interleaved thinking, text, and multiple tool-call deltas.")
     agentElems.push(settingLabelElem)
 
-    settingLabelElem = createSettingElemBool("agentSkipPlanningStep", "Skip agent planning step", "When enabled, the agent skips the initial plan_actions step and selects commands directly each cycle. Explicit plans provided by macros still run normally.")
+    settingLabelElem = createSettingElemBool("agentSkipPlanningStep", "Skip agent planning step", "When enabled, the agent skips the initial plan_actions step and selects commands directly from the user prompt each cycle. The model can either call tools or return direct text. Explicit plans provided by macros still run normally.")
     agentElems.push(settingLabelElem)
 
-    settingLabelElem = createSettingElemRange("agentMaxActionsInHistory", "Maximum actions in history", "Defines the maximum number of previous actions to load into the current context. This value should be higher than the 'Maximum agent actions per plan' option to maintain history.", 0, 50, 1, 30)
+    settingLabelElem = createSettingElemRange("agentMaxActionsInHistory", "Maximum actions in history", "Defines the maximum number of previous actions to load into the current context. This value should be higher than the 'Maximum agent actions per plan' option to maintain history.", 0, 100, 1, 30)
     agentElems.push(settingLabelElem)
 
     settingLabelElem = createSettingElemBool("agentSkipPreviousCOTWhenProcessing", "Skip previous COT when processing history", "When enabled, hides previous chain of thought entries during history initialization, similar to 'Hide agent COT' but applied only when loading past actions.")
@@ -724,6 +778,9 @@ window.addEventListener('load', () => {
     agentElems.push(settingLabelElem)
 
     settingLabelElem = createSettingElemBool("agentLumaraPollingRate", "Enable Lumara listener", "When enabled, agent mode listens for live Lumara websocket updates. If disconnected, reconnect attempts run every 60 seconds until connected.")
+    agentElems.push(settingLabelElem)
+
+    settingLabelElem = createSettingElemBool("agentBlockWriteOnSyntaxError", "Should write to disk fail if syntax is incorrect?", "When enabled, filesystem writes are blocked if tree-sitter syntax validation finds errors. When disabled, writes still proceed but the agent receives the syntax error and can replan.")
     agentElems.push(settingLabelElem)
 
     let lumaraStatusLabel = document.createElement("div")
@@ -769,9 +826,25 @@ window.addEventListener('load', () => {
     settingLabelElem = createSettingElemBool("legacySaveMechanisms", "Save options (legacy)", "Shows buttons for saving to slots and server using the non-data manager UI (legacy)")
     settingsBox.append(settingLabelElem)
 
+    settingLabelElem = createSettingElemBool("overwriteCharacterOnNameCollision", "Overwrite character on name collision", "When this flag is set to true, if a new character has the same name it will overwrite. When this is set to false, it will append a _1, _2 etc.")
+    settingsBox.append(settingLabelElem)
+
     settingsBox.appendChild(createNewSubSection("Misc settings"))
 
     settingLabelElem = createSettingElemButton("libraryMods", "Mods", "Open the third-party mods manager to browse and apply community mods.", () => modManager.showModListWarning())
+    settingsBox.append(settingLabelElem)
+
+    settingsBox.appendChild(createNewSubSection("Context settings", false))
+
+    settingLabelElem = createSettingElemRange("turnsMaxContent", "Turns max content", "The maximum amount tokens allowed for user and AI turns. Enabling this option will create a sliding window. With smaller models this is often not needed as the prompt processing speed is high, but can be useful for larger models. Please note, the amount selected here should be your total possible context minus the amount you expect to be used for memory, world info, authors note, system prompt etc as a maximum.", 0, 131072, 1024, 0)
+    settingsBox.append(settingLabelElem)
+
+    settingLabelElem = createSettingElemRange("turnsOldContentRatio", "Turns old content ratio", "The ratio of old content to retain within the sliding window.", 0, 1, 0.05, 0.6)
+    settingsBox.append(settingLabelElem)
+
+    settingLabelElem = createSettingElemBool("hearthfireContext", "Hearthfire context", "When this flag is set to true, after a user gets a reply another request will be automatically triggered. The second request preps the context for future interactions which should reduce the wait time (essentially prompt processing while you start to type your reply).")
+    // Hide hearthfire context as it is buggy at the moment
+    settingLabelElem.style.display = "none"
     settingsBox.append(settingLabelElem)
 
     toolsSettingsBox.appendChild(createNewSubSection("Esobold Agent Tools"))
@@ -806,6 +879,19 @@ window.addEventListener('load', () => {
     settingsBox.append(settingLabelElem)
 
     createStopThinkingButton()
+
+    // Helpers for SettingsExtension pages (see modHooks.js)
+    window.eso.settingsUi = {
+        section: createNewSettingsSection,
+        subSection: createNewSubSection,
+        text: createSettingElementText,
+        textArea: createSettingElementTextArea,
+        button: createSettingElemButton,
+        bool: createSettingElemBool,
+        select: createSettingElemSelect,
+        range: createSettingElemRange
+    }
+    syncSettingsExtensionTabs()
 })
 
 window.eso.afterKoboldCppVersionCheck = async () => {
