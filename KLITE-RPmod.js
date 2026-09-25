@@ -253,6 +253,26 @@ button.rpm-chip, .rpm-chip[role=button] { cursor: pointer; }
 .btn.rpm-btn.rpm-warning { border-color: var(--rpm-quest); box-shadow: inset 3px 0 0 var(--rpm-quest); }
 .btn.rpm-btn:disabled, .btn.rpm-btn.disabled { opacity: .5; cursor: not-allowed; }
 
+/* ---- Game over (R8) ---- */
+.rpm-gameover { padding: var(--rpm-s3); display: flex; flex-direction: column; gap: var(--rpm-s1); overflow: auto; }
+.rpm-gameover-title { margin: 0 0 var(--rpm-s1); font-size: 1.6em; letter-spacing: 0.04em; color: var(--rpm-danger, var(--rpm-fg-hi)); }
+.rpm-gameover-banner { border-color: var(--rpm-danger, var(--rpm-border-hi)); margin-top: var(--rpm-s1); }
+
+/* ---- Adventure picker (R8): choose a pregenerated character ---- */
+.rpm-adv { flex: 1 1 auto; min-height: 0; overflow: auto; padding: var(--rpm-s3); display: flex; flex-direction: column; gap: var(--rpm-s2); }
+.rpm-adv-title { margin: 0; font-size: 1.15em; color: var(--rpm-fg-hi); }
+.rpm-adv-summary { margin: 0; }
+.rpm-adv-pregens { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: var(--rpm-s2); }
+.rpm-adv-pregen { display: flex; align-items: flex-start; gap: var(--rpm-s2); text-align: left; padding: var(--rpm-s2); cursor: pointer;
+    border: 1px solid var(--rpm-border); border-radius: var(--rpm-radius); background: var(--rpm-bg-alt); color: var(--rpm-fg); }
+.rpm-adv-pregen:hover, .rpm-adv-pregen.rpm-active { border-color: var(--rpm-border-hi); background: var(--rpm-accent-bg-hi); color: var(--rpm-accent-fg-hi); }
+.rpm-adv-pregen.rpm-active { box-shadow: inset 0 0 0 1px var(--rpm-fg-hi); }
+.rpm-adv-avatar { flex: 0 0 auto; width: 40px; height: 40px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+    font-weight: bold; background: var(--rpm-accent-bg-hi); color: var(--rpm-fg-hi); border: 1px solid var(--rpm-border-hi); }
+.rpm-adv-who { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.rpm-adv-line { font-size: var(--rpm-fs-sm); color: var(--rpm-fg-muted); }
+.rpm-adv-msg { margin: 0; color: var(--rpm-danger, var(--rpm-fg-hi)); }
+
 /* ---- Compendium window (R3): list | entry; one column in a narrow window ---- */
 .rpm-cmp-scroll { flex: 1 1 auto; min-height: 0; display: flex; container-type: inline-size; }
 .rpm-cmp { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: minmax(240px, 320px) 1fr; }
@@ -1050,10 +1070,10 @@ body.rpm-docked #maincontainer {
     let wm = null;
     let shownTab = null;
     const PLACES = /* @__PURE__ */ new Set(["left", "right", "window"]);
-    function sortedViews(place) {
-      return [...views.values()].filter((v) => v.def.place === place).sort((a, b) => (a.def.order ?? 100) - (b.def.order ?? 100) || String(a.def.id).localeCompare(String(b.def.id)));
+    function sortedViews(place2) {
+      return [...views.values()].filter((v) => v.def.place === place2).sort((a, b) => (a.def.order ?? 100) - (b.def.order ?? 100) || String(a.def.id).localeCompare(String(b.def.id)));
     }
-    const hasViews = (place) => sortedViews(place).length > 0;
+    const hasViews = (place2) => sortedViews(place2).length > 0;
     function registerView(def) {
       if (!def || !def.id || !PLACES.has(def.place) || typeof def.mount !== "function") {
         throw new Error("KLITE_RPMod_Shell.registerView: need { id, place: left|right|window, mount }");
@@ -1358,7 +1378,7 @@ body.rpm-docked #maincontainer {
           v.mounted = false;
         }
       });
-      for (const place of ["left", "right"]) for (const v of sortedViews(place)) placeView(v);
+      for (const place2 of ["left", "right"]) for (const v of sortedViews(place2)) placeView(v);
       syncMode(true);
       for (const v of sortedViews("window")) if (shouldRestoreWindow(v.def.id)) openView(v.def.id);
       let resizeTimer = null;
@@ -8687,10 +8707,10 @@ ${wi.content}
         }
         return matchCount;
       },
-      hashString(str3) {
+      hashString(str4) {
         let hash3 = 0;
-        for (let i = 0; i < str3.length; i++) {
-          const char = str3.charCodeAt(i);
+        for (let i = 0; i < str4.length; i++) {
+          const char = str4.charCodeAt(i);
           hash3 = (hash3 << 5) - hash3 + char;
           hash3 = hash3 & hash3;
         }
@@ -10248,16 +10268,16 @@ ${examples}`;
       detailObserverEnabled: false,
       _detailSaveTimer: null,
       // Basic HTML escaping helpers to prevent HTML/JS injection when rendering
-      escapeHTML(str3 = "") {
-        return String(str3).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+      escapeHTML(str4 = "") {
+        return String(str4).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
       },
       // Escape content specifically for placement inside <textarea> ... </textarea>
-      escapeTextarea(str3 = "") {
-        return this.escapeHTML(String(str3)).replace(/<\/textarea/gi, "&lt;/textarea");
+      escapeTextarea(str4 = "") {
+        return this.escapeHTML(String(str4)).replace(/<\/textarea/gi, "&lt;/textarea");
       },
       // Attempt to fix common UTF-8 mojibake (e.g., “ — ” becoming â / â)
-      fixMojibake(str3 = "") {
-        const s = String(str3);
+      fixMojibake(str4 = "") {
+        const s = String(str4);
         const looksMojibake = /[\u0080-\u00FF]/.test(s) && /(Ã|Â|â)/.test(s);
         if (looksMojibake) {
           try {
@@ -10270,8 +10290,8 @@ ${examples}`;
         return s.normalize("NFC");
       },
       // Sanitize imported text fields: fix encoding, normalize, strip unsafe control chars
-      sanitizeImportedString(str3 = "") {
-        let out = this.fixMojibake(str3);
+      sanitizeImportedString(str4 = "") {
+        let out = this.fixMojibake(str4);
         out = out.replace(/\r\n?/g, "\n").replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "");
         return out;
       },
@@ -20340,6 +20360,9 @@ ${char.mes_example}
     for (let i = 0; i < SRD.xp.length; i++) if ((Number(xp) || 0) >= SRD.xp[i]) lvl = i + 1;
     return lvl;
   }
+  function xpForLevel(level) {
+    return SRD.xp[Math.min(20, Math.max(1, Number(level) || 1)) - 1];
+  }
 
   // src/game/quest-rules.js
   var norm2 = (v) => String(v == null ? "" : v).trim();
@@ -20773,13 +20796,13 @@ ${char.mes_example}
   function visibleExit(ex, found) {
     return !isSecret(ex) || asArray(found && found.secrets).includes(ex.id);
   }
-  function rectOf(room) {
-    const m = room && room.map || {};
+  function rectOf(room2) {
+    const m = room2 && room2.map || {};
     const num2 = (v, d) => Number.isFinite(Number(v)) && v !== null && v !== "" ? Math.round(Number(v)) : d;
     return { x: num2(m.x, 0), y: num2(m.y, 0), w: Math.max(1, num2(m.w, ROOM.w)), h: Math.max(1, num2(m.h, ROOM.h)) };
   }
-  function hasRect(room) {
-    return !!(room && room.map && Number.isFinite(Number(room.map.x)) && Number.isFinite(Number(room.map.y)));
+  function hasRect(room2) {
+    return !!(room2 && room2.map && Number.isFinite(Number(room2.map.x)) && Number.isFinite(Number(room2.map.y)));
   }
   function overlaps(a, b, gap = 0) {
     return a.x < b.x + b.w + gap && b.x < a.x + a.w + gap && a.y < b.y + b.h + gap && b.y < a.y + a.h + gap;
@@ -20831,15 +20854,15 @@ ${char.mes_example}
         }
       }
       if (pick2 < 0) pick2 = 0;
-      const room = todo.splice(pick2, 1)[0];
-      const size = rectOf(room);
+      const room2 = todo.splice(pick2, 1)[0];
+      const size = rectOf(room2);
       let want;
       if (anchor) want = besideRect(placed.get(anchor.to), mirrorDir(anchor.dir) || "e", size.w, size.h);
       else if (!placed.size) want = { x: 0, y: 0, w: size.w, h: size.h };
       else want = { x: 0, y: Math.max(...[...placed.values()].map((p) => p.y + p.h)) + ROOM.gap, w: size.w, h: size.h };
       const r = freeSpot(want, [...placed.values()], ROOM.gap);
-      placed.set(room.id, r);
-      out[room.id] = r;
+      placed.set(room2.id, r);
+      out[room2.id] = r;
     }
     return out;
   }
@@ -21066,10 +21089,10 @@ ${char.mes_example}
   var DELTA = { n: [0, -1], e: [1, 0], s: [0, 1], w: [-1, 0] };
   var OPP = { n: "s", s: "n", e: "w", w: "e" };
   var CARD = ["n", "e", "s", "w"];
-  function hash(str3) {
-    let h = 1779033703 ^ str3.length;
-    for (let i = 0; i < str3.length; i++) {
-      h = Math.imul(h ^ str3.charCodeAt(i), 3432918353);
+  function hash(str4) {
+    let h = 1779033703 ^ str4.length;
+    for (let i = 0; i < str4.length; i++) {
+      h = Math.imul(h ^ str4.charCodeAt(i), 3432918353);
       h = h << 13 | h >>> 19;
     }
     h = Math.imul(h ^ h >>> 16, 2246822507);
@@ -21260,10 +21283,10 @@ ${char.mes_example}
     const reserved = /* @__PURE__ */ new Set([slotKey(-1, 0)]);
     const addRoomAt = (i, j, extra) => {
       const key = "r" + rooms.length;
-      const room = Object.assign({ key, slot: [i, j], name: `Room ${rooms.length + 1}`, rect: rectAt(i, j, chance(R, 0.3) ? 3 : 5, 3), features: [] }, extra || {});
-      rooms.push(room);
+      const room2 = Object.assign({ key, slot: [i, j], name: `Room ${rooms.length + 1}`, rect: rectAt(i, j, chance(R, 0.3) ? 3 : 5, 3), features: [] }, extra || {});
+      rooms.push(room2);
       slots.set(slotKey(i, j), key);
-      return room;
+      return room2;
     };
     const free = (i, j) => !slots.has(slotKey(i, j)) && !reserved.has(slotKey(i, j));
     const entrance = addRoomAt(0, 0, { name: "Entrance", entrance: true });
@@ -21273,8 +21296,8 @@ ${char.mes_example}
       const opts2 = neighbours(...from.slot).filter((x) => free(x.i, x.j));
       if (!opts2.length) continue;
       const nb = pick(R, opts2);
-      const room = addRoomAt(nb.i, nb.j);
-      edges.push(Object.assign({ from: from.key, to: room.key, dir: nb.d }, T.connect(R)));
+      const room2 = addRoomAt(nb.i, nb.j);
+      edges.push(Object.assign({ from: from.key, to: room2.key, dir: nb.d }, T.connect(R)));
     }
     const linked = (a, b) => edges.some((e) => e.from === a && e.to === b || e.from === b && e.to === a);
     const loopCands = [];
@@ -21351,7 +21374,7 @@ ${char.mes_example}
     };
     const square = add(0, 0, { name: "Town Square", entrance: true, features: [{ name: "Well", kind: "furniture" }] });
     for (const k2 of shuffle(R, keys)) {
-      const place = TOWN_PLACES.find((p) => p.key === k2);
+      const place2 = TOWN_PLACES.find((p) => p.key === k2);
       const cands = [];
       for (const r of rooms) for (const nb of neighbours(...r.slot)) {
         const sk = slotKey(nb.i, nb.j);
@@ -21360,10 +21383,10 @@ ${char.mes_example}
       }
       const best = Math.min(...cands.map((c) => c.dist));
       const spot2 = pick(R, cands.filter((c) => c.dist === best));
-      const room = add(spot2.i, spot2.j, { name: place.name, place: k2, features: place.features.map(([name, kind]) => kind === "light" ? { name, kind, lit: true } : { name, kind }) });
-      const nbs = neighbours(spot2.i, spot2.j).map((x) => ({ d: x.d, key: slots.get(slotKey(x.i, x.j)), dist: Math.abs(x.i) + Math.abs(x.j) })).filter((x) => x.key && x.key !== room.key).sort((a, b) => a.dist - b.dist);
+      const room2 = add(spot2.i, spot2.j, { name: place2.name, place: k2, features: place2.features.map(([name, kind]) => kind === "light" ? { name, kind, lit: true } : { name, kind }) });
+      const nbs = neighbours(spot2.i, spot2.j).map((x) => ({ d: x.d, key: slots.get(slotKey(x.i, x.j)), dist: Math.abs(x.i) + Math.abs(x.j) })).filter((x) => x.key && x.key !== room2.key).sort((a, b) => a.dist - b.dist);
       const to = nbs[0];
-      edges.push({ from: to.key, to: room.key, dir: OPP[to.d], type: "open" });
+      edges.push({ from: to.key, to: room2.key, dir: OPP[to.d], type: "open" });
     }
     const linked = (a, b) => edges.some((e) => e.from === a && e.to === b || e.from === b && e.to === a);
     const loopCands = [];
@@ -21419,10 +21442,10 @@ ${char.mes_example}
   var OPP2 = { n: "s", s: "n", e: "w", w: "e" };
   var NEXT = { n: ["e", "w"], e: ["n", "s"], s: ["e", "w"], w: ["n", "s"] };
   var asArray2 = (v) => Array.isArray(v) ? v : [];
-  function layoutFor(room, exitDirs) {
+  function layoutFor(room2, exitDirs) {
     const dirs = [...new Set(asArray2(exitDirs).filter((d) => RING.includes(d)))];
-    let kind = room && LAYOUTS.includes(room.combatSpace) ? room.combatSpace : null;
-    const m = room && room.map;
+    let kind = room2 && LAYOUTS.includes(room2.combatSpace) ? room2.combatSpace : null;
+    const m = room2 && room2.map;
     if (!kind) {
       if (!m || !(Number(m.w) > 0) || !(Number(m.h) > 0)) kind = "large";
       else if (Math.min(m.w, m.h) <= 1) kind = "corridor";
@@ -21623,10 +21646,10 @@ ${char.mes_example}
     if (kind === "faction" && !str(e.description) && str(e.goals)) return "goals";
     return TEXT_FIELD[kind];
   }
-  function entitiesOf(world) {
+  function entitiesOf(world2) {
     const out = [];
     for (const kind of Object.keys(KINDS2)) {
-      for (const e of arr(world && world[KINDS2[kind]])) {
+      for (const e of arr(world2 && world2[KINDS2[kind]])) {
         if (!e || typeof e !== "object") continue;
         const field = textFieldOf(kind, e);
         const text = str(e[field]);
@@ -21660,12 +21683,12 @@ ${char.mes_example}
     const kind = m && HEADER_KIND[m[1].toLowerCase()];
     return kind ? { kind, name: m[2], text: m[3].trim() } : null;
   }
-  function bookExt(world, embed) {
-    return { rpmod: embed === false ? { version: 1 } : { version: 1, world } };
+  function bookExt(world2, embed) {
+    return { rpmod: embed === false ? { version: 1 } : { version: 1, world: world2 } };
   }
-  function toTavern(world, { embed = true } = {}) {
+  function toTavern(world2, { embed = true } = {}) {
     const entries = {};
-    entitiesOf(world).forEach((x, i) => {
+    entitiesOf(world2).forEach((x, i) => {
       entries[String(i)] = {
         uid: i,
         key: x.keys,
@@ -21685,10 +21708,10 @@ ${char.mes_example}
         extensions: { rpmod: { kind: x.kind, id: x.id, field: x.field } }
       };
     });
-    return { name: str(world && world.name) || "World", description: str(world && world.description), extensions: bookExt(world, embed), entries };
+    return { name: str(world2 && world2.name) || "World", description: str(world2 && world2.description), extensions: bookExt(world2, embed), entries };
   }
-  function toV3(world, { embed = true } = {}) {
-    const entries = entitiesOf(world).map((x, i) => ({
+  function toV3(world2, { embed = true } = {}) {
+    const entries = entitiesOf(world2).map((x, i) => ({
       keys: x.keys,
       content: entryContent(x),
       extensions: { rpmod: { kind: x.kind, id: x.id, field: x.field } },
@@ -21703,7 +21726,7 @@ ${char.mes_example}
       id: i,
       position: "before_char"
     }));
-    return { spec: "lorebook_v3", data: { name: str(world && world.name) || "World", description: str(world && world.description), extensions: bookExt(world, embed), entries } };
+    return { spec: "lorebook_v3", data: { name: str(world2 && world2.name) || "World", description: str(world2 && world2.description), extensions: bookExt(world2, embed), entries } };
   }
   function normEntry(e) {
     if (!e || typeof e !== "object") return null;
@@ -21736,8 +21759,8 @@ ${char.mes_example}
     const raw = book && book.entries;
     const entries = (Array.isArray(raw) ? raw : raw && typeof raw === "object" ? Object.values(raw) : []).map(normEntry).filter(Boolean);
     const ext = book && book.extensions && book.extensions.rpmod;
-    const world = ext && ext.world && typeof ext.world === "object" && !Array.isArray(ext.world) ? ext.world : null;
-    return { name: str(book && book.name) || str(inner && inner.name) || str(data.name), world, entries };
+    const world2 = ext && ext.world && typeof ext.world === "object" && !Array.isArray(ext.world) ? ext.world : null;
+    return { name: str(book && book.name) || str(inner && inner.name) || str(data.name), world: world2, entries };
   }
   function typedEntry(e) {
     const h = parseHeader(e.content);
@@ -21745,12 +21768,12 @@ ${char.mes_example}
     if (kind === "lore") return { kind, name: e.comment || e.keys[0] || "Lore", text: e.content };
     return { kind, name: h ? h.name : e.comment || e.keys[0] || "", text: h ? h.text : e.content };
   }
-  function applyEntryEdits(world, entries) {
+  function applyEntryEdits(world2, entries) {
     const extra = [];
     let edited = 0;
     for (const e of entries) {
       const r = e.rpmod;
-      const ent = r && arr(world[KINDS2[r.kind]]).find((x) => x && x.id === r.id);
+      const ent = r && arr(world2[KINDS2[r.kind]]).find((x) => x && x.id === r.id);
       if (!ent) {
         extra.push(e);
         continue;
@@ -22277,7 +22300,10 @@ Spells: ${chosen}` : "") + (sp.spells ? `${chosen ? "; " : "\nSpells: "}${sp.spe
       // Two-slot runtime: { active:'working'|'base', base:Snapshot, working:Snapshot }.
       // `base` is the state we loaded/started with; `working` is the live, mutating one.
       // Reset/commit/swap between them; both persist in the savefile + export/import.
-      runtime: null
+      runtime: null,
+      // R8: runtimes of other worlds this story has used, { [worldId]: container } — switching
+      // worlds parks the current one here instead of carrying it into a world it does not fit
+      parked: {}
     };
     function defaultRuntime() {
       return {
@@ -22318,8 +22344,8 @@ Spells: ${chosen}` : "") + (sp.spells ? `${chosen ? "; " : "\nSpells: "}${sp.spe
         // non-repeatable events already fired
         startedEncounters: [],
         // saved encounters already started (R7: "waiting here" hint)
-        lastParsedIndex: 0,
-        // gametext_arr index up to which tags were applied
+        lastParsedIndex: chatLength(),
+        // gametext_arr index up to which tags were applied (a new state starts at the current chat: older tags are not replayed)
         // R7 exploration of dungeons/towns (map-rules.js): { [roomId]: 'known'|'discovered'|'visited' },
         // found secrets (exit/room ids) and traps, rooms searched, door states and room light
         // that override the authored ones
@@ -22331,6 +22357,13 @@ Spells: ${chosen}` : "") + (sp.spells ? `${chosen ? "; " : "\nSpells: "}${sp.spe
       };
     }
     const deepClone = (o) => JSON.parse(JSON.stringify(o));
+    function chatLength() {
+      try {
+        return Array.isArray(window.gametext_arr) ? window.gametext_arr.length : 0;
+      } catch (_) {
+        return 0;
+      }
+    }
     function newRuntime() {
       return { active: "working", base: defaultRuntime(), working: defaultRuntime() };
     }
@@ -22370,7 +22403,7 @@ Spells: ${chosen}` : "") + (sp.spells ? `${chosen ? "; " : "\nSpells: "}${sp.spe
       } catch (_) {
       }
     }
-    const asArray4 = (v) => Array.isArray(v) ? v : [];
+    const asArray5 = (v) => Array.isArray(v) ? v : [];
     const norm5 = (s) => String(s == null ? "" : s).trim();
     function uid(prefix) {
       return (prefix || "id") + "_" + Math.random().toString(36).slice(2, 9);
@@ -22380,13 +22413,13 @@ Spells: ${chosen}` : "") + (sp.spells ? `${chosen ? "; " : "\nSpells: "}${sp.spe
     }
     function findById(list3, id) {
       if (!id) return null;
-      for (const it of asArray4(list3)) if (it && it.id === id) return it;
+      for (const it of asArray5(list3)) if (it && it.id === id) return it;
       return null;
     }
-    function locationByName(world, name) {
+    function locationByName(world2, name) {
       const n = norm5(name).toLowerCase();
       if (!n) return null;
-      for (const l of asArray4(world.locations)) {
+      for (const l of asArray5(world2.locations)) {
         if (norm5(l.name).toLowerCase() === n) return l;
       }
       return null;
@@ -22586,7 +22619,8 @@ Spells: ${chosen}` : "") + (sp.spells ? `${chosen ? "; " : "\nSpells: "}${sp.spe
         enabled: !!W.config.enabled,
         activeWorldId: W.activeWorldId,
         config: { ...W.config },
-        runtime: W.runtime ? JSON.parse(JSON.stringify(W.runtime)) : null
+        runtime: W.runtime ? JSON.parse(JSON.stringify(W.runtime)) : null,
+        parked: Object.keys(W.parked || {}).length ? JSON.parse(JSON.stringify(W.parked)) : void 0
       };
     }
     function restoreSaveState(state) {
@@ -22596,6 +22630,8 @@ Spells: ${chosen}` : "") + (sp.spells ? `${chosen ? "; " : "\nSpells: "}${sp.spe
         if (state.config && typeof state.config === "object") W.config = { ...W.config, ...state.config };
         W.config.enabled = !!state.enabled;
         W.runtime = state.runtime ? toRuntimeContainer(state.runtime) : W.activeWorldId ? newRuntime() : null;
+        W.parked = {};
+        if (state.parked && typeof state.parked === "object") for (const [id, c] of Object.entries(state.parked)) W.parked[id] = toRuntimeContainer(c);
         dbg("runtime state restored; world=", W.activeWorldId, "enabled=", W.config.enabled);
       } catch (e) {
         err("restoreSaveState failed", e);
@@ -22619,7 +22655,7 @@ Spells: ${chosen}` : "") + (sp.spells ? `${chosen ? "; " : "\nSpells: "}${sp.spe
       return out;
     }
     function childLocations(locId) {
-      return asArray4(activeWorld() && activeWorld().locations).filter((l) => l.parentId === locId);
+      return asArray5(activeWorld() && activeWorld().locations).filter((l) => l.parentId === locId);
     }
     function setLocationParent(locId, parentId) {
       const w = activeWorld();
@@ -22657,7 +22693,7 @@ Spells: ${chosen}` : "") + (sp.spells ? `${chosen ? "; " : "\nSpells: "}${sp.spe
       return rt() && rt().found || { secrets: [], traps: [] };
     }
     function roomFound(loc) {
-      return !!loc && (!loc.secret || asArray4(foundState().secrets).includes(loc.id));
+      return !!loc && (!loc.secret || asArray5(foundState().secrets).includes(loc.id));
     }
     function playerExits(locId) {
       const rank = (e) => {
@@ -22667,8 +22703,8 @@ Spells: ${chosen}` : "") + (sp.spells ? `${chosen ? "; " : "\nSpells: "}${sp.spe
       return exitsOfLoc(locId).filter((e) => visibleExit(e, foundState()) && roomFound(locOf(e.to))).sort((a, b) => rank(a) - rank(b));
     }
     function findExit(exitId) {
-      for (const l of asArray4(activeWorld() && activeWorld().locations)) {
-        const ex = asArray4(l.exits).find((e) => e && e.id === exitId);
+      for (const l of asArray5(activeWorld() && activeWorld().locations)) {
+        const ex = asArray5(l.exits).find((e) => e && e.id === exitId);
         if (ex) return { owner: l, exit: ex };
       }
       return null;
@@ -22712,11 +22748,11 @@ Spells: ${chosen}` : "") + (sp.spells ? `${chosen ? "; " : "\nSpells: "}${sp.spe
       else if (fields.near && locOf(fields.near)) want = besideRect(rectOf(locOf(fields.near)), fields.dir || "e", size.w, size.h);
       else want = placed.length ? { x: 0, y: Math.max(...placed.map((p) => p.y + p.h)) + ROOM.gap, ...size } : { x: 0, y: 0, ...size };
       const rect2 = fields.x != null && fields.y != null ? want : freeSpot(want, placed, ROOM.gap);
-      const room = { id: uid("location"), name: norm5(fields.name) || defaultRoomName(map), parentId: map.id, map: rect2 };
-      for (const k2 of ["description", "kind", "light", "secret", "hazards", "origin", "combatSpace"]) if (fields[k2] != null) room[k2] = fields[k2];
-      activeWorld().locations.push(room);
-      if (fields.near && locOf(fields.near) && fields.connect !== false) addExit(fields.near, room.id, { dir: fields.dir });
-      return room;
+      const room2 = { id: uid("location"), name: norm5(fields.name) || defaultRoomName(map), parentId: map.id, map: rect2 };
+      for (const k2 of ["description", "kind", "light", "secret", "hazards", "origin", "combatSpace"]) if (fields[k2] != null) room2[k2] = fields[k2];
+      activeWorld().locations.push(room2);
+      if (fields.near && locOf(fields.near) && fields.connect !== false) addExit(fields.near, room2.id, { dir: fields.dir });
+      return room2;
     }
     function addExit(fromId, toId, opts = {}) {
       const a = locOf(fromId), b = locOf(toId);
@@ -22729,7 +22765,7 @@ Spells: ${chosen}` : "") + (sp.spells ? `${chosen ? "; " : "\nSpells: "}${sp.spe
       const ex = normalizeExit({ to: toId, dir, type }, () => uid("ex"));
       if (type === "door" || type === "secret") ex.door = Object.assign({ state: "closed" }, opts.door || {});
       if (opts.secretDC != null) ex.secretDC = Number(opts.secretDC) || 0;
-      a.exits = asArray4(a.exits);
+      a.exits = asArray5(a.exits);
       a.exits.push(ex);
       return ex;
     }
@@ -22748,7 +22784,7 @@ Spells: ${chosen}` : "") + (sp.spells ? `${chosen ? "; " : "\nSpells: "}${sp.spe
     function removeExit(exitId) {
       const f = findExit(exitId);
       if (!f) return false;
-      f.owner.exits = asArray4(f.owner.exits).filter((e) => e.id !== exitId);
+      f.owner.exits = asArray5(f.owner.exits).filter((e) => e.id !== exitId);
       return true;
     }
     function setRoomRect(id, rect2) {
@@ -22800,26 +22836,26 @@ Spells: ${chosen}` : "") + (sp.spells ? `${chosen ? "; " : "\nSpells: "}${sp.spe
       const ids = new Set(rooms.map((x) => x.id));
       const seen = /* @__PURE__ */ new Set();
       const exits = [];
-      for (const room of rooms) for (const e of exitsOfLoc(room.id)) {
+      for (const room2 of rooms) for (const e of exitsOfLoc(room2.id)) {
         if (seen.has(e.id) || !ids.has(e.to)) continue;
         if (opts.player && !visibleExit(e, foundState())) continue;
         seen.add(e.id);
         exits.push({
           id: e.id,
           from: e.owner,
-          to: e.owner === room.id ? e.to : room.id,
-          dir: e.owner === room.id ? e.dir : mirrorDir(e.dir),
+          to: e.owner === room2.id ? e.to : room2.id,
+          dir: e.owner === room2.id ? e.dir : mirrorDir(e.dir),
           type: e.type || "open",
           state: doorState(e, r && r.doorState),
           secret: isSecret(e),
-          found: asArray4(foundState().secrets).includes(e.id),
+          found: asArray5(foundState().secrets).includes(e.id),
           legacy: !!e.legacy,
           door: e.door ? { ...e.door } : null,
           secretDC: e.secretDC || null
         });
       }
       const outside = [];
-      for (const room of rooms) for (const e of exitsOfLoc(room.id)) if (!ids.has(e.to) && !isInsideLocation(e.to, mapId) && e.to !== mapId) outside.push({ room: room.id, to: e.to, name: norm5((locOf(e.to) || {}).name), dir: e.dir });
+      for (const room2 of rooms) for (const e of exitsOfLoc(room2.id)) if (!ids.has(e.to) && !isInsideLocation(e.to, mapId) && e.to !== mapId) outside.push({ room: room2.id, to: e.to, name: norm5((locOf(e.to) || {}).name), dir: e.dir });
       return {
         id: map.id,
         name: norm5(phasedEntity(map).name),
@@ -22866,7 +22902,7 @@ Spells: ${chosen}` : "") + (sp.spells ? `${chosen ? "; " : "\nSpells: "}${sp.spe
       if (unseen) return locOf(unseen.to);
       const hit = exits.map((e) => locOf(e.to)).filter(Boolean).find((l) => nameKey(phasedEntity(l).name) === key || nameKey(l.name) === key);
       if (hit) return hit;
-      return asArray4(w.locations).find((l) => nameKey(phasedEntity(l).name) === key || nameKey(l.name) === key) || null;
+      return asArray5(w.locations).find((l) => nameKey(phasedEntity(l).name) === key || nameKey(l.name) === key) || null;
     }
     function go(target, opts = {}) {
       const w = activeWorld();
@@ -22937,7 +22973,7 @@ Spells: ${chosen}` : "") + (sp.spells ? `${chosen ? "; " : "\nSpells: "}${sp.spe
     }
     function featureVisible(o) {
       if (o.hidden) return false;
-      return o.kind !== "trap" || asArray4(foundState().traps).includes(o.id);
+      return o.kind !== "trap" || asArray5(foundState().traps).includes(o.id);
     }
     const isDoorExit = (e) => !!e && (e.type === "door" || e.type === "secret");
     const SKILL_ABILITY = { perception: "wis", investigation: "int", stealth: "dex" };
@@ -22993,7 +23029,7 @@ Spells: ${chosen}` : "") + (sp.spells ? `${chosen ? "; " : "\nSpells: "}${sp.spe
       return i > p ? { name: "Investigation", bonus: i } : { name: "Perception", bonus: p };
     }
     function hasThievesTools() {
-      return asArray4(inventoryView().items).some((i) => /thie(f|ves)['’]?s?\s*tools/i.test(norm5(i && i.name)));
+      return asArray5(inventoryView().items).some((i) => /thie(f|ves)['’]?s?\s*tools/i.test(norm5(i && i.name)));
     }
     function lockpickBonus() {
       const sh = personaSheet();
@@ -23063,11 +23099,11 @@ Spells: ${chosen}` : "") + (sp.spells ? `${chosen ? "; " : "\nSpells: "}${sp.spe
       for (const e of exitsOfLoc(locId)) {
         const to = locOf(e.to);
         const dirTxt = e.dir ? ` (${dirName(e.dir)})` : "";
-        if (isSecret(e) && !asArray4(f.secrets).includes(e.id)) out.push({ kind: "secret", id: e.id, dc: Number(e.secretDC) || DEFAULT_DC, label: `a secret door${dirTxt}`, room: to && to.secret && !roomFound(to) ? to.id : null, exit: e });
+        if (isSecret(e) && !asArray5(f.secrets).includes(e.id)) out.push({ kind: "secret", id: e.id, dc: Number(e.secretDC) || DEFAULT_DC, label: `a secret door${dirTxt}`, room: to && to.secret && !roomFound(to) ? to.id : null, exit: e });
         else if (to && to.secret && !roomFound(to) && visibleExit(e, f)) out.push({ kind: "room", id: to.id, dc: Number(to.secretDC) || DEFAULT_DC, label: `a hidden way${dirTxt}`, exit: e });
       }
-      for (const o of asArray4(activeWorld() && activeWorld().objects)) {
-        if (o.locationId !== locId || o.kind !== "trap" || o.hidden || asArray4(f.traps).includes(o.id)) continue;
+      for (const o of asArray5(activeWorld() && activeWorld().objects)) {
+        if (o.locationId !== locId || o.kind !== "trap" || o.hidden || asArray5(f.traps).includes(o.id)) continue;
         out.push({ kind: "trap", id: o.id, dc: Number(o.trapDC) || DEFAULT_DC, label: `a trap (${norm5(o.name) || "trap"})` });
       }
       return out;
@@ -23144,12 +23180,12 @@ Spells: ${chosen}` : "") + (sp.spells ? `${chosen ? "; " : "\nSpells: "}${sp.spe
       }
       if (!dir) dir = ["n", "e", "s", "w"].find((d) => !taken.has(d));
       if (!dir) return refuse(`${placeName(curId, curId)} has no free side`);
-      const room = addRoom2(map.id, { name: spec.name, near: curId, dir, description: spec.description || null, origin: "ai", connect: false });
-      const ex = addExit(curId, room.id, { dir, type: town ? "open" : "door", door: town ? void 0 : { state: "open" } });
-      raiseExplored(rt().explored, room.id, "discovered");
+      const room2 = addRoom2(map.id, { name: spec.name, near: curId, dir, description: spec.description || null, origin: "ai", connect: false });
+      const ex = addExit(curId, room2.id, { dir, type: town ? "open" : "door", door: town ? void 0 : { state: "open" } });
+      raiseExplored(rt().explored, room2.id, "discovered");
       markDirty();
-      gameLog(`New ${town ? "place" : "room"}: ${room.name}, ${dirName(dir)} of ${placeName(curId, curId)}.`, "map");
-      return { ok: true, room: room.id, exit: ex.id };
+      gameLog(`New ${town ? "place" : "room"}: ${room2.name}, ${dirName(dir)} of ${placeName(curId, curId)}.`, "map");
+      return { ok: true, room: room2.id, exit: ex.id };
     }
     function aiDoor(arg) {
       const spec = parseDoorSpec(arg);
@@ -23164,26 +23200,26 @@ Spells: ${chosen}` : "") + (sp.spells ? `${chosen ? "; " : "\nSpells: "}${sp.spe
       if (!ex) return refuse("there is no such way here");
       const f = findExit(ex.id);
       if (!f) return refuse("this way cannot have a door");
-      let world = false;
+      let world2 = false;
       if (!isDoorExit(f.exit)) {
         if (!spec.state && !spec.material) return { ok: true, same: true };
         updateExit(ex.id, { type: "door", door: { state: "open" } });
-        world = true;
+        world2 = true;
       }
       f.exit.door = f.exit.door || { state: "closed" };
       const st = doorState(f.exit, rt().doorState);
       if (spec.state && spec.state !== st) {
         if (!harderOrSame(st, spec.state)) {
-          if (world) markDirty();
+          if (world2) markDirty();
           return refuse(`the door is ${st} — only <open> or <unlock> opens it`);
         }
         rt().doorState[ex.id] = spec.state;
       }
       for (const k2 of ["material", "lockDC", "keyItem"]) if (spec[k2] != null && (f.exit.door[k2] == null || f.exit.door[k2] === "")) {
         f.exit.door[k2] = spec[k2];
-        world = true;
+        world2 = true;
       }
-      if (world) markDirty();
+      if (world2) markDirty();
       if (spec.state && spec.state !== st) gameLog(`${doorLabel(Object.assign({}, ex, { door: f.exit.door }), curId).replace(/^the/, "The")} is now ${spec.state}.`, "map");
       return { ok: true, state: doorState(f.exit, rt().doorState) };
     }
@@ -23208,10 +23244,10 @@ Spells: ${chosen}` : "") + (sp.spells ? `${chosen ? "; " : "\nSpells: "}${sp.spe
       return o;
     }
     function encountersAt(locId) {
-      return asArray4(activeWorld() && activeWorld().encounters).filter((e) => e.locationId === locId);
+      return asArray5(activeWorld() && activeWorld().encounters).filter((e) => e.locationId === locId);
     }
     function encounterSummary(monsters) {
-      return asArray4(monsters).map((m) => `${m.count > 1 ? m.count + " " : ""}${(MONSTERS[m.key] || {}).name || m.key}`).join(", ");
+      return asArray5(monsters).map((m) => `${m.count > 1 ? m.count + " " : ""}${(MONSTERS[m.key] || {}).name || m.key}`).join(", ");
     }
     function generateMap(mapId, opts = {}) {
       const w = activeWorld();
@@ -23222,8 +23258,8 @@ Spells: ${chosen}` : "") + (sp.spells ? `${chosen ? "; " : "\nSpells: "}${sp.spe
         if (!opts.replace) throw new Error("this map already has rooms");
         const here2 = rt() && rt().playerLocationId;
         if (here2 && isInsideLocation(here2, mapId)) throw new Error("the player is inside this map — move them out first");
-        const inner = new Set(asArray4(w.locations).filter((l) => isInsideLocation(l.id, mapId)).map((l) => l.id));
-        w.encounters = asArray4(w.encounters).filter((e) => !inner.has(e.locationId));
+        const inner = new Set(asArray5(w.locations).filter((l) => isInsideLocation(l.id, mapId)).map((l) => l.id));
+        w.encounters = asArray5(w.encounters).filter((e) => !inner.has(e.locationId));
         for (const r of old) deleteEntity(r.id, { withRooms: true });
       }
       const town = kindOf(map) === "town";
@@ -23232,18 +23268,18 @@ Spells: ${chosen}` : "") + (sp.spells ? `${chosen ? "; " : "\nSpells: "}${sp.spe
       const plan = town ? generateTown({ places: opts.places, seed }) : generateDungeon({ size: opts.size, theme: opts.theme, seed, encounters: opts.encounters, level: Number(opts.level) || party.level, partySize: Number(opts.partySize) || party.size });
       const ids = {};
       for (const r of plan.rooms) {
-        const room = { id: uid("location"), name: r.name, parentId: mapId, map: { ...r.rect }, generated: true };
-        if (r.light) room.light = r.light;
-        if (r.hazards) room.hazards = r.hazards.slice();
-        if (r.secret) room.secret = true;
-        w.locations.push(room);
-        ids[r.key] = room.id;
-        for (const f of r.features) addFeatureTo(room.id, f);
+        const room2 = { id: uid("location"), name: r.name, parentId: mapId, map: { ...r.rect }, generated: true };
+        if (r.light) room2.light = r.light;
+        if (r.hazards) room2.hazards = r.hazards.slice();
+        if (r.secret) room2.secret = true;
+        w.locations.push(room2);
+        ids[r.key] = room2.id;
+        for (const f of r.features) addFeatureTo(room2.id, f);
       }
       for (const e of plan.exits) addExit(ids[e.from], ids[e.to], { dir: e.dir, type: e.type, door: e.door, secretDC: e.secretDC });
       let encounters = 0;
       for (const r of plan.rooms) if (r.encounter) {
-        w.encounters = asArray4(w.encounters);
+        w.encounters = asArray5(w.encounters);
         w.encounters.push({
           id: uid("enc"),
           name: `${norm5(map.name)}: ${encounterSummary(r.encounter.monsters)} (${r.name})`,
@@ -23326,10 +23362,11 @@ Spells: ${chosen}` : "") + (sp.spells ? `${chosen ? "; " : "\nSpells: "}${sp.spe
       return false;
     }
     function resolveNpcLocationId(npc) {
+      if (rt() && rt().playerLocationId && asArray5(rt().party).includes(npc.id)) return rt().playerLocationId;
       const ov = rt()?.npcStateOverrides?.[npc.id];
       if (ov && ov.locationId) return ov.locationId;
       npc = phasedEntity(npc);
-      const sched = asArray4(npc.schedule);
+      const sched = asArray5(npc.schedule);
       if (sched.length && rt()?.clock) {
         const t = norm5(rt().clock.time).toLowerCase();
         const hit = sched.find((row2) => norm5(row2.time).toLowerCase() === t);
@@ -23344,7 +23381,7 @@ Spells: ${chosen}` : "") + (sp.spells ? `${chosen ? "; " : "\nSpells: "}${sp.spe
     }
     function characterLibrary() {
       try {
-        const gallery = asArray4(window.KLITE_RPMod && window.KLITE_RPMod.characters);
+        const gallery = asArray5(window.KLITE_RPMod && window.KLITE_RPMod.characters);
         if (gallery.length) return gallery;
         const L = window.KLITE_RPMod_Library;
         return L && typeof L.characterNames === "function" ? L.characterNames().map((name) => ({ id: name, name })) : [];
@@ -23436,7 +23473,7 @@ Spells: ${chosen}` : "") + (sp.spells ? `${chosen ? "; " : "\nSpells: "}${sp.spe
       d.isMonster = !!s.isMonster;
       d.skills = s.skills && typeof s.skills === "object" ? { ...s.skills } : {};
       d.saves = s.saves && typeof s.saves === "object" ? { ...s.saves } : {};
-      d.attacks = asArray4(s.attacks);
+      d.attacks = asArray5(s.attacks);
       for (const k2 of ["saveActions", "multiattack", "xp", "cr", "key", "name"]) if (s[k2] != null) d[k2] = s[k2];
       return d;
     }
@@ -23445,7 +23482,7 @@ Spells: ${chosen}` : "") + (sp.spells ? `${chosen ? "; " : "\nSpells: "}${sp.spe
       const s = normalizeStats(stats);
       const abil = ABILITIES2.map((a) => `${a.toUpperCase()} ${s.abilities[a]}(${fmtMod(abilityMod3(s.abilities[a]))})`).join(" ");
       const init2 = s.initiativeMod || abilityMod3(s.abilities.dex);
-      const atk = asArray4(s.attacks).map((a) => norm5(a && a.name)).filter(Boolean).join(", ");
+      const atk = asArray5(s.attacks).map((a) => norm5(a && a.name)).filter(Boolean).join(", ");
       return `AC ${s.ac}, HP ${s.hpMax}, ${abil}, Init ${fmtMod(init2)}` + (atk ? `; Attacks: ${atk}` : "");
     }
     const QUEST_STATES = ["available", "active", "complete", "turnedin", "failed"];
@@ -23458,12 +23495,12 @@ Spells: ${chosen}` : "") + (sp.spells ? `${chosen ? "; " : "\nSpells: "}${sp.spe
       return s || "available";
     }
     function isDiscovered(kind, id) {
-      return !!(rt() && rt().discovered && asArray4(rt().discovered[kind]).includes(id));
+      return !!(rt() && rt().discovered && asArray5(rt().discovered[kind]).includes(id));
     }
     function discover(kind, id) {
       if (!rt()) return;
       rt().discovered = rt().discovered || { quests: [], events: [], descriptions: [] };
-      const a = rt().discovered[kind] = asArray4(rt().discovered[kind]);
+      const a = rt().discovered[kind] = asArray5(rt().discovered[kind]);
       if (!a.includes(id)) a.push(id);
     }
     function questVisible(q, mode2) {
@@ -23506,9 +23543,9 @@ Spells: ${chosen}` : "") + (sp.spells ? `${chosen ? "; " : "\nSpells: "}${sp.spe
       return m && !m.grey ? m.mark : "";
     }
     function questMarkerInfo(personId, mode2) {
-      const world = activeWorld();
-      if (!world || !personId) return null;
-      const quests = asArray4(world.quests).filter((q) => questVisible(q, mode2));
+      const world2 = activeWorld();
+      if (!world2 || !personId) return null;
+      const quests = asArray5(world2.quests).filter((q) => questVisible(q, mode2));
       if (quests.some((q) => q.turninPersonId === personId && questStateOf(q) === "complete")) return { mark: "?", grey: false };
       if (quests.some((q) => q.giverPersonId === personId && questStateOf(q) === "available" && !questLocks(q).length)) return { mark: "!", grey: false };
       if (quests.some((q) => q.turninPersonId === personId && questStateOf(q) === "active")) return { mark: "?", grey: true };
@@ -23532,7 +23569,7 @@ Spells: ${chosen}` : "") + (sp.spells ? `${chosen ? "; " : "\nSpells: "}${sp.spe
       const picks = [].concat(choice == null ? [] : choice);
       let ci = 0;
       const got = [];
-      for (const r of asArray4(q.rewards)) {
+      for (const r of asArray5(q.rewards)) {
         switch (rewardType(r)) {
           case "xp":
             addXp(r.xp);
@@ -23551,7 +23588,7 @@ Spells: ${chosen}` : "") + (sp.spells ? `${chosen ? "; " : "\nSpells: "}${sp.spe
             got.push(formatReward(r, factionName));
             break;
           case "choice": {
-            const o = asArray4(r.options)[Number(picks[ci++]) || 0];
+            const o = asArray5(r.options)[Number(picks[ci++]) || 0];
             if (o) {
               inventoryAdd(o.item, o.qty);
               got.push(formatReward({ type: "item", ...o }));
@@ -23578,13 +23615,13 @@ Spells: ${chosen}` : "") + (sp.spells ? `${chosen ? "; " : "\nSpells: "}${sp.spe
       }
     }
     function factionIdOf(idOrName) {
-      const fs = asArray4(activeWorld() && activeWorld().factions);
+      const fs = asArray5(activeWorld() && activeWorld().factions);
       const q = norm5(idOrName);
       const f = fs.find((x) => x.id === q) || fs.find((x) => sameName(x.name, q)) || fs.find((x) => norm5(x.name).toLowerCase().includes(q.toLowerCase()) && q.length > 3);
       return f ? f.id : null;
     }
     function reputationList() {
-      return asArray4(activeWorld() && activeWorld().factions).map((f) => {
+      return asArray5(activeWorld() && activeWorld().factions).map((f) => {
         const value = repValue(f.id);
         const pr = tierProgress(value);
         const tier = pr.tier;
@@ -23604,7 +23641,7 @@ Spells: ${chosen}` : "") + (sp.spells ? `${chosen ? "; " : "\nSpells: "}${sp.spe
       return Number(f && f.startReputation) || 0;
     }
     function needsChoice(q) {
-      return asArray4(q && q.rewards).filter((r) => rewardType(r) === "choice").length;
+      return asArray5(q && q.rewards).filter((r) => rewardType(r) === "choice").length;
     }
     function setQuestState(questId, state) {
       ensureRuntime();
@@ -23638,7 +23675,7 @@ Spells: ${chosen}` : "") + (sp.spells ? `${chosen ? "; " : "\nSpells: "}${sp.spe
       if (!q) return null;
       if (needsChoice(q) && choice == null && !(rt().rewardsPaid && rt().rewardsPaid[id])) return null;
       if (!(rt().rewardsPaid && rt().rewardsPaid[id])) {
-        for (const o of asArray4(q.objectives)) if (objectiveKind(o) === "collect" && o.consume !== false) inventoryRemove(o.target || o.text, objectiveCount(o));
+        for (const o of asArray5(q.objectives)) if (objectiveKind(o) === "collect" && o.consume !== false) inventoryRemove(o.target || o.text, objectiveCount(o));
       }
       const got = payRewards(q, choice);
       const s = setQuestState(id, "turnedin");
@@ -23657,7 +23694,7 @@ Spells: ${chosen}` : "") + (sp.spells ? `${chosen ? "; " : "\nSpells: "}${sp.spe
       const w = activeWorld();
       if (!w || !rt()) return;
       const today = absoluteDay(rt().clock);
-      for (const q of asArray4(w.quests)) {
+      for (const q of asArray5(w.quests)) {
         if (questStateOf(q) !== "turnedin" || !repeatReady(q, rt().questRepeats && rt().questRepeats[q.id], today)) continue;
         if (rt().questObjectives) delete rt().questObjectives[q.id];
         if (rt().rewardsPaid) delete rt().rewardsPaid[q.id];
@@ -23685,9 +23722,9 @@ Spells: ${chosen}` : "") + (sp.spells ? `${chosen ? "; " : "\nSpells: "}${sp.spe
     function questEvent(kind, info) {
       const w = activeWorld();
       if (!w || !rt()) return;
-      for (const q of asArray4(w.quests)) {
+      for (const q of asArray5(w.quests)) {
         if (questStateOf(q) !== "active") continue;
-        for (const o of asArray4(q.objectives)) {
+        for (const o of asArray5(q.objectives)) {
           if (objectiveKind(o) !== kind) continue;
           const st = objectiveStatusOf(q, o);
           if (st.done) continue;
@@ -23726,16 +23763,16 @@ Spells: ${chosen}` : "") + (sp.spells ? `${chosen ? "; " : "\nSpells: "}${sp.spe
       try {
         refreshRepeatables();
         const here2 = rt().playerLocationId;
-        for (const q of asArray4(w.quests)) {
+        for (const q of asArray5(w.quests)) {
           if (!q.startItem || questStateOf(q) !== "available" || isDiscovered("quests", q.id) || itemCount(q.startItem) <= 0) continue;
           discover("quests", q.id);
           discover("descriptions", q.id);
           gameLog(`The ${norm5(q.startItem)} starts a quest: ${questTitle(q)}.`);
         }
-        for (const q of asArray4(w.quests)) {
+        for (const q of asArray5(w.quests)) {
           const st = questStateOf(q);
           if (st !== "active" && st !== "complete") continue;
-          const objs = asArray4(q.objectives);
+          const objs = asArray5(q.objectives);
           if (!objs.length) continue;
           if (st === "active" && here2) {
             for (const o of objs) if (objectiveKind(o) === "visit" && !objectiveStatusOf(q, o).done && isInsideLocation(here2, o.target)) {
@@ -23757,7 +23794,7 @@ Spells: ${chosen}` : "") + (sp.spells ? `${chosen ? "; " : "\nSpells: "}${sp.spe
       const w = activeWorld();
       const out = [];
       const say = (t) => norm5(t) ? ` — "${norm5(t)}"` : "";
-      for (const q of asArray4(w && w.quests)) {
+      for (const q of asArray5(w && w.quests)) {
         if (!questVisible(q, mode2)) continue;
         const st = questStateOf(q), title = questTitle(q);
         const rep = repeatKind(q) ? ` (${repeatKind(q)})` : "";
@@ -23773,7 +23810,7 @@ Spells: ${chosen}` : "") + (sp.spells ? `${chosen ? "; " : "\nSpells: "}${sp.spe
     }
     function questByTitle(t) {
       const n = norm5(t).toLowerCase();
-      const qs = asArray4(activeWorld() && activeWorld().quests);
+      const qs = asArray5(activeWorld() && activeWorld().quests);
       return qs.find((q) => q.id === norm5(t)) || qs.find((q) => questTitle(q).toLowerCase() === n) || qs.find((q) => n.length > 3 && questTitle(q).toLowerCase().includes(n)) || null;
     }
     function tagAccept(t) {
@@ -23800,9 +23837,9 @@ Spells: ${chosen}` : "") + (sp.spells ? `${chosen ? "; " : "\nSpells: "}${sp.spe
       const here2 = rt().playerLocationId;
       const t = norm5(text).toLowerCase();
       if (!t) return;
-      for (const q of asArray4(w.quests)) {
+      for (const q of asArray5(w.quests)) {
         if (questStateOf(q) !== "active") continue;
-        for (const o of asArray4(q.objectives)) {
+        for (const o of asArray5(q.objectives)) {
           if (objectiveKind(o) !== "talk" || objectiveStatusOf(q, o).done) continue;
           const npc = findById(w.npcs, o.target);
           if (!npc || resolveNpcLocationId(npc) !== here2) continue;
@@ -23824,11 +23861,11 @@ Spells: ${chosen}` : "") + (sp.spells ? `${chosen ? "; " : "\nSpells: "}${sp.spe
       return s;
     }
     function listQuests(mode2) {
-      const world = activeWorld();
-      if (!world) return [];
+      const world2 = activeWorld();
+      if (!world2) return [];
       mode2 = mode2 || "gm";
-      return asArray4(world.quests).filter((q) => questVisible(q, mode2) && !(mode2 === "player" && questStateOf(q) === "available" && questLocks(q).length && !onlyLevelLocked(q))).map((q) => {
-        const giver = findById(world.npcs, q.giverPersonId), turnin = findById(world.npcs, q.turninPersonId);
+      return asArray5(world2.quests).filter((q) => questVisible(q, mode2) && !(mode2 === "player" && questStateOf(q) === "available" && questLocks(q).length && !onlyLevelLocked(q))).map((q) => {
+        const giver = findById(world2.npcs, q.giverPersonId), turnin = findById(world2.npcs, q.turninPersonId);
         return {
           id: q.id,
           title: norm5(q.title) || norm5(q.name) || "Quest",
@@ -23838,8 +23875,8 @@ Spells: ${chosen}` : "") + (sp.spells ? `${chosen ? "; " : "\nSpells: "}${sp.spe
           active: rt() && rt().activeQuestId === q.id,
           giver: giver ? personName(giver) : "",
           turnin: turnin ? personName(turnin) : "",
-          rewards: asArray4(q.rewards),
-          objectives: asArray4(q.objectives).filter((o) => mode2 !== "player" || !o.hidden).map((o) => {
+          rewards: asArray5(q.rewards),
+          objectives: asArray5(q.objectives).filter((o) => mode2 !== "player" || !o.hidden).map((o) => {
             const os = objectiveStatusOf(q, o);
             return { ...o, kind: objectiveKind(o), ...os, label: objectiveLabel(o, os) };
           }),
@@ -23935,11 +23972,11 @@ Spells: ${chosen}` : "") + (sp.spells ? `${chosen ? "; " : "\nSpells: "}${sp.spe
           return false;
       }
     }
-    function eventActive(world, ev) {
+    function eventActive(world2, ev) {
       if (!ev) return false;
-      if (!ev.repeatable && asArray4(rt()?.completedEventIds).includes(ev.id)) return false;
-      if (asArray4(ev.locationIds).length && !ev.locationIds.includes(rt()?.playerLocationId)) return false;
-      return asArray4(ev.conditions).every(evalCondition);
+      if (!ev.repeatable && asArray5(rt()?.completedEventIds).includes(ev.id)) return false;
+      if (asArray5(ev.locationIds).length && !ev.locationIds.includes(rt()?.playerLocationId)) return false;
+      return asArray5(ev.conditions).every(evalCondition);
     }
     const TIME_SLOTS = ["morning", "noon", "afternoon", "evening", "night"];
     const DAYS_PER_MONTH = 30, MONTHS_PER_YEAR = 12;
@@ -23975,10 +24012,10 @@ Spells: ${chosen}` : "") + (sp.spells ? `${chosen ? "; " : "\nSpells: "}${sp.spe
       dbg("clock advanced ->", `d${c.day} m${c.month} ${c.time} ${c.season}`);
       return { ...c };
     }
-    function findNpcByName(world, name) {
+    function findNpcByName(world2, name) {
       const n = norm5(name).toLowerCase();
       if (!n) return null;
-      return asArray4(world.npcs).find((x) => norm5(x.name).toLowerCase() === n) || findById(world.npcs, name);
+      return asArray5(world2.npcs).find((x) => norm5(x.name).toLowerCase() === n) || findById(world2.npcs, name);
     }
     function parseFlagValue(raw) {
       const v = norm5(raw);
@@ -24034,10 +24071,10 @@ Spells: ${chosen}` : "") + (sp.spells ? `${chosen ? "; " : "\nSpells: "}${sp.spe
     }
     function itemCount(name) {
       let n = 0;
-      for (const i of asArray4(rt() && rt().inventory)) if (sameName(i.name, name)) n += Number(i.qty) || 1;
+      for (const i of asArray5(rt() && rt().inventory)) if (sameName(i.name, name)) n += Number(i.qty) || 1;
       const sh = sheetOwner() && personaSheet();
       if (sh) {
-        for (const i of asArray4(sh.inventory)) if (sameName(i.name, name)) n += Number(i.qty) || 1;
+        for (const i of asArray5(sh.inventory)) if (sameName(i.name, name)) n += Number(i.qty) || 1;
       }
       return n;
     }
@@ -24065,8 +24102,8 @@ Spells: ${chosen}` : "") + (sp.spells ? `${chosen ? "; " : "\nSpells: "}${sp.spe
     }
     function inventoryView() {
       const sh = sheetOwner() && personaSheet();
-      const story = asArray4(rt() && rt().inventory);
-      if (sh) return { source: "sheet", owner: personaName(), items: asArray4(sh.inventory).concat(story), gp: Number(sh.coins && sh.coins.gp) || 0, xp: Number(sh.xp) || 0, purseText: formatPrice(wealthCp(sh.coins)) };
+      const story = asArray5(rt() && rt().inventory);
+      if (sh) return { source: "sheet", owner: personaName(), items: asArray5(sh.inventory).concat(story), gp: Number(sh.coins && sh.coins.gp) || 0, xp: Number(sh.xp) || 0, purseText: formatPrice(wealthCp(sh.coins)) };
       return { source: "story", owner: "", items: story, gp: Number(rt() && rt().coins && rt().coins.gp) || 0, xp: Number(rt() && rt().xp) || 0, purseText: formatPrice(wealthCp(rt() && rt().coins)) };
     }
     function gameLog(what, kind) {
@@ -24101,7 +24138,7 @@ Spells: ${chosen}` : "") + (sp.spells ? `${chosen ? "; " : "\nSpells: "}${sp.spe
       const here2 = rt() && rt().playerLocationId;
       if (!w || !here2) return [];
       const loc = findById(w.locations, here2);
-      return asArray4(w.npcs).filter((p) => isVendor(p) && !phasedEntity(p).gone && (resolveNpcLocationId(p) === here2 || asArray4(loc && loc.npcIds).includes(p.id)));
+      return asArray5(w.npcs).filter((p) => isVendor(p) && !phasedEntity(p).gone && (resolveNpcLocationId(p) === here2 || asArray5(loc && loc.npcIds).includes(p.id)));
     }
     function vendorTier(p) {
       return p && p.factionId ? tierOf(repValue(p.factionId)) : "Neutral";
@@ -24230,8 +24267,8 @@ Spells: ${chosen}` : "") + (sp.spells ? `${chosen ? "; " : "\nSpells: "}${sp.spe
 The player's purse: ${formatPrice(wealthCp(purse()))}. When the player buys or sells, write <buy>item x2</buy> or <sell>item</sell>; RPmod checks the price, the stock and the purse and logs the result — narrate only what the log says.`;
     }
     function parseMutations(text) {
-      const world = activeWorld();
-      if (!world || !rt()) return false;
+      const world2 = activeWorld();
+      if (!world2 || !rt()) return false;
       let changed = false;
       const s = String(text || "");
       const scan = (re, fn2) => {
@@ -24252,8 +24289,8 @@ The player's purse: ${formatPrice(wealthCp(purse()))}. When the player buys or s
         }
       }
       scan(/<npcmove>\s*([^=<>]+?)\s*=\s*([^<>]+?)\s*<\/npcmove>/gi, (m) => {
-        const npc = findNpcByName(world, m[1]);
-        const l = findById(world.locations, m[2]) || locationByName(world, m[2]);
+        const npc = findNpcByName(world2, m[1]);
+        const l = findById(world2.locations, m[2]) || locationByName(world2, m[2]);
         if (npc && l) {
           (rt().npcStateOverrides[npc.id] = rt().npcStateOverrides[npc.id] || {}).locationId = l.id;
           return true;
@@ -24261,7 +24298,7 @@ The player's purse: ${formatPrice(wealthCp(purse()))}. When the player buys or s
         return false;
       });
       scan(/<mood>\s*([^=<>]+?)\s*=\s*([^<>]+?)\s*<\/mood>/gi, (m) => {
-        const npc = findNpcByName(world, m[1]);
+        const npc = findNpcByName(world2, m[1]);
         if (npc) {
           (rt().npcStateOverrides[npc.id] = rt().npcStateOverrides[npc.id] || {}).mood = norm5(m[2]);
           return true;
@@ -24296,8 +24333,10 @@ The player's purse: ${formatPrice(wealthCp(purse()))}. When the player buys or s
       scan(/<turnin>\s*([^<>]+?)\s*<\/turnin>/gi, (m) => tagTurnIn(m[1]));
       scan(/<buy>\s*([^<>]+?)\s*<\/buy>/gi, (m) => tradeTag("buy", m[1]));
       scan(/<sell>\s*([^<>]+?)\s*<\/sell>/gi, (m) => tradeTag("sell", m[1]));
+      scan(/<join>\s*([^<>]+?)\s*<\/join>/gi, (m) => joinParty(m[1], { source: "tag" }).ok);
+      scan(/<leave>\s*([^<>]+?)\s*<\/leave>/gi, (m) => leaveParty(m[1], { source: "tag" }).ok);
       scan(/<talk>\s*([^<>]+?)\s*<\/talk>/gi, (m) => {
-        const npc = findNpcByName(world, m[1]);
+        const npc = findNpcByName(world2, m[1]);
         if (!npc) return false;
         questEvent("talk", { personId: npc.id });
         return true;
@@ -24360,7 +24399,7 @@ The player's purse: ${formatPrice(wealthCp(purse()))}. When the player buys or s
     }
     function applyEffect(effect) {
       if (!effect || typeof effect !== "object" || !rt()) return [];
-      const world = activeWorld();
+      const world2 = activeWorld();
       const sigs = [];
       switch (norm5(effect.type)) {
         case "flag":
@@ -24391,7 +24430,7 @@ The player's purse: ${formatPrice(wealthCp(purse()))}. When the player buys or s
           break;
         }
         case "move": {
-          const l = findById(world && world.locations, effect.locationId) || locationByName(world, effect.location);
+          const l = findById(world2 && world2.locations, effect.locationId) || locationByName(world2, effect.location);
           if (l) {
             rt().playerLocationId = l.id;
             sigs.push("enter:" + l.id);
@@ -24399,8 +24438,8 @@ The player's purse: ${formatPrice(wealthCp(purse()))}. When the player buys or s
           break;
         }
         case "npcmove": {
-          const npc = findById(world && world.npcs, effect.npcId) || findNpcByName(world, effect.npc);
-          const l = findById(world && world.locations, effect.locationId) || locationByName(world, effect.location);
+          const npc = findById(world2 && world2.npcs, effect.npcId) || findNpcByName(world2, effect.npc);
+          const l = findById(world2 && world2.locations, effect.locationId) || locationByName(world2, effect.location);
           if (npc && l) (rt().npcStateOverrides[npc.id] = rt().npcStateOverrides[npc.id] || {}).locationId = l.id;
           break;
         }
@@ -24427,7 +24466,7 @@ The player's purse: ${formatPrice(wealthCp(purse()))}. When the player buys or s
     let firedEventsBuffer = [];
     let firing = false, pendingSignals = [];
     function eventTriggers(ev) {
-      const t = asArray4(ev.triggers);
+      const t = asArray5(ev.triggers);
       return t.length ? t : [{ type: "onTurn" }];
     }
     function triggerMatches(trig, signal, ev) {
@@ -24467,8 +24506,8 @@ The player's purse: ${formatPrice(wealthCp(purse()))}. When the player buys or s
       }
     }
     function fireTriggers(signal) {
-      const world = activeWorld();
-      if (!world || !rt()) return [];
+      const world2 = activeWorld();
+      if (!world2 || !rt()) return [];
       if (firing) {
         pendingSignals.push(signal);
         return [];
@@ -24482,17 +24521,17 @@ The player's purse: ${formatPrice(wealthCp(purse()))}. When the player buys or s
         while (queue.length && steps < 400) {
           steps++;
           const sig = queue.shift();
-          for (const ev of asArray4(world.events)) {
+          for (const ev of asArray5(world2.events)) {
             if (firedNow.has(ev.id)) continue;
-            if (!ev.repeatable && asArray4(rt().completedEventIds).includes(ev.id)) continue;
+            if (!ev.repeatable && asArray5(rt().completedEventIds).includes(ev.id)) continue;
             if (!eventTriggers(ev).some((t) => triggerMatches(t, sig, ev))) continue;
-            if (asArray4(ev.locationIds).length && !ev.locationIds.includes(rt().playerLocationId)) continue;
-            if (!asArray4(ev.conditions).every(evalCondition)) continue;
+            if (asArray5(ev.locationIds).length && !ev.locationIds.includes(rt().playerLocationId)) continue;
+            if (!asArray5(ev.conditions).every(evalCondition)) continue;
             firedNow.add(ev.id);
             fired.push(ev.id);
             if (!firedEventsBuffer.includes(ev.id)) firedEventsBuffer.push(ev.id);
-            if (!ev.repeatable && !asArray4(rt().completedEventIds).includes(ev.id)) rt().completedEventIds.push(ev.id);
-            for (const eff of asArray4(ev.effects)) for (const s of applyEffect(eff)) queue.push(s);
+            if (!ev.repeatable && !asArray5(rt().completedEventIds).includes(ev.id)) rt().completedEventIds.push(ev.id);
+            for (const eff of asArray5(ev.effects)) for (const s of applyEffect(eff)) queue.push(s);
             queue.push("event:" + ev.id);
             dbg("event fired:", ev.id, "via", sig);
           }
@@ -24560,7 +24599,7 @@ The player's purse: ${formatPrice(wealthCp(purse()))}. When the player buys or s
     }
     function combatantName(id) {
       const cb = getCombat();
-      const o = cb && asArray4(cb.order).find((x) => x.id === id);
+      const o = cb && asArray5(cb.order).find((x) => x.id === id);
       if (o && o.name) return o.name;
       if (id === "__player__") return personaSheet() && personaName() || norm5(playerCombatCfg().name) || personaName() || "You";
       const p = entityById(activeWorld(), id);
@@ -24595,14 +24634,18 @@ The player's purse: ${formatPrice(wealthCp(purse()))}. When the player buys or s
       if (opts && opts.sides && opts.sides[id]) return opts.sides[id] === "party" ? "party" : "enemy";
       const p = entityById(activeWorld(), id);
       const monster = !!(p && (p.isMonster || p.stats && p.stats.isMonster));
-      return !monster && asArray4(rt() && rt().party).includes(id) ? "party" : "enemy";
+      return !monster && asArray5(rt() && rt().party).includes(id) ? "party" : "enemy";
     }
     function startEncounter(ids, opts = {}) {
       ensureRuntime();
-      const entries = asArray4(ids).map((id) => ({ id, kind: id === "__player__" ? "player" : "person" }));
+      const entries = asArray5(ids).map((id) => ({ id, kind: id === "__player__" ? "player" : "person" }));
       if (opts.includePlayer !== false && !entries.some((e) => e.id === "__player__")) entries.unshift({ id: "__player__", kind: "player" });
+      if (opts.includePlayer !== false && opts.withParty !== false) for (const id of asArray5(rt().party)) {
+        const p = entityById(activeWorld(), id);
+        if (p && !p.isMonster && !phasedEntity(p).gone && !entries.some((e) => e.id === id)) entries.push({ id, kind: "person" });
+      }
       const stats = {}, names = /* @__PURE__ */ new Set();
-      for (const m of asArray4(opts.monsters)) {
+      for (const m of asArray5(opts.monsters)) {
         const key = findMonster(m.key || m.name);
         if (!key) continue;
         const count = Math.max(1, Math.min(20, Number(m.count) || 1));
@@ -24726,7 +24769,7 @@ The player's purse: ${formatPrice(wealthCp(purse()))}. When the player buys or s
       const cb = getCombat();
       if (!cb) return;
       cb.conditions = cb.conditions || {};
-      const list3 = cb.conditions[id] = asArray4(cb.conditions[id]).filter((c) => c.name !== name);
+      const list3 = cb.conditions[id] = asArray5(cb.conditions[id]).filter((c) => c.name !== name);
       list3.push({ name, rounds: rounds ? Number(rounds) : null });
     }
     function removeCond(id, name) {
@@ -24920,7 +24963,7 @@ The player's purse: ${formatPrice(wealthCp(purse()))}. When the player buys or s
     function saveAction(attackerId, targetId, actionIndex) {
       const cb = getCombat();
       if (!cb || cb.outcome) return null;
-      const act = asArray4(combatantStats(attackerId).saveActions)[Number(actionIndex) || 0];
+      const act = asArray5(combatantStats(attackerId).saveActions)[Number(actionIndex) || 0];
       if (!act) return null;
       const r = savingThrow(targetId, act.save, act.dc, { quiet: true });
       let dmg = act.damage ? rollExpr(act.damage).total : 0;
@@ -24970,11 +25013,26 @@ The player's purse: ${formatPrice(wealthCp(purse()))}. When the player buys or s
       if (enemies.length && enemies.every((o) => isDown(cb, o.id))) {
         cb.outcome = "victory";
         cb.xp = enemies.reduce((n, o) => n + (Number(combatantStats(o.id).xp) || 0), 0);
-        combatLog(`Victory! All enemies are defeated.${cb.xp ? ` ${cb.xp} XP earned.` : ""}`);
+        cb.xpShares = Math.max(1, party.length);
+        cb.xpEach = Math.floor(cb.xp / cb.xpShares);
+        combatLog(`Victory! All enemies are defeated.${cb.xp ? cb.xpShares > 1 ? ` ${cb.xp} XP, ${cb.xpEach} XP each for ${cb.xpShares} characters.` : ` ${cb.xp} XP earned.` : ""}`);
       } else if (party.length && party.every((o) => isDown(cb, o.id) && !(deathOf(cb, o.id) && !deathOf(cb, o.id).stable && !deathOf(cb, o.id).dead))) {
         cb.outcome = "defeat";
         const p = deathOf(cb, "__player__");
-        combatLog(`Defeat. ${p && p.dead ? "You have died." : "You are unconscious but stable, at the mercy of your foes."}`);
+        cb.wipe = party.every((o) => {
+          const d = deathOf(cb, o.id);
+          return !!(d && d.dead) || o.kind !== "player" && !d && isDown(cb, o.id);
+        });
+        if (cb.wipe) {
+          const r = rt();
+          const names = party.map((o) => combatantName(o.id));
+          if (r) r.gameOver = { day: r.clock && r.clock.day, time: r.clock && r.clock.time, locationId: r.playerLocationId, persona: cb.persona || "", fallen: names };
+          combatLog(`Game over. ${names.length > 1 ? "Everyone in the party has died" : "You have died"}: ${names.join(", ")}.`);
+          try {
+            setTimeout(() => window.dispatchEvent(new CustomEvent("klite:game-over", { detail: { fallen: names } })), 0);
+          } catch (_) {
+          }
+        } else combatLog(`Defeat. ${p && p.dead ? "You have died." : "You are unconscious but stable, at the mercy of your foes."}`);
       }
       if (cb.outcome) syncPersonaSheet(cb);
       return cb.outcome;
@@ -24983,24 +25041,29 @@ The player's purse: ${formatPrice(wealthCp(purse()))}. When the player buys or s
       if (!cb || cb.synced) return;
       cb.synced = true;
       const C2 = window.KLITE_RPMod_Characters;
+      const xp = cb.outcome === "victory" ? Number(cb.xpEach != null ? cb.xpEach : cb.xp) || 0 : 0;
+      const addXp2 = (s, name2) => {
+        const before = levelForXp(s.xp);
+        s.xp = (Number(s.xp) || 0) + xp;
+        if (xp && levelForXp(s.xp) > (Number(s.level) || 1) && levelForXp(s.xp) > before) gameLog(`${name2} has enough XP for level ${(Number(s.level) || 1) + 1} — use Level up on the character sheet.`, "combat");
+      };
       for (const o of sideList(cb, "party")) {
         if (o.kind !== "person" || cb.hp[o.id] == null) continue;
         const hpNow = cb.hp[o.id];
-        if (rt() && !asArray4(rt().companions).includes(o.id)) rt().companions = [...asArray4(rt().companions), o.id];
+        if (rt() && !asArray5(rt().companions).includes(o.id)) rt().companions = [...asArray5(rt().companions), o.id];
         if (o.sheet && C2 && C2.updateSheet) C2.updateSheet(o.sheet, (s) => {
           s.hp.current = hpNow;
+          addXp2(s, o.sheet);
         });
         else if (rt()) {
           rt().partyHp = Object.assign({}, rt().partyHp, { [o.id]: hpNow });
         }
       }
       if (!cb.persona || !C2 || !C2.updateSheet) return;
-      const name = cb.persona, hp = cb.hp.__player__, xp = cb.outcome === "victory" ? Number(cb.xp) || 0 : 0;
+      const name = cb.persona, hp = cb.hp.__player__;
       C2.updateSheet(name, (s) => {
         if (hp != null) s.hp.current = hp;
-        const before = levelForXp(s.xp);
-        s.xp = (Number(s.xp) || 0) + xp;
-        if (xp && levelForXp(s.xp) > (Number(s.level) || 1) && levelForXp(s.xp) > before) gameLog(`${name} has enough XP for level ${(Number(s.level) || 1) + 1} — use Level up on the character sheet.`, "combat");
+        addXp2(s, name);
       });
     }
     function personSheetName(id) {
@@ -25037,7 +25100,7 @@ The player's purse: ${formatPrice(wealthCp(purse()))}. When the player buys or s
       const sv = spell(key), u = sp.use, C2 = window.KLITE_RPMod_Characters;
       const A = combatantName(casterId);
       if (isDown(cb, casterId) || cannotAct(conds(casterId))) return { ok: false, reason: `${A} cannot cast spells now` };
-      let targets = [...new Set(asArray4(opts.targets).filter((t) => cb.order.some((o) => o.id === t)))];
+      let targets = [...new Set(asArray5(opts.targets).filter((t) => cb.order.some((o) => o.id === t)))];
       const needsTarget = u.kind === "attack" || u.kind === "heal" || u.kind === "darts" || u.kind === "save" && !!u.damage;
       if (needsTarget && !targets.length) return { ok: false, reason: "choose a target" };
       if (u.kind === "attack" || u.kind === "heal" || u.kind === "save" && !u.area) targets = targets.slice(0, 1);
@@ -25106,7 +25169,57 @@ The player's purse: ${formatPrice(wealthCp(purse()))}. When the player buys or s
       return out;
     }
     function companionIds() {
-      return [.../* @__PURE__ */ new Set([...asArray4(rt() && rt().party), ...asArray4(rt() && rt().companions)])];
+      return [.../* @__PURE__ */ new Set([...asArray5(rt() && rt().party), ...asArray5(rt() && rt().companions)])];
+    }
+    function personAt(p) {
+      const here2 = rt() && rt().playerLocationId;
+      const at = resolveNpcLocationId(p);
+      return !!(here2 && at && (at === here2 || isInsideLocation(here2, at)));
+    }
+    function personByLooseName(w, q, pool) {
+      const exact = findById(w.npcs, q) || findNpcByName(w, q);
+      if (exact) return exact;
+      const k2 = norm5(q).toLowerCase();
+      if (k2.length < 2) return null;
+      const hits = pool.filter((p) => norm5(personName(phasedEntity(p))).toLowerCase().split(/\s+/).includes(k2));
+      return hits.length === 1 ? hits[0] : null;
+    }
+    function joinParty(idOrName, { source = "api" } = {}) {
+      const w = activeWorld();
+      if (!w || !ensureRuntime()) return { ok: false, reason: "No world is active." };
+      const p = personByLooseName(w, idOrName, asArray5(w.npcs).filter((x) => personAt(x)));
+      const refuse = (reason) => {
+        if (source !== "api") gameLog(reason, "party");
+        return { ok: false, reason };
+      };
+      if (!p) return refuse(`No one called "${norm5(idOrName)}" is known.`);
+      const ph = phasedEntity(p), name = personName(ph);
+      if (asArray5(rt().party).includes(p.id)) return { ok: true, person: name, already: true };
+      if (ph.gone) return refuse(`${name} is not here.`);
+      if (p.isMonster || !ph.canJoin) return refuse(`${name} does not join the party.`);
+      if (!personAt(p)) return refuse(`${name} is not here.`);
+      rt().party = [...asArray5(rt().party), p.id];
+      if (rt().npcStateOverrides && rt().npcStateOverrides[p.id]) delete rt().npcStateOverrides[p.id].locationId;
+      gameLog(`${name} joins the party.`, "party");
+      return { ok: true, person: name };
+    }
+    function leaveParty(idOrName, { source = "api" } = {}) {
+      const w = activeWorld();
+      if (!w || !rt()) return { ok: false, reason: "No world is active." };
+      const p = personByLooseName(w, idOrName, asArray5(w.npcs).filter((x) => asArray5(rt().party).includes(x.id)));
+      const name = p ? personName(phasedEntity(p)) : norm5(idOrName);
+      if (!p || !asArray5(rt().party).includes(p.id)) {
+        const reason = `${name} is not in the party.`;
+        if (source !== "api") gameLog(reason, "party");
+        return { ok: false, reason };
+      }
+      rt().party = asArray5(rt().party).filter((id) => id !== p.id);
+      if (rt().playerLocationId) (rt().npcStateOverrides[p.id] = rt().npcStateOverrides[p.id] || {}).locationId = rt().playerLocationId;
+      gameLog(`${name} leaves the party.`, "party");
+      return { ok: true, person: name };
+    }
+    function partyMembers() {
+      return asArray5(rt() && rt().party).map((id) => entityById(activeWorld(), id)).filter(Boolean).map((p) => ({ id: p.id, name: personName(phasedEntity(p)) }));
     }
     function partyStatus() {
       const C2 = window.KLITE_RPMod_Characters;
@@ -25145,7 +25258,11 @@ The player's purse: ${formatPrice(wealthCp(purse()))}. When the player buys or s
       if (!cb || cb.outcome) return null;
       const o = cb.order.find((x) => x.id === id);
       if (!o) return null;
-      if (isDown(cb, id)) return { skipped: "down" };
+      if (isDown(cb, id)) {
+        const d = deathOf(cb, id);
+        if (d && !d.stable && !d.dead && !o.isPlayer) return { deathSave: deathSaveRoll(id) };
+        return { skipped: "down" };
+      }
       if (cannotAct(conds(id))) {
         combatLog(`${o.name} cannot act (${conds(id).map((c) => c.name).join(", ")}).`);
         return { skipped: "incapacitated" };
@@ -25188,7 +25305,7 @@ The player's purse: ${formatPrice(wealthCp(purse()))}. When the player buys or s
     function partyInfo() {
       const sheet = personaSheet();
       const level = Math.max(1, Number(sheet && sheet.level) || Number(playerCombatCfg().level) || 1);
-      const allies = asArray4(rt() && rt().party).filter((id) => {
+      const allies = asArray5(rt() && rt().party).filter((id) => {
         const p = entityById(activeWorld(), id);
         return p && !p.isMonster;
       });
@@ -25207,11 +25324,11 @@ The player's purse: ${formatPrice(wealthCp(purse()))}. When the player buys or s
     function startSavedEncounter(idOrName) {
       const w = activeWorld();
       const q = norm5(idOrName).toLowerCase();
-      const enc = asArray4(w && w.encounters).find((e) => e.id === idOrName || norm5(e.name).toLowerCase() === q);
+      const enc = asArray5(w && w.encounters).find((e) => e.id === idOrName || norm5(e.name).toLowerCase() === q);
       if (enc) {
-        const c = startEncounter(asArray4(enc.personIds), { monsters: enc.monsters, encounterId: enc.id, difficulty: enc.difficulty, enemyStart: enc.start || void 0 });
+        const c = startEncounter(asArray5(enc.personIds), { monsters: enc.monsters, encounterId: enc.id, difficulty: enc.difficulty, enemyStart: enc.start || void 0 });
         if (c && rt()) {
-          rt().startedEncounters = asArray4(rt().startedEncounters);
+          rt().startedEncounters = asArray5(rt().startedEncounters);
           if (!rt().startedEncounters.includes(enc.id)) rt().startedEncounters.push(enc.id);
         }
         return c;
@@ -25235,12 +25352,12 @@ The player's purse: ${formatPrice(wealthCp(purse()))}. When the player buys or s
       return settingOn(ZONES_SETTING2, true);
     }
     function roomLayout(roomId) {
-      const room = locOf(roomId);
-      const dirs = room ? playerExits(roomId).map((e) => e.dir) : [];
-      return layoutFor(room && mapOf(roomId) ? room : null, dirs);
+      const room2 = locOf(roomId);
+      const dirs = room2 ? playerExits(roomId).map((e) => e.dir) : [];
+      return layoutFor(room2 && mapOf(roomId) ? room2 : null, dirs);
     }
     function roomFeatures(roomId) {
-      return asArray4(activeWorld() && activeWorld().objects).filter((o) => o.locationId === roomId && featureVisible(o));
+      return asArray5(activeWorld() && activeWorld().objects).filter((o) => o.locationId === roomId && featureVisible(o));
     }
     function newZoneTurn(id) {
       return { id, moved: 0, fled: false, attacked: false, acted: false };
@@ -25266,23 +25383,23 @@ The player's purse: ${formatPrice(wealthCp(purse()))}. When the player buys or s
     }
     function attackOf(id, idx) {
       const st = combatantStats(id);
-      const list3 = asArray4(st.attacks);
+      const list3 = asArray5(st.attacks);
       const atk = list3[Number(idx) || 0] || { name: "Unarmed Strike", toHit: st.proficiency + abilityMod3(st.abilities.str), damage: String(Math.max(1, 1 + abilityMod3(st.abilities.str))) };
       let reach = atk.reach;
       const o = getCombat() && zOrder(getCombat(), id);
       if (!reach && o && o.key && MONSTERS[o.key]) {
-        const src = asArray4(MONSTERS[o.key].attacks).find((a) => a.name === atk.name);
+        const src = asArray5(MONSTERS[o.key].attacks).find((a) => a.name === atk.name);
         if (src) reach = src.reach;
       }
       const wp = weaponInfo(atk.name);
       return { atk, P: attackProfile(Object.assign({}, atk, { reach }), wp && wp.properties, wp && wp.category) };
     }
     function attackChoices(id) {
-      return asArray4(combatantStats(id).attacks).map((a, i) => Object.assign({ i, avg: a.avg || avgDamage(a.damage) }, attackOf(id, i)));
+      return asArray5(combatantStats(id).attacks).map((a, i) => Object.assign({ i, avg: a.avg || avgDamage(a.damage) }, attackOf(id, i)));
     }
     function bestMeleeIndex(id) {
       const m = attackChoices(id).filter((x) => x.P.melee).sort((a, b) => b.avg - a.avg)[0];
-      return m ? m.i : asArray4(combatantStats(id).attacks).length;
+      return m ? m.i : asArray5(combatantStats(id).attacks).length;
     }
     function coverLevelOf(Z2, id) {
       const f = Z2.cover[id] && findById(activeWorld() && activeWorld().objects, Z2.cover[id]);
@@ -25579,7 +25696,8 @@ ${recent}` : "");
       if (zoneState(cb)) parts.push(zoneText(cb));
       parts.push("Party:\n" + sideList(cb, "party").map(line).join("\n"));
       parts.push("Enemies:\n" + sideList(cb, "enemy").map(line).join("\n"));
-      if (cb.outcome === "victory") parts.push(`OUTCOME: Victory — every enemy is defeated${cb.xp ? ` (${cb.xp} XP)` : ""}. Narrate the end of the fight.`);
+      if (cb.outcome === "victory") parts.push(`OUTCOME: Victory — every enemy is defeated${cb.xp ? ` (${cb.xp} XP${cb.xpShares > 1 ? `, ${cb.xpEach} XP each` : ""})` : ""}. Narrate the end of the fight.`);
+      else if (cb.outcome === "defeat" && cb.wipe) parts.push("OUTCOME: Game over — every member of the party has died. Narrate their fall in a few calm, respectful sentences as the end of this story. Do not continue the story and do not revive anyone.");
       else if (cb.outcome === "defeat") parts.push("OUTCOME: Defeat — the party has fallen. Narrate what happens to the player character now; do not revive them by yourself.");
       else parts.push(`RPmod rolls every attack, saving throw and HP change; narrate only the results listed under "Rolls and combat" — do not invent hits, damage or deaths.${cur.isPlayer ? " It is the player's turn: set the scene and wait for their action." : ""}`);
       if (!window.KLITE_RPMod_Log) {
@@ -25607,12 +25725,12 @@ ${recent}` : "");
       if (changed || advanced) dbg("applied pending mutations; loc=", rt().playerLocationId);
       return changed || advanced;
     }
-    function resolveCurrentLocation(world, mutate) {
-      let loc = findById(world.locations, rt()?.playerLocationId);
+    function resolveCurrentLocation(world2, mutate) {
+      let loc = findById(world2.locations, rt()?.playerLocationId);
       if (loc) return loc;
       const ctx = recentContext().toLowerCase();
       if (ctx) {
-        const sorted = asArray4(world.locations).slice().sort((a, b) => norm5(b.name).length - norm5(a.name).length);
+        const sorted = asArray5(world2.locations).slice().sort((a, b) => norm5(b.name).length - norm5(a.name).length);
         for (const l of sorted) {
           const n = norm5(l.name).toLowerCase();
           if (n && ctx.includes(n)) {
@@ -25621,11 +25739,11 @@ ${recent}` : "");
           }
         }
       }
-      loc = asArray4(world.locations)[0] || null;
+      loc = asArray5(world2.locations)[0] || null;
       if (loc && mutate && rt() && !rt().playerLocationId) rt().playerLocationId = loc.id;
       return loc;
     }
-    function connectedLocations(world, loc, depth) {
+    function connectedLocations(world2, loc, depth) {
       const out = [];
       const seen = /* @__PURE__ */ new Set([loc.id]);
       let frontier = [loc];
@@ -25636,7 +25754,7 @@ ${recent}` : "");
           for (const id of ids) {
             if (seen.has(id)) continue;
             seen.add(id);
-            const l = findById(world.locations, id);
+            const l = findById(world2.locations, id);
             if (l) {
               out.push(l);
               next.push(l);
@@ -25671,11 +25789,11 @@ ${recent}` : "");
         }
       }
       const seen = /* @__PURE__ */ new Set();
-      const here2 = asArray4(w.npcs).filter((n) => (resolveNpcLocationId(n) === loc.id || asArray4(loc.npcIds).includes(n.id)) && !seen.has(n.id) && seen.add(n.id) && !phasedEntity(n).gone);
+      const here2 = asArray5(w.npcs).filter((n) => (resolveNpcLocationId(n) === loc.id || asArray5(loc.npcIds).includes(n.id)) && !seen.has(n.id) && seen.add(n.id) && !phasedEntity(n).gone);
       const people = here2.map((n) => ({ id: n.id, name: personName(n), marker: personQuestMarker(n.id, mode2) }));
       const ids = new Set(here2.map((n) => n.id));
       const quests = [];
-      for (const q of asArray4(w.quests)) {
+      for (const q of asArray5(w.quests)) {
         if (!questVisible(q, mode2)) continue;
         const st = questStateOf(q);
         if (st === "available" && ids.has(q.giverPersonId) && !questLocks(q).length) quests.push({ id: q.id, title: questTitle(q), action: "accept" });
@@ -25685,16 +25803,16 @@ ${recent}` : "");
     }
     function computeActiveSlice(opts) {
       const mutate = !!(opts && opts.mutate);
-      const world = activeWorld();
-      if (!world || !rt()) return { sections: [], location: null };
-      const loc = resolveCurrentLocation(world, mutate);
+      const world2 = activeWorld();
+      if (!world2 || !rt()) return { sections: [], location: null };
+      const loc = resolveCurrentLocation(world2, mutate);
       const sections = [];
       const push = (title, priority, text) => {
         if (norm5(text)) sections.push({ title, priority, text: norm5(text) });
       };
-      push("World: " + nodeName("world", world), 100, norm5(world.description));
+      push("World: " + nodeName("world", world2), 100, norm5(world2.description));
       if (W.config.insertRules) {
-        const rules = asArray4(world.rules).map(norm5).filter(Boolean).join("\n");
+        const rules = asArray5(world2.rules).map(norm5).filter(Boolean).join("\n");
         push("World Rules", 100, rules);
       }
       const c = rt().clock || {};
@@ -25704,34 +25822,34 @@ ${recent}` : "");
         `Day ${c.day}, ${c.season} (${c.time}). Weather: ${c.weather}.`
       );
       const stateBits = [];
-      const inv = asArray4(rt().inventory).filter((i) => i && norm5(i.name));
+      const inv = asArray5(rt().inventory).filter((i) => i && norm5(i.name));
       if (inv.length) stateBits.push((sheetOwner() && personaSheet() ? "Story items: " : "Inventory: ") + inv.map((i) => norm5(i.name) + ((Number(i.qty) || 1) > 1 ? ` x${i.qty}` : "")).join(", "));
       if (!(sheetOwner() && personaSheet())) {
         const cp = wealthCp(rt().coins), xp = Number(rt().xp) || 0;
         if (cp || xp) stateBits.push(`Gold: ${formatPrice(cp)}, XP: ${xp}`);
       }
-      const party = asArray4(rt().party).map((id) => (findById(world.npcs, id) || {}).name).filter(Boolean);
+      const party = asArray5(rt().party).map((id) => (findById(world2.npcs, id) || {}).name).filter(Boolean);
       if (party.length) stateBits.push("Party: " + party.map(norm5).join(", "));
       push("Player State", 85, stateBits.join("\n"));
       push("Combat", 96, combatText());
       if (!(getCombat() && getCombat().active)) {
-        const saved = asArray4(world.encounters).map((e) => e.name).filter(Boolean);
+        const saved = asArray5(world2.encounters).map((e) => e.name).filter(Boolean);
         push("Starting a fight", 20, "When a fight breaks out, write <encounter>2 Wolf, Goblin Warrior</encounter> (SRD monster names and counts)" + (saved.length ? ` or the name of a prepared encounter (${saved.slice(0, 8).join(", ")})` : "") + ". RPmod then rolls initiative and every attack; you narrate the results.");
       }
       if (!loc) {
         return { sections, location: null };
       }
-      if (mutate && rt() && !asArray4(rt().visitedLocationIds).includes(loc.id)) rt().visitedLocationIds.push(loc.id);
+      if (mutate && rt() && !asArray5(rt().visitedLocationIds).includes(loc.id)) rt().visitedLocationIds.push(loc.id);
       if (mutate) markVisitedRoom(loc.id);
       const pLoc = phasedEntity(loc);
       const zones = zonePath(loc.id), inRoom = !!mapOf(loc.id);
       const inner = innerPlaces(loc);
-      const exits = playerExits(loc.id).filter((e) => !e.mirrored).map((e) => norm5(e.name)).filter(Boolean).concat(connectedLocations(world, loc, 1).map((l) => placeName(l.id, loc.id))).concat(zones.length && !inRoom ? [norm5(phasedEntity(zones[zones.length - 1]).name)] : []);
+      const exits = playerExits(loc.id).filter((e) => !e.mirrored).map((e) => norm5(e.name)).filter(Boolean).concat(connectedLocations(world2, loc, 1).map((l) => placeName(l.id, loc.id))).concat(zones.length && !inRoom ? [norm5(phasedEntity(zones[zones.length - 1]).name)] : []);
       const exitsUniq = [...new Set(exits.map(norm5).filter(Boolean))];
       let locText = norm5(pLoc.description);
       const light = roomLightOf(loc);
       if (light && (inRoom || light !== loc.light)) locText += `${locText ? "\n" : ""}Light: ${light}`;
-      if (inRoom && asArray4(loc.hazards).length) locText += `${locText ? "\n" : ""}Hazards: ${asArray4(loc.hazards).join(", ")}`;
+      if (inRoom && asArray5(loc.hazards).length) locText += `${locText ? "\n" : ""}Hazards: ${asArray5(loc.hazards).join(", ")}`;
       if (zones.length) locText = `Part of: ${zones.map((z) => norm5(phasedEntity(z).name)).join(" › ")}` + (locText ? "\n" + locText : "");
       if (norm5(pLoc.atmosphere)) locText += `${locText ? "\n" : ""}Atmosphere: ${norm5(pLoc.atmosphere)}`;
       if (loc.hub) locText += `${locText ? "\n" : ""}A hub: travellers, traders and quest givers gather here.`;
@@ -25741,10 +25859,10 @@ ${recent}` : "");
         if (xl.length) locText += `${locText ? "\n" : ""}Exits:
 ${xl.join("\n")}`;
       } else if (exitsUniq.length) locText += `${locText ? "\n" : ""}Exits: ${exitsUniq.join(", ")}`;
-      const hqFactions = asArray4(world.factions).filter((f) => factionHq(f) === loc.id).map((f) => norm5(phasedEntity(f).name)).filter(Boolean);
+      const hqFactions = asArray5(world2.factions).filter((f) => factionHq(f) === loc.id).map((f) => norm5(phasedEntity(f).name)).filter(Boolean);
       if (hqFactions.length) locText += `${locText ? "\n" : ""}Headquarters of: ${hqFactions.join(", ")}`;
       sections.push({ title: `Current Location: ${norm5(pLoc.name)}`, priority: 80, text: locText });
-      const npcsHere = asArray4(world.npcs).filter((npc) => resolveNpcLocationId(npc) === loc.id || asArray4(loc.npcIds).includes(npc.id));
+      const npcsHere = asArray5(world2.npcs).filter((npc) => resolveNpcLocationId(npc) === loc.id || asArray5(loc.npcIds).includes(npc.id));
       const npcSeen = /* @__PURE__ */ new Set();
       const npcLines = [];
       const mode2 = aiMode();
@@ -25753,7 +25871,7 @@ ${xl.join("\n")}`;
         npcSeen.add(rawNpc.id);
         const npc = phasedEntity(rawNpc);
         if (npc.gone) continue;
-        const faction = findById(world.factions, npc.factionId) && phasedEntity(findById(world.factions, npc.factionId));
+        const faction = findById(world2.factions, npc.factionId) && phasedEntity(findById(world2.factions, npc.factionId));
         const marker = personQuestMarker(npc.id, mode2);
         const att = personAttitude(npc);
         const bits = [(marker ? marker + " " : "") + personName(npc) + (att ? ` (${att.name}: ${att.tier}${att.hostile ? " — hostile to the player" : ""})` : "")];
@@ -25765,18 +25883,21 @@ ${xl.join("\n")}`;
         if (faction) bits.push(`Faction: ${norm5(faction.name)}`);
         const npcStats = npc.stats || cardSheetStats(npc);
         if (npcStats) bits.push(statSummary(npcStats));
+        const inParty = asArray5(rt() && rt().party).includes(npc.id);
+        if (inParty) bits.push(`travels with the player (party); if they part ways, write <leave>${personName(npc)}</leave>`);
+        else if (npc.canJoin && !npc.isMonster) bits.push(`may join the player: when they agree to travel together, write <join>${personName(npc)}</join>`);
         npcLines.push("- " + bits.join(" | "));
-        if (mutate && rt() && !asArray4(rt().knownNpcIds).includes(npc.id)) rt().knownNpcIds.push(npc.id);
+        if (mutate && rt() && !asArray5(rt().knownNpcIds).includes(npc.id)) rt().knownNpcIds.push(npc.id);
       }
       push("Nearby NPCs", 70, npcLines.join("\n"));
       const giverLines = questGiverLines(npcsHere.filter((n) => !phasedEntity(n).gone).map((n) => n.id), mode2);
       if (giverLines.length) push("Quest givers here", 66, giverLines.join("\n") + "\nSpeak the offers in the giver's voice. When the player agrees to a quest, write <accept>quest title</accept>; when they hand in a finished one, <turnin>quest title</turnin>. RPmod checks the requirements and pays the rewards.");
       push("Trade", 62, shopText());
-      const objsHere = asArray4(world.objects).filter((o) => (o.locationId === loc.id || asArray4(loc.objectIds).includes(o.id)) && featureVisible(o));
+      const objsHere = asArray5(world2.objects).filter((o) => (o.locationId === loc.id || asArray5(loc.objectIds).includes(o.id)) && featureVisible(o));
       const objLines = objsHere.map((o) => "- " + norm5(o.name) + (FEATURE_KINDS.includes(o.kind) && o.kind !== "furniture" ? ` (${o.kind === "light" ? o.lit ? "lit" : "unlit" : o.kind})` : "") + (norm5(o.desc) ? `: ${norm5(o.desc)}` : ""));
       push("Nearby Objects", 50, objLines.join("\n"));
       if (!(getCombat() && getCombat().active)) {
-        const waiting = encountersAt(loc.id).filter((e) => !asArray4(rt().startedEncounters).includes(e.id));
+        const waiting = encountersAt(loc.id).filter((e) => !asArray5(rt().startedEncounters).includes(e.id));
         if (waiting.length) push("Waiting here", 64, waiting.map((e) => `- ${norm5(e.name)}`).join("\n") + "\nWhen they notice the player (or the player attacks), write <encounter>exact name</encounter>; RPmod then runs the fight.");
       }
       if (inRoom) {
@@ -25784,14 +25905,14 @@ ${xl.join("\n")}`;
         if (settingOn(ASCII_MAP_SETTING, false)) push("Map (explored)", 60, asciiMapText(loc.id));
       }
       const questLines = [];
-      for (const q of asArray4(world.quests)) {
+      for (const q of asArray5(world2.quests)) {
         const st = questStateOf(q);
         if (st !== "active" && st !== "complete") continue;
         if (!questVisible(q, mode2)) continue;
         const title = norm5(q.title) || norm5(q.name) || "Quest";
         const track = rt().activeQuestId === q.id ? " [tracked]" : "";
         const desc = questDescription(q, mode2);
-        const objs = asArray4(q.objectives).filter((o) => questVisible(q, mode2) && !o.hidden).map((o) => {
+        const objs = asArray5(q.objectives).filter((o) => questVisible(q, mode2) && !o.hidden).map((o) => {
           const os = objectiveStatusOf(q, o);
           return `    ${os.done ? "☑" : "☐"} ${objectiveLabel(o, os)}`;
         }).filter(Boolean);
@@ -25802,9 +25923,9 @@ ${xl.join("\n")}`;
       push("Reputation", 42, reps.map((r) => `- ${r.name}: ${r.tier}${r.effect ? ` — ${r.effect}` : ""}`).join("\n"));
       const evLines = [];
       const seenEv = /* @__PURE__ */ new Set();
-      for (const ev of asArray4(world.events)) {
-        const ambient = !asArray4(ev.triggers).length || asArray4(ev.triggers).some((t) => norm5(t.type) === "onTurn");
-        const show = firedEventsBuffer.includes(ev.id) || ambient && eventActive(world, ev);
+      for (const ev of asArray5(world2.events)) {
+        const ambient = !asArray5(ev.triggers).length || asArray5(ev.triggers).some((t) => norm5(t.type) === "onTurn");
+        const show = firedEventsBuffer.includes(ev.id) || ambient && eventActive(world2, ev);
         if (!show || seenEv.has(ev.id)) continue;
         if (ev.hidden && mode2 === "player" && !isDiscovered("events", ev.id)) continue;
         seenEv.add(ev.id);
@@ -25812,16 +25933,16 @@ ${xl.join("\n")}`;
       }
       push("Active Events", 40, evLines.join("\n"));
       const loreLines = [];
-      for (const ll of asArray4(loc.localLore)) {
+      for (const ll of asArray5(loc.localLore)) {
         const t = norm5(typeof ll === "string" ? ll : ll.content);
         if (t) loreLines.push(t);
       }
       const ctx = recentContext().toLowerCase();
-      for (const gl of asArray4(world.globalLore)) {
+      for (const gl of asArray5(world2.globalLore)) {
         const content = norm5(typeof gl === "string" ? gl : gl.content);
         if (!content || gl && gl.disabled) continue;
         const always = gl && (gl.always || gl.constant);
-        const keys = asArray4(gl && gl.keys).map((k2) => norm5(k2).toLowerCase()).filter(Boolean);
+        const keys = asArray5(gl && gl.keys).map((k2) => norm5(k2).toLowerCase()).filter(Boolean);
         const hit = always || keys.length && keys.some((k2) => ctx.includes(k2));
         if (hit) loreLines.push(content);
       }
@@ -25887,7 +26008,7 @@ ${xl.join("\n")}`;
         const C2 = window.KLITE_RPMod_Characters;
         const w = activeWorld();
         if (!C2 || !w) return;
-        for (const p of asArray4(w.npcs)) if (p && p.characterRef && p.characterRef.name) C2.cachedSheet(p.characterRef.name);
+        for (const p of asArray5(w.npcs)) if (p && p.characterRef && p.characterRef.name) C2.cachedSheet(p.characterRef.name);
       } catch (_) {
       }
     }
@@ -25943,6 +26064,7 @@ ${xl.join("\n")}`;
               W.config.enabled = false;
               W.activeWorldId = null;
               W.runtime = null;
+              W.parked = {};
               removeWorldsEntries();
             }
           } catch (e) {
@@ -25957,30 +26079,30 @@ ${xl.join("\n")}`;
     }
     const TYPE_ARRAYS = { location: "locations", npc: "npcs", faction: "factions", object: "objects", event: "events", quest: "quests", lore: "globalLore", encounter: "encounters" };
     const ENTRY_FIELD = { location: "description", npc: "description", faction: "description", object: "desc", event: "description", quest: "description", lore: "content", encounter: "notes" };
-    function normalizeWorld(world) {
-      if (!world || typeof world !== "object") return world;
+    function normalizeWorld(world2) {
+      if (!world2 || typeof world2 !== "object") return world2;
       for (const t of Object.keys(TYPE_ARRAYS)) {
         const key = TYPE_ARRAYS[t];
-        world[key] = asArray4(world[key]);
-        for (const e of world[key]) {
+        world2[key] = asArray5(world2[key]);
+        for (const e of world2[key]) {
           if (e && !e.id) e.id = uid(t);
         }
       }
-      for (const l of world.locations) if (l && Array.isArray(l.exits)) for (const ex of l.exits) normalizeExit(ex, () => uid("ex"));
-      world.rules = asArray4(world.rules);
-      if (!world.ruleset || typeof world.ruleset !== "object") world.ruleset = {};
-      if (world.ruleset.aiMode !== "player") world.ruleset.aiMode = "gm";
-      return world;
+      for (const l of world2.locations) if (l && Array.isArray(l.exits)) for (const ex of l.exits) normalizeExit(ex, () => uid("ex"));
+      world2.rules = asArray5(world2.rules);
+      if (!world2.ruleset || typeof world2.ruleset !== "object") world2.ruleset = {};
+      if (world2.ruleset.aiMode !== "player") world2.ruleset.aiMode = "gm";
+      return world2;
     }
-    function entityType(world, id) {
+    function entityType(world2, id) {
       if (id === "__world__") return "world";
-      for (const t of Object.keys(TYPE_ARRAYS)) if (findById(world[TYPE_ARRAYS[t]], id)) return t;
+      for (const t of Object.keys(TYPE_ARRAYS)) if (findById(world2[TYPE_ARRAYS[t]], id)) return t;
       return null;
     }
-    function entityById(world, id) {
-      if (id === "__world__") return world;
+    function entityById(world2, id) {
+      if (id === "__world__") return world2;
       for (const t of Object.keys(TYPE_ARRAYS)) {
-        const e = findById(world[TYPE_ARRAYS[t]], id);
+        const e = findById(world2[TYPE_ARRAYS[t]], id);
         if (e) return e;
       }
       return null;
@@ -25995,22 +26117,22 @@ ${xl.join("\n")}`;
     function nodeEntry(type, e) {
       return norm5(e[ENTRY_FIELD[type]] || "");
     }
-    function encounterRef(world, value) {
+    function encounterRef(world2, value) {
       const q = norm5(value).toLowerCase();
       if (!q) return null;
-      return asArray4(world && world.encounters).find((e) => e.id === value) || asArray4(world && world.encounters).find((e) => norm5(e.name).toLowerCase() === q) || null;
+      return asArray5(world2 && world2.encounters).find((e) => e.id === value) || asArray5(world2 && world2.encounters).find((e) => norm5(e.name).toLowerCase() === q) || null;
     }
     function getGraph() {
-      const world = activeWorld();
-      if (!world) return { world: null, nodes: [], edges: [] };
-      normalizeWorld(world);
-      const nodes = [{ id: "__world__", type: "world", name: nodeName("world", world), entry: norm5(world.description), x: world.ui?.x, y: world.ui?.y }];
+      const world2 = activeWorld();
+      if (!world2) return { world: null, nodes: [], edges: [] };
+      normalizeWorld(world2);
+      const nodes = [{ id: "__world__", type: "world", name: nodeName("world", world2), entry: norm5(world2.description), x: world2.ui?.x, y: world2.ui?.y }];
       const edges = [];
       for (const t of Object.keys(TYPE_ARRAYS)) {
-        for (const e of asArray4(world[TYPE_ARRAYS[t]])) {
+        for (const e of asArray5(world2[TYPE_ARRAYS[t]])) {
           const n = { id: e.id, type: t, name: nodeName(t, e), entry: nodeEntry(t, e), x: e.ui?.x, y: e.ui?.y };
           const inLoc = t === "location" ? e.id : t === "object" ? e.locationId : null;
-          if (inLoc && findById(world.locations, inLoc)) {
+          if (inLoc && findById(world2.locations, inLoc)) {
             const m = mapOf(inLoc);
             const anchor = graphAnchor(inLoc);
             if (t === "location") {
@@ -26026,73 +26148,73 @@ ${xl.join("\n")}`;
           nodes.push(n);
         }
       }
-      for (const l of asArray4(world.locations)) {
+      for (const l of asArray5(world2.locations)) {
         edges.push({ from: "__world__", to: l.id, kind: "contains" });
-        for (const cid of asArray4(l.connectedLocationIds)) if (findById(world.locations, cid)) edges.push({ from: l.id, to: cid, kind: "exit" });
-        for (const ex of asArray4(l.exits)) {
+        for (const cid of asArray5(l.connectedLocationIds)) if (findById(world2.locations, cid)) edges.push({ from: l.id, to: cid, kind: "exit" });
+        for (const ex of asArray5(l.exits)) {
           const to = ex && (ex.to || ex.locationId);
-          if (to && to !== l.id && findById(world.locations, to) && !asArray4(l.connectedLocationIds).includes(to)) edges.push({ from: l.id, to, kind: "exit", exitId: ex.id });
+          if (to && to !== l.id && findById(world2.locations, to) && !asArray5(l.connectedLocationIds).includes(to)) edges.push({ from: l.id, to, kind: "exit", exitId: ex.id });
         }
       }
-      for (const n of asArray4(world.npcs)) {
-        if (n.homeLocationId && findById(world.locations, n.homeLocationId)) edges.push({ from: n.id, to: n.homeLocationId, kind: "resident" });
-        if (n.factionId && findById(world.factions, n.factionId)) edges.push({ from: n.id, to: n.factionId, kind: "faction" });
+      for (const n of asArray5(world2.npcs)) {
+        if (n.homeLocationId && findById(world2.locations, n.homeLocationId)) edges.push({ from: n.id, to: n.homeLocationId, kind: "resident" });
+        if (n.factionId && findById(world2.factions, n.factionId)) edges.push({ from: n.id, to: n.factionId, kind: "faction" });
       }
-      for (const f of asArray4(world.factions)) if (f.hqLocationId && findById(world.locations, f.hqLocationId)) edges.push({ from: f.id, to: f.hqLocationId, kind: "hq" });
-      for (const o of asArray4(world.objects)) {
-        if (o.locationId && findById(world.locations, o.locationId)) edges.push({ from: o.id, to: o.locationId, kind: "in" });
-        if (o.ownerNpcId && findById(world.npcs, o.ownerNpcId)) edges.push({ from: o.id, to: o.ownerNpcId, kind: "owned" });
+      for (const f of asArray5(world2.factions)) if (f.hqLocationId && findById(world2.locations, f.hqLocationId)) edges.push({ from: f.id, to: f.hqLocationId, kind: "hq" });
+      for (const o of asArray5(world2.objects)) {
+        if (o.locationId && findById(world2.locations, o.locationId)) edges.push({ from: o.id, to: o.locationId, kind: "in" });
+        if (o.ownerNpcId && findById(world2.npcs, o.ownerNpcId)) edges.push({ from: o.id, to: o.ownerNpcId, kind: "owned" });
       }
-      for (const ev of asArray4(world.events)) for (const lid of asArray4(ev.locationIds)) if (findById(world.locations, lid)) edges.push({ from: ev.id, to: lid, kind: "occurs" });
-      for (const q of asArray4(world.quests)) {
-        if (q.giverPersonId && findById(world.npcs, q.giverPersonId)) edges.push({ from: q.id, to: q.giverPersonId, kind: "gives" });
-        if (q.turninPersonId && findById(world.npcs, q.turninPersonId)) edges.push({ from: q.id, to: q.turninPersonId, kind: "turnin" });
-        for (const pid of asArray4(q.prerequisites && q.prerequisites.quests)) if (findById(world.quests, pid)) edges.push({ from: pid, to: q.id, kind: "unlocks" });
+      for (const ev of asArray5(world2.events)) for (const lid of asArray5(ev.locationIds)) if (findById(world2.locations, lid)) edges.push({ from: ev.id, to: lid, kind: "occurs" });
+      for (const q of asArray5(world2.quests)) {
+        if (q.giverPersonId && findById(world2.npcs, q.giverPersonId)) edges.push({ from: q.id, to: q.giverPersonId, kind: "gives" });
+        if (q.turninPersonId && findById(world2.npcs, q.turninPersonId)) edges.push({ from: q.id, to: q.turninPersonId, kind: "turnin" });
+        for (const pid of asArray5(q.prerequisites && q.prerequisites.quests)) if (findById(world2.quests, pid)) edges.push({ from: pid, to: q.id, kind: "unlocks" });
       }
-      for (const l of asArray4(world.locations)) {
-        if (l.parentId && findById(world.locations, l.parentId)) edges.push({ from: l.parentId, to: l.id, kind: "zone" });
+      for (const l of asArray5(world2.locations)) {
+        if (l.parentId && findById(world2.locations, l.parentId)) edges.push({ from: l.parentId, to: l.id, kind: "zone" });
       }
-      for (const en of asArray4(world.encounters)) {
-        if (en.locationId && findById(world.locations, en.locationId)) edges.push({ from: en.id, to: en.locationId, kind: "at" });
-        for (const pid of asArray4(en.personIds)) if (findById(world.npcs, pid)) edges.push({ from: en.id, to: pid, kind: "fights" });
-        if (en.factionId && findById(world.factions, en.factionId)) edges.push({ from: en.id, to: en.factionId, kind: "faction" });
+      for (const en of asArray5(world2.encounters)) {
+        if (en.locationId && findById(world2.locations, en.locationId)) edges.push({ from: en.id, to: en.locationId, kind: "at" });
+        for (const pid of asArray5(en.personIds)) if (findById(world2.npcs, pid)) edges.push({ from: en.id, to: pid, kind: "fights" });
+        if (en.factionId && findById(world2.factions, en.factionId)) edges.push({ from: en.id, to: en.factionId, kind: "faction" });
       }
-      for (const ev of asArray4(world.events)) {
-        for (const t of asArray4(ev.triggers)) {
-          if (norm5(t.type) === "onQuestState" && findById(world.quests, t.questId)) edges.push({ from: t.questId, to: ev.id, kind: "onquest" });
-          if (norm5(t.type) === "onEnterLocation" && findById(world.locations, t.locationId)) edges.push({ from: t.locationId, to: ev.id, kind: "onenter" });
+      for (const ev of asArray5(world2.events)) {
+        for (const t of asArray5(ev.triggers)) {
+          if (norm5(t.type) === "onQuestState" && findById(world2.quests, t.questId)) edges.push({ from: t.questId, to: ev.id, kind: "onquest" });
+          if (norm5(t.type) === "onEnterLocation" && findById(world2.locations, t.locationId)) edges.push({ from: t.locationId, to: ev.id, kind: "onenter" });
         }
-        for (const eff of asArray4(ev.effects)) {
+        for (const eff of asArray5(ev.effects)) {
           const qid = eff.questId || eff.quest;
-          if ((norm5(eff.type) === "quest" || norm5(eff.type) === "discover") && findById(world.quests, qid)) edges.push({ from: ev.id, to: qid, kind: "affects" });
-          if (norm5(eff.type) === "fireEvent" && findById(world.events, eff.eventId)) edges.push({ from: ev.id, to: eff.eventId, kind: "chains" });
+          if ((norm5(eff.type) === "quest" || norm5(eff.type) === "discover") && findById(world2.quests, qid)) edges.push({ from: ev.id, to: qid, kind: "affects" });
+          if (norm5(eff.type) === "fireEvent" && findById(world2.events, eff.eventId)) edges.push({ from: ev.id, to: eff.eventId, kind: "chains" });
           if (norm5(eff.type) === "encounter") {
-            const en = encounterRef(world, eff.value);
+            const en = encounterRef(world2, eff.value);
             if (en) edges.push({ from: ev.id, to: en.id, kind: "starts" });
           }
         }
       }
-      return { world, nodes, edges };
+      return { world: world2, nodes, edges };
     }
     function addEntity(type, fields = {}) {
-      const world = activeWorld();
-      if (!world) throw new Error("no active world");
+      const world2 = activeWorld();
+      if (!world2) throw new Error("no active world");
       const key = TYPE_ARRAYS[type];
       if (!key) throw new Error("bad type " + type);
-      normalizeWorld(world);
+      normalizeWorld(world2);
       const e = { id: uid(type), ui: { x: Number(fields.x) || 300, y: Number(fields.y) || 200 } };
       if (type === "lore") e.content = norm5(fields.name) || "";
       else if (type === "quest") e.title = norm5(fields.title || fields.name) || "New quest";
       else e.name = norm5(fields.name) || "New " + type;
       if (type === "encounter") Object.assign(e, { monsters: [], personIds: [], locationId: null, difficulty: null });
-      world[key].push(e);
+      world2[key].push(e);
       dbg("addEntity", type, e.id);
       return e;
     }
     function updateEntity(id, patch) {
-      const world = activeWorld();
-      if (!world) return null;
-      const e = entityById(world, id);
+      const world2 = activeWorld();
+      if (!world2) return null;
+      const e = entityById(world2, id);
       if (!e) return null;
       for (const [k2, v] of Object.entries(patch || {})) {
         if (k2 !== "id") e[k2] = v;
@@ -26107,70 +26229,70 @@ ${xl.join("\n")}`;
       e.ui.y = Math.round(y);
     }
     function deleteEntity(id, opts) {
-      const world = activeWorld();
-      if (!world || id === "__world__") return false;
-      const type = entityType(world, id);
+      const world2 = activeWorld();
+      if (!world2 || id === "__world__") return false;
+      const type = entityType(world2, id);
       if (!type) return false;
       if (type === "location" && opts && opts.withRooms) {
-        const inner = asArray4(world.locations).filter((l) => l.id !== id && isInsideLocation(l.id, id)).map((l) => l.id);
-        for (const rid of inner.concat([id])) for (const o of asArray4(world.objects).filter((o2) => o2.locationId === rid && FEATURE_KINDS.includes(o2.kind))) deleteEntity(o.id);
+        const inner = asArray5(world2.locations).filter((l) => l.id !== id && isInsideLocation(l.id, id)).map((l) => l.id);
+        for (const rid of inner.concat([id])) for (const o of asArray5(world2.objects).filter((o2) => o2.locationId === rid && FEATURE_KINDS.includes(o2.kind))) deleteEntity(o.id);
         for (const rid of inner) deleteEntity(rid);
       }
-      world[TYPE_ARRAYS[type]] = asArray4(world[TYPE_ARRAYS[type]]).filter((e) => e.id !== id);
-      for (const l of asArray4(world.locations)) {
+      world2[TYPE_ARRAYS[type]] = asArray5(world2[TYPE_ARRAYS[type]]).filter((e) => e.id !== id);
+      for (const l of asArray5(world2.locations)) {
         if (Array.isArray(l.exits)) l.exits = l.exits.filter((ex) => !ex || (ex.to || ex.locationId) !== id);
-        l.connectedLocationIds = asArray4(l.connectedLocationIds).filter((x) => x !== id);
-        l.npcIds = asArray4(l.npcIds).filter((x) => x !== id);
-        l.objectIds = asArray4(l.objectIds).filter((x) => x !== id);
+        l.connectedLocationIds = asArray5(l.connectedLocationIds).filter((x) => x !== id);
+        l.npcIds = asArray5(l.npcIds).filter((x) => x !== id);
+        l.objectIds = asArray5(l.objectIds).filter((x) => x !== id);
       }
-      for (const n of asArray4(world.npcs)) {
+      for (const n of asArray5(world2.npcs)) {
         if (n.homeLocationId === id) n.homeLocationId = null;
         if (n.factionId === id) n.factionId = null;
       }
-      for (const f of asArray4(world.factions)) {
+      for (const f of asArray5(world2.factions)) {
         if (f.hqLocationId === id) f.hqLocationId = null;
       }
-      for (const o of asArray4(world.objects)) {
+      for (const o of asArray5(world2.objects)) {
         if (o.locationId === id) o.locationId = null;
         if (o.ownerNpcId === id) o.ownerNpcId = null;
       }
-      for (const ev of asArray4(world.events)) ev.locationIds = asArray4(ev.locationIds).filter((x) => x !== id);
-      for (const q of asArray4(world.quests)) {
+      for (const ev of asArray5(world2.events)) ev.locationIds = asArray5(ev.locationIds).filter((x) => x !== id);
+      for (const q of asArray5(world2.quests)) {
         if (q.giverPersonId === id) q.giverPersonId = null;
         if (q.turninPersonId === id) q.turninPersonId = null;
       }
-      for (const en of asArray4(world.encounters)) {
+      for (const en of asArray5(world2.encounters)) {
         if (en.locationId === id) en.locationId = null;
         if (en.factionId === id) en.factionId = null;
-        en.personIds = asArray4(en.personIds).filter((x) => x !== id);
+        en.personIds = asArray5(en.personIds).filter((x) => x !== id);
       }
-      if (type === "encounter") for (const ev of asArray4(world.events)) ev.effects = asArray4(ev.effects).filter((f) => !(norm5(f.type) === "encounter" && f.value === id));
+      if (type === "encounter") for (const ev of asArray5(world2.events)) ev.effects = asArray5(ev.effects).filter((f) => !(norm5(f.type) === "encounter" && f.value === id));
       if (rt() && rt().playerLocationId === id) rt().playerLocationId = null;
       dbg("deleteEntity", id);
       return true;
     }
     function connect(fromId, toId) {
-      const world = activeWorld();
-      if (!world) throw new Error("no active world");
+      const world2 = activeWorld();
+      if (!world2) throw new Error("no active world");
       if (fromId === toId) throw new Error("cannot connect a node to itself");
-      const ta = entityType(world, fromId), tb = entityType(world, toId);
-      const a = entityById(world, fromId), b = entityById(world, toId);
+      const ta = entityType(world2, fromId), tb = entityType(world2, toId);
+      const a = entityById(world2, fromId), b = entityById(world2, toId);
       if (!a || !b) throw new Error("unknown node");
       const pair = [ta, tb];
       const is = (x, y) => ta === x && tb === y || ta === y && tb === x;
       const locOf2 = () => ta === "location" ? a : b;
       const other = (loc) => loc === a ? b : a;
       if (is("location", "location")) {
-        a.connectedLocationIds = asArray4(a.connectedLocationIds);
+        a.connectedLocationIds = asArray5(a.connectedLocationIds);
         if (!a.connectedLocationIds.includes(toId)) a.connectedLocationIds.push(toId);
-        b.connectedLocationIds = asArray4(b.connectedLocationIds);
+        b.connectedLocationIds = asArray5(b.connectedLocationIds);
         if (!b.connectedLocationIds.includes(fromId)) b.connectedLocationIds.push(fromId);
         return { kind: "exit" };
       }
       if (is("npc", "location")) {
         const npc = ta === "npc" ? a : b, loc = locOf2();
         npc.homeLocationId = loc.id;
-        loc.npcIds = asArray4(loc.npcIds);
+        loc.npcIds = asArray5(loc.npcIds);
         if (!loc.npcIds.includes(npc.id)) loc.npcIds.push(npc.id);
         return { kind: "resident" };
       }
@@ -26187,7 +26309,7 @@ ${xl.join("\n")}`;
       if (is("object", "location")) {
         const obj = ta === "object" ? a : b, loc = locOf2();
         obj.locationId = loc.id;
-        loc.objectIds = asArray4(loc.objectIds);
+        loc.objectIds = asArray5(loc.objectIds);
         if (!loc.objectIds.includes(obj.id)) loc.objectIds.push(obj.id);
         return { kind: "in" };
       }
@@ -26198,7 +26320,7 @@ ${xl.join("\n")}`;
       }
       if (is("event", "location")) {
         const ev = ta === "event" ? a : b, loc = locOf2();
-        ev.locationIds = asArray4(ev.locationIds);
+        ev.locationIds = asArray5(ev.locationIds);
         if (!ev.locationIds.includes(loc.id)) ev.locationIds.push(loc.id);
         return { kind: "occurs" };
       }
@@ -26217,7 +26339,7 @@ ${xl.join("\n")}`;
       }
       if (ta === "quest" && tb === "quest") {
         b.prerequisites = Object.assign({}, b.prerequisites || {});
-        b.prerequisites.quests = asArray4(b.prerequisites.quests);
+        b.prerequisites.quests = asArray5(b.prerequisites.quests);
         if (!b.prerequisites.quests.includes(a.id)) b.prerequisites.quests.push(a.id);
         return { kind: "unlocks" };
       }
@@ -26233,24 +26355,24 @@ ${xl.join("\n")}`;
       }
       if (is("encounter", "npc")) {
         const en = ta === "encounter" ? a : b, npc = ta === "npc" ? a : b;
-        en.personIds = asArray4(en.personIds);
+        en.personIds = asArray5(en.personIds);
         if (!en.personIds.includes(npc.id)) en.personIds.push(npc.id);
         return { kind: "fights" };
       }
       if (is("event", "encounter")) {
         const ev = ta === "event" ? a : b, en = ta === "encounter" ? a : b;
-        ev.effects = asArray4(ev.effects);
-        if (!ev.effects.some((f) => norm5(f.type) === "encounter" && encounterRef(world, f.value) === en)) ev.effects.push({ type: "encounter", value: en.id });
-        if (!asArray4(ev.triggers).length) ev.triggers = [{ type: "manual" }];
+        ev.effects = asArray5(ev.effects);
+        if (!ev.effects.some((f) => norm5(f.type) === "encounter" && encounterRef(world2, f.value) === en)) ev.effects.push({ type: "encounter", value: en.id });
+        if (!asArray5(ev.triggers).length) ev.triggers = [{ type: "manual" }];
         return { kind: "starts" };
       }
       if (is("world", "location")) return { kind: "contains" };
       throw new Error(`no relationship defined between ${ta} and ${tb}`);
     }
     function disconnect(fromId, toId) {
-      const world = activeWorld();
-      if (!world) return false;
-      const a = entityById(world, fromId), b = entityById(world, toId);
+      const world2 = activeWorld();
+      if (!world2) return false;
+      const a = entityById(world2, fromId), b = entityById(world2, toId);
       if (!a || !b) return false;
       for (const [x, yId] of [[a, toId], [b, fromId]]) {
         if (Array.isArray(x.connectedLocationIds)) x.connectedLocationIds = x.connectedLocationIds.filter((v) => v !== yId);
@@ -26268,19 +26390,19 @@ ${xl.join("\n")}`;
         if (x.prerequisites && Array.isArray(x.prerequisites.quests)) x.prerequisites.quests = x.prerequisites.quests.filter((v) => v !== yId);
         if (x.parentId === yId) x.parentId = null;
         if (Array.isArray(x.personIds)) x.personIds = x.personIds.filter((v) => v !== yId);
-        if (Array.isArray(x.effects)) x.effects = x.effects.filter((f) => !(f && norm5(f.type) === "encounter" && (f.value === yId || (encounterRef(world, f.value) || {}).id === yId)));
+        if (Array.isArray(x.effects)) x.effects = x.effects.filter((f) => !(f && norm5(f.type) === "encounter" && (f.value === yId || (encounterRef(world2, f.value) || {}).id === yId)));
       }
       return true;
     }
     function changeEntityType(id, newType) {
-      const world = activeWorld();
-      if (!world) return false;
-      const oldType = entityType(world, id);
-      const e = entityById(world, id);
+      const world2 = activeWorld();
+      if (!world2) return false;
+      const oldType = entityType(world2, id);
+      const e = entityById(world2, id);
       if (!e || !oldType || oldType === "world" || newType === "world" || !TYPE_ARRAYS[newType] || oldType === newType) return false;
       if (oldType === "encounter" || newType === "encounter") return false;
       const entry2 = nodeEntry(oldType, e), name = nodeName(oldType, e);
-      world[TYPE_ARRAYS[oldType]] = asArray4(world[TYPE_ARRAYS[oldType]]).filter((x) => x.id !== id);
+      world2[TYPE_ARRAYS[oldType]] = asArray5(world2[TYPE_ARRAYS[oldType]]).filter((x) => x.id !== id);
       const n = { id, ui: e.ui || {} };
       if (newType === "lore") {
         n.content = entry2 || name;
@@ -26289,7 +26411,7 @@ ${xl.join("\n")}`;
         n.name = name;
         n[ENTRY_FIELD[newType]] = entry2;
       }
-      world[TYPE_ARRAYS[newType]].push(n);
+      world2[TYPE_ARRAYS[newType]].push(n);
       dbg("changeEntityType", id, oldType, "->", newType);
       return true;
     }
@@ -26297,23 +26419,22 @@ ${xl.join("\n")}`;
       const w = normalizeWorld({ id: uid("world"), name: norm5(name) || "New World", description: "", ui: { x: 120, y: 260 } });
       W.library[w.id] = w;
       await saveLibrary();
-      W.activeWorldId = w.id;
-      ensureRuntime();
+      switchWorld(w.id);
       return w.id;
     }
-    function addBookEntry(world, e, y) {
+    function addBookEntry(world2, e, y) {
       const t = typedEntry(e);
       if (t.kind === "lore") {
         const gl = { id: uid("lore"), content: t.text, keys: e.keys, secondary: e.secondary, label: e.comment || e.keys[0] || "Lore", always: e.constant, wigroup: e.wigroup, ui: { x: 700, y } };
         if (!e.enabled) gl.disabled = true;
-        world.globalLore.push(gl);
+        world2.globalLore.push(gl);
         return;
       }
       const n = { id: uid(t.kind), ui: { x: 300, y } };
       if (t.kind === "quest") n.title = t.name || "Quest";
       else n.name = t.name || "New " + t.kind;
       n[TEXT_FIELD[t.kind]] = t.text;
-      world[KINDS2[t.kind]].push(n);
+      world2[KINDS2[t.kind]].push(n);
     }
     async function importLorebook(data, opts = {}) {
       const book = readBook(data);
@@ -26332,21 +26453,20 @@ ${xl.join("\n")}`;
         }
         W.library[w.id] = w;
         await saveLibrary();
-        W.activeWorldId = w.id;
-        ensureRuntime();
+        switchWorld(w.id);
         syncLive();
         dbg("lorebook: restored world", w.id, "edited", edited, "added", extra.length);
         return book.entries.length;
       }
-      let world = opts.merge ? activeWorld() : null;
-      if (!world) {
+      let world2 = opts.merge ? activeWorld() : null;
+      if (!world2) {
         await createWorld(opts.worldName || book.name || "Imported World");
-        world = activeWorld();
+        world2 = activeWorld();
       }
-      normalizeWorld(world);
+      normalizeWorld(world2);
       let gy = 120;
       for (const e of book.entries) {
-        addBookEntry(world, e, gy);
+        addBookEntry(world2, e, gy);
         gy += 60;
       }
       await saveLibrary();
@@ -26363,7 +26483,7 @@ ${xl.join("\n")}`;
       const w = W.library[worldId || W.activeWorldId];
       if (!w) return null;
       const clone = JSON.parse(JSON.stringify(w));
-      for (const p of asArray4(clone.npcs)) {
+      for (const p of asArray5(clone.npcs)) {
         if (p.characterRef && !p.characterSnapshot) {
           const c = resolveCharacter(p);
           if (c) p.characterSnapshot = { name: c.name, description: c.description || "", personality: c.personality || "", scenario: c.scenario || "" };
@@ -26376,12 +26496,12 @@ ${xl.join("\n")}`;
       if (!w) return [];
       const mk = (key, content, comment, constant) => ({ key: norm5(key), keysecondary: "", keyanti: "", content, comment: norm5(comment), wigroup: "", constant: !!constant, selective: false, probability: 100, widisabled: false });
       const out = [];
-      for (const l of asArray4(w.locations)) out.push(mk(l.name, `[Location: ${norm5(l.name)}]${norm5(l.description) ? "\n" + norm5(l.description) : ""}`, l.name));
-      for (const n of asArray4(w.npcs)) out.push(mk(n.name, `[Character: ${norm5(n.name)}]${norm5(n.personality || n.description) ? "\n" + norm5(n.personality || n.description) : ""}`, n.name));
-      for (const f of asArray4(w.factions)) out.push(mk(f.name, `[Faction: ${norm5(f.name)}]${norm5(f.description || f.goals) ? "\n" + norm5(f.description || f.goals) : ""}`, f.name));
-      for (const o of asArray4(w.objects)) out.push(mk(o.name, `[Object: ${norm5(o.name)}]${norm5(o.desc) ? "\n" + norm5(o.desc) : ""}`, o.name));
-      for (const ev of asArray4(w.events)) out.push(mk(ev.name, `[Event: ${norm5(ev.name)}]${norm5(ev.description) ? "\n" + norm5(ev.description) : ""}`, ev.name));
-      for (const gl of asArray4(w.globalLore)) out.push(mk(asArray4(gl.keys).join(",") || gl.label, norm5(gl.content), gl.label, gl.always || gl.constant));
+      for (const l of asArray5(w.locations)) out.push(mk(l.name, `[Location: ${norm5(l.name)}]${norm5(l.description) ? "\n" + norm5(l.description) : ""}`, l.name));
+      for (const n of asArray5(w.npcs)) out.push(mk(n.name, `[Character: ${norm5(n.name)}]${norm5(n.personality || n.description) ? "\n" + norm5(n.personality || n.description) : ""}`, n.name));
+      for (const f of asArray5(w.factions)) out.push(mk(f.name, `[Faction: ${norm5(f.name)}]${norm5(f.description || f.goals) ? "\n" + norm5(f.description || f.goals) : ""}`, f.name));
+      for (const o of asArray5(w.objects)) out.push(mk(o.name, `[Object: ${norm5(o.name)}]${norm5(o.desc) ? "\n" + norm5(o.desc) : ""}`, o.name));
+      for (const ev of asArray5(w.events)) out.push(mk(ev.name, `[Event: ${norm5(ev.name)}]${norm5(ev.description) ? "\n" + norm5(ev.description) : ""}`, ev.name));
+      for (const gl of asArray5(w.globalLore)) out.push(mk(asArray5(gl.keys).join(",") || gl.label, norm5(gl.content), gl.label, gl.always || gl.constant));
       return out;
     }
     const EXAMPLE_WORLD = {
@@ -26391,6 +26511,7 @@ ${xl.join("\n")}`;
       rules: ["Medieval low-fantasy tone.", "Keep replies vivid but concise.", "When the scene changes location, emit <move>Location Name</move>."],
       ruleset: { aiMode: "gm", player: { name: "You", stats: { abilities: { str: 14, dex: 14, con: 13, int: 10, wis: 12, cha: 11 }, ac: 16, hpMax: 12, proficiency: 2, attacks: [{ name: "Longsword", toHit: 4, damage: "1d8+2" }, { name: "Shortbow", toHit: 4, damage: "1d6+2" }] } } },
       ui: { x: 120, y: 320 },
+      start: { locationId: "loc_village", clock: { day: 1, month: 4, year: 1, time: "morning", season: "spring", weather: "clear" } },
       locations: [
         { id: "loc_vale", name: "Brookvale", description: "A green valley on the frontier: farms, woods and one old trade road.", atmosphere: "open", ui: { x: 520, y: 700 } },
         {
@@ -26549,20 +26670,68 @@ ${xl.join("\n")}`;
       normalizeWorld(w);
       W.library[w.id] = w;
       await saveLibrary();
-      W.activeWorldId = w.id;
-      W.runtime = newRuntime();
-      const start = rt();
-      start.playerLocationId = "loc_village";
-      start.clock = { day: 1, month: 4, year: 1, time: "morning", season: "spring", weather: "clear" };
-      commitToBase();
+      switchWorld(w.id, { fresh: true });
       W.config.enabled = true;
       syncLive();
       dbg("example world loaded");
       return w.id;
     }
+    function startRuntime(world2) {
+      const c = newRuntime();
+      const st = world2 && world2.start && typeof world2.start === "object" ? world2.start : null;
+      const snap = c.working;
+      if (st) {
+        if (st.locationId && findById(world2.locations, st.locationId)) snap.playerLocationId = st.locationId;
+        if (st.clock && typeof st.clock === "object") {
+          Object.assign(snap.clock, st.clock);
+          if (st.clock.month != null && st.clock.season == null) snap.clock.season = deriveSeason(snap.clock.month);
+        }
+        if (st.flags && typeof st.flags === "object") Object.assign(snap.flags, st.flags);
+      }
+      c.base = deepClone(snap);
+      return c;
+    }
+    function switchWorld(worldId, { fresh = false } = {}) {
+      const target = W.library[worldId];
+      if (!target) throw new Error("unknown world " + worldId);
+      const cur = W.activeWorldId;
+      if (cur === worldId && W.runtime && !fresh) return rt();
+      if (cur && cur !== worldId && W.runtime) W.parked[cur] = W.runtime;
+      if (!cur && W.runtime && !fresh) {
+        W.activeWorldId = worldId;
+        return rt();
+      }
+      const parked = W.parked[worldId];
+      delete W.parked[worldId];
+      W.activeWorldId = worldId;
+      W.runtime = parked && !fresh ? parked : startRuntime(target);
+      return rt();
+    }
+    function setWorldStart(patch) {
+      const w = activeWorld();
+      if (!w) return null;
+      const st = Object.assign({}, w.start || {});
+      for (const [k2, v] of Object.entries(patch || {})) {
+        if (v == null || v === "") delete st[k2];
+        else st[k2] = deepClone(v);
+      }
+      if (st.view && st.view !== "player" && st.view !== "creator") delete st.view;
+      if (st.locationId && !findById(w.locations, st.locationId)) delete st.locationId;
+      if (Object.keys(st).length) w.start = st;
+      else delete w.start;
+      return w.start ? deepClone(w.start) : null;
+    }
+    function keepChatPosition(change) {
+      const pos = rt() ? rt().lastParsedIndex : null;
+      const res = change();
+      if (pos != null && rt()) rt().lastParsedIndex = pos;
+      return res;
+    }
     function resetToBase() {
       if (!W.runtime) return false;
-      W.runtime.working = deepClone(W.runtime.base);
+      keepChatPosition(() => {
+        W.runtime.working = deepClone(W.runtime.base);
+      });
       dbg("reset working <- base");
       return true;
     }
@@ -26574,13 +26743,17 @@ ${xl.join("\n")}`;
     }
     function swapActive() {
       if (!W.runtime) return null;
-      W.runtime.active = W.runtime.active === "working" ? "base" : "working";
+      keepChatPosition(() => {
+        W.runtime.active = W.runtime.active === "working" ? "base" : "working";
+      });
       dbg("active slot =", W.runtime.active);
       return W.runtime.active;
     }
     function setActiveSlot(slot) {
       if (!W.runtime || slot !== "base" && slot !== "working") return null;
-      W.runtime.active = slot;
+      keepChatPosition(() => {
+        W.runtime.active = slot;
+      });
       return slot;
     }
     const API3 = {
@@ -26707,7 +26880,7 @@ ${xl.join("\n")}`;
       itemCount: (name) => itemCount(name),
       rewardText: (r) => formatReward(r, factionName),
       parseReward: (text) => parseReward(text, (n) => {
-        const f = asArray4(activeWorld() && activeWorld().factions).find((x) => sameName(x.name, n) || x.id === n);
+        const f = asArray5(activeWorld() && activeWorld().factions).find((x) => sameName(x.name, n) || x.id === n);
         return f ? f.id : null;
       }),
       questState(id) {
@@ -26786,7 +26959,7 @@ ${xl.join("\n")}`;
       },
       placeName: (id, fromId) => placeName(id, fromId),
       asciiMap: (locId) => asciiMapText(locId || rt() && rt().playerLocationId),
-      featuresOf: (roomId) => asArray4(activeWorld() && activeWorld().objects).filter((o) => o.locationId === roomId),
+      featuresOf: (roomId) => asArray5(activeWorld() && activeWorld().objects).filter((o) => o.locationId === roomId),
       addFeature(roomId, fields = {}) {
         const o = addFeatureTo(roomId, fields);
         syncLive();
@@ -26898,6 +27071,44 @@ ${xl.join("\n")}`;
       },
       questNeedsChoice: (id) => needsChoice(questById(id)),
       rewardsPaid: (id) => !!(rt() && rt().rewardsPaid && rt().rewardsPaid[id]),
+      // R8: game over (everyone in the party died) and starting again
+      gameOver() {
+        const r = rt();
+        return r && r.gameOver ? deepClone(r.gameOver) : null;
+      },
+      // End the fight and bring the persona and the companions back to full HP (their sheets).
+      reviveParty() {
+        const cb = getCombat();
+        if (cb && cb.active !== false) endEncounter();
+        const r = longRest();
+        syncLive();
+        return r;
+      },
+      // Revive, then the world begins anew at its start (the story's game over is gone with it).
+      restartAtStart() {
+        const w = activeWorld();
+        if (!w) return null;
+        this.reviveParty();
+        switchWorld(w.id, { fresh: true });
+        W.config.enabled = true;
+        syncLive();
+        return rt();
+      },
+      joinParty(idOrName, opts) {
+        const r = joinParty(idOrName, opts);
+        syncLive();
+        return r;
+      },
+      leaveParty(idOrName, opts) {
+        const r = leaveParty(idOrName, opts);
+        syncLive();
+        return r;
+      },
+      partyMembers,
+      isHere(id) {
+        const p = findById(activeWorld() && activeWorld().npcs, id);
+        return !!(p && rt() && personAt(p));
+      },
       setActiveQuest(id) {
         ensureRuntime();
         rt().activeQuestId = id;
@@ -26919,7 +27130,7 @@ ${xl.join("\n")}`;
       },
       objectiveStatus(qid, oid) {
         const q = questById(qid);
-        const o = q && asArray4(q.objectives).find((x) => x.id === oid);
+        const o = q && asArray5(q.objectives).find((x) => x.id === oid);
         return o ? objectiveStatusOf(q, o) : null;
       },
       questEvent(kind, info) {
@@ -27019,7 +27230,7 @@ ${xl.join("\n")}`;
       findMonster: (q) => findMonster(q),
       encounterBudget: (level, size) => budget(level, size),
       encounterDifficulty: (xp, level, size) => difficulty(xp, level, size),
-      encounterXp: (monsters) => encounterXp(asArray4(monsters).map((m) => ({ key: findMonster(m.key || m.name), count: m.count }))),
+      encounterXp: (monsters) => encounterXp(asArray5(monsters).map((m) => ({ key: findMonster(m.key || m.name), count: m.count }))),
       partyInfo,
       autoTurn(id) {
         const r = autoTurn(id);
@@ -27095,18 +27306,18 @@ ${xl.join("\n")}`;
       conditionText: (name) => conditionText(name),
       listEncounters() {
         const w = activeWorld();
-        return asArray4(w && w.encounters).map((e) => ({ ...e, xp: encounterXp(e.monsters) }));
+        return asArray5(w && w.encounters).map((e) => ({ ...e, xp: encounterXp(e.monsters) }));
       },
       saveEncounter(enc) {
         const w = activeWorld();
         if (!w) return null;
-        w.encounters = asArray4(w.encounters);
-        const old = asArray4(w.encounters).find((x) => x.id === enc.id) || {};
+        w.encounters = asArray5(w.encounters);
+        const old = asArray5(w.encounters).find((x) => x.id === enc.id) || {};
         const e = {
           id: enc.id || uid("enc"),
           name: norm5(enc.name) || "Encounter",
-          monsters: asArray4(enc.monsters).map((m) => ({ key: findMonster(m.key || m.name), count: Math.max(1, Number(m.count) || 1) })).filter((m) => m.key),
-          personIds: asArray4(enc.personIds),
+          monsters: asArray5(enc.monsters).map((m) => ({ key: findMonster(m.key || m.name), count: Math.max(1, Number(m.count) || 1) })).filter((m) => m.key),
+          personIds: asArray5(enc.personIds),
           locationId: enc.locationId || null,
           difficulty: enc.difficulty || null
         };
@@ -27121,16 +27332,16 @@ ${xl.join("\n")}`;
       },
       deleteEncounter(id) {
         const w = activeWorld();
-        if (!w || !asArray4(w.encounters).some((e) => e.id === id)) return false;
+        if (!w || !asArray5(w.encounters).some((e) => e.id === id)) return false;
         return deleteEntity(id);
       },
       // the difficulty of a saved encounter for the current party (editor: after changing monsters)
       encounterInfo(id) {
         const w = activeWorld();
-        const e = asArray4(w && w.encounters).find((x) => x.id === id);
+        const e = asArray5(w && w.encounters).find((x) => x.id === id);
         if (!e) return null;
         const party = partyInfo();
-        const xp = encounterXp(asArray4(e.monsters));
+        const xp = encounterXp(asArray5(e.monsters));
         return { xp, difficulty: difficulty(xp, party.level, party.size), budget: budget(party.level, party.size), party };
       },
       startSavedEncounter(idOrName) {
@@ -27176,31 +27387,53 @@ ${xl.join("\n")}`;
       exportWorldAsLorebook,
       readLorebook: (data) => readBook(data),
       // ----- world library -----
-      async importWorld(world, { activate = true } = {}) {
-        if (!world || typeof world !== "object") throw new Error("world object required");
-        if (!world.id) world.id = uid("world");
-        normalizeWorld(world);
-        W.library[world.id] = world;
+      async importWorld(world2, { activate = true } = {}) {
+        if (!world2 || typeof world2 !== "object") throw new Error("world object required");
+        if (!world2.id) world2.id = uid("world");
+        normalizeWorld(world2);
+        W.library[world2.id] = world2;
         await saveLibrary();
-        if (activate) this.useWorld(world.id);
-        dbg("world imported", world.id, world.name);
-        return world.id;
+        if (activate) this.useWorld(world2.id);
+        dbg("world imported", world2.id, world2.name);
+        return world2.id;
       },
       listWorlds() {
-        return Object.values(W.library).map((w) => ({ id: w.id, name: w.name, locations: asArray4(w.locations).length }));
+        return Object.values(W.library).map((w) => ({ id: w.id, name: w.name, locations: asArray5(w.locations).length }));
       },
-      useWorld(worldId) {
+      // opts.fresh: begin this world anew at its start (the story's old runtime for it is dropped)
+      useWorld(worldId, opts) {
         if (!W.library[worldId]) throw new Error("unknown world " + worldId);
-        W.activeWorldId = worldId;
-        ensureRuntime();
+        switchWorld(worldId, opts || {});
         syncLive();
         dbg("active world =", worldId);
         return true;
       },
+      worldStart(worldId) {
+        const w = W.library[worldId || W.activeWorldId];
+        return w && w.start ? deepClone(w.start) : null;
+      },
+      setWorldStart(patch) {
+        const st = setWorldStart(patch);
+        markDirty();
+        syncLive();
+        return st;
+      },
+      // the start as the live game is now: place and clock (the view is kept)
+      setWorldStartFromLive() {
+        const r = rt();
+        if (!r) return null;
+        const c = r.clock || {};
+        return this.setWorldStart({ locationId: r.playerLocationId || null, clock: { day: c.day, month: c.month, year: c.year, time: c.time, weather: c.weather } });
+      },
+      parkedWorlds() {
+        return Object.keys(W.parked || {});
+      },
       async deleteWorld(worldId) {
+        delete W.parked[worldId];
         delete W.library[worldId];
         if (W.activeWorldId === worldId) {
           W.activeWorldId = null;
+          W.runtime = null;
           W.config.enabled = false;
           syncLive();
         }
@@ -27226,9 +27459,9 @@ ${xl.join("\n")}`;
       },
       // ----- runtime controls -----
       moveTo(locationNameOrId) {
-        const world = activeWorld();
-        if (!world) throw new Error("no active world");
-        let loc = findById(world.locations, locationNameOrId) || locationByName(world, locationNameOrId);
+        const world2 = activeWorld();
+        if (!world2) throw new Error("no active world");
+        let loc = findById(world2.locations, locationNameOrId) || locationByName(world2, locationNameOrId);
         if (!loc) throw new Error("unknown location: " + locationNameOrId);
         ensureRuntime();
         rt().playerLocationId = loc.id;
@@ -27554,7 +27787,7 @@ ${xl.join("\n")}`;
       root.appendChild(g);
     }
     const used = {};
-    const place = (z) => {
+    const place2 = (z) => {
       const sh = shapes[z];
       if (!sh) return null;
       const i = used[z] = (used[z] || 0) + 1;
@@ -27579,7 +27812,7 @@ ${xl.join("\n")}`;
         outOfRange.push(t);
         continue;
       }
-      const p = place(z);
+      const p = place2(z);
       if (!p) continue;
       const g = svg("g", { class: `rpm-zone-token rpm-zone-${t.side === "party" ? "party" : "enemy"}` + (t.current ? " rpm-zone-current" : "") + (t.down ? " rpm-zone-down" : "") + (t.hidden ? " rpm-zone-hidden" : ""), "data-token": t.id });
       g.appendChild(svg("title", null, `${t.name}${t.cover ? " — in cover" : ""}${t.hidden ? " — hidden" : ""}${t.down ? " — down" : ""}`));
@@ -27667,7 +27900,7 @@ ${xl.join("\n")}`;
     return Object.entries(U.monsters).filter(([, n]) => n > 0).map(([key, count]) => ({ key, count }));
   }
   function renderBuilder(box, A, refresh2) {
-    const world = A.activeWorld();
+    const world2 = A.activeWorld();
     const party = A.partyInfo();
     const xp = A.encounterXp(chosenMonsters()) + Object.entries(U.persons).filter(([, s]) => s === "enemy").reduce((n, [id]) => n + (Number((A.getStats(id) || {}).xp) || 0), 0);
     const b = A.encounterBudget(party.level, party.size);
@@ -27734,7 +27967,7 @@ ${xl.join("\n")}`;
       if (!hits.length) list3.appendChild(muted("No monster matches."));
     }
     renderList();
-    const persons = world ? A.getGraph().nodes.filter((n) => n.type === "npc") : [];
+    const persons = world2 ? A.getGraph().nodes.filter((n) => n.type === "npc") : [];
     if (persons.length) {
       box.appendChild(label("Persons of this world"));
       for (const p of persons) {
@@ -27751,7 +27984,7 @@ ${xl.join("\n")}`;
         ], "margin-top:3px"));
       }
     }
-    const saved = world ? A.listEncounters() : [];
+    const saved = world2 ? A.listEncounters() : [];
     if (saved.length) {
       box.appendChild(label("Saved encounters"));
       for (const e of saved) {
@@ -27785,7 +28018,7 @@ ${xl.join("\n")}`;
     name.addEventListener("input", () => {
       U.name = name.value;
     });
-    if (world) box.appendChild(row([name, btn("Save to world", () => {
+    if (world2) box.appendChild(row([name, btn("Save to world", () => {
       A.saveEncounter({ name: U.name || "Encounter", monsters: chosen, personIds: Object.keys(U.persons).filter((id) => U.persons[id] === "enemy"), locationId: (A.runtime || {}).playerLocationId || null, difficulty: diff, start: U.start });
       refresh2();
     }, { disabled: !chosen.length, id: "save" })], "margin-top:12px"));
@@ -27816,7 +28049,7 @@ ${xl.join("\n")}`;
     if (cb.outcome) {
       box.appendChild(el("div", { class: "rpm-card rpm-cb-outcome rpm-cb-" + cb.outcome, "data-cb": "outcome" }, [
         el("div", { class: "rpm-heading", text: cb.outcome === "victory" ? "Victory!" : "Defeat" }),
-        muted(cb.outcome === "victory" ? `${cb.xp || 0} XP earned${cb.persona ? ` — saved to ${cb.persona}'s sheet` : ""}. Send a message so the AI narrates the end of the fight.` : "The party has fallen. Send a message so the AI tells what happens next.")
+        muted(cb.outcome === "victory" ? `${cb.xp || 0} XP earned${cb.xpShares > 1 ? ` — ${cb.xpEach} XP each for ${cb.xpShares} characters` : ""}${cb.persona ? `, saved to ${cb.persona}'s sheet${cb.xpShares > 1 ? " and your companions' sheets" : ""}` : ""}. Send a message so the AI narrates the end of the fight.` : "The party has fallen. Send a message so the AI tells what happens next.")
       ]));
     }
     const zv = A.zoneView && A.zoneView();
@@ -28578,9 +28811,9 @@ ${xl.join("\n")}`;
   function updateSaveState() {
     if (!M.saveBtn) return;
     const A = API();
-    const dirty = !!(A && A.hasUnsavedChanges && A.hasUnsavedChanges()), auto = !!(A && A.autosaveEnabled && A.autosaveEnabled());
-    M.saveBtn.textContent = dirty ? auto ? "Saving…" : "Save •" : "Saved";
-    M.saveBtn.classList.toggle("rpm-unsaved", dirty && !auto);
+    const dirty2 = !!(A && A.hasUnsavedChanges && A.hasUnsavedChanges()), auto = !!(A && A.autosaveEnabled && A.autosaveEnabled());
+    M.saveBtn.textContent = dirty2 ? auto ? "Saving…" : "Save •" : "Saved";
+    M.saveBtn.classList.toggle("rpm-unsaved", dirty2 && !auto);
   }
   var px = (c) => c * CELL;
   function roomById(id) {
@@ -28752,8 +28985,8 @@ ${xl.join("\n")}`;
   }
   function addRoom() {
     const near = M.selected || null;
-    const room = API().addRoom(M.mapId, near ? { near, dir: freeDir(near) } : {});
-    M.selected = room.id;
+    const room2 = API().addRoom(M.mapId, near ? { near, dir: freeDir(near) } : {});
+    M.selected = room2.id;
     M.selectedExit = null;
     rebuild();
   }
@@ -28907,13 +29140,13 @@ ${xl.join("\n")}`;
   function renderRoom(box, id) {
     const A = API();
     const R = MR();
-    const room = A.entityById(id);
-    if (!room) return;
+    const room2 = A.entityById(id);
+    if (!room2) return;
     const town = M.board.kind === "town";
     box.appendChild(heading(town ? "Place" : "Room"));
-    if (room.origin === "ai") box.appendChild(el("p", { class: "rpm-muted", "data-ai-room": "1", text: "Added by the AI during play. Keep it, edit it, or delete it." }));
+    if (room2.origin === "ai") box.appendChild(el("p", { class: "rpm-muted", "data-ai-room": "1", text: "Added by the AI during play. Keep it, edit it, or delete it." }));
     box.appendChild(lbl("Name"));
-    box.appendChild(input(room.name, (v) => {
+    box.appendChild(input(room2.name, (v) => {
       A.updateEntity(id, { name: v });
       const r = roomById(id);
       if (r) {
@@ -28922,27 +29155,27 @@ ${xl.join("\n")}`;
       }
     }, { live: true, attrs: { "aria-label": "Room name" } }));
     box.appendChild(lbl("Description"));
-    box.appendChild(input(room.description, (v) => A.updateEntity(id, { description: v }), { area: true, attrs: { "aria-label": "Room description" } }));
+    box.appendChild(input(room2.description, (v) => A.updateEntity(id, { description: v }), { area: true, attrs: { "aria-label": "Room description" } }));
     box.appendChild(lbl("Kind"));
     const kindOpts = [["location", town ? "Place" : "Room"], ["dungeon", "Dungeon level (own map)"], ["town", "Town district (own map)"]];
-    box.appendChild(select(kindOpts, R.kindOf(room), (v) => {
+    box.appendChild(select(kindOpts, R.kindOf(room2), (v) => {
       A.setLocationKind(id, v);
       refreshAll();
     }, { "aria-label": "Room kind" }));
-    if (R.isContainer(room)) box.appendChild(btn2(`Open ${R.kindOf(room) === "town" ? "district" : "level"} (${A.roomsOf(id).length})`, () => openMapEditor(id), { icon: "door-open", block: true, data: { open: id } }));
+    if (R.isContainer(room2)) box.appendChild(btn2(`Open ${R.kindOf(room2) === "town" ? "district" : "level"} (${A.roomsOf(id).length})`, () => openMapEditor(id), { icon: "door-open", block: true, data: { open: id } }));
     box.appendChild(lbl("Light"));
-    box.appendChild(select([["", "— not set —"], ...R.LIGHT.map((l) => [l, cap(l)])], room.light || "", (v) => {
+    box.appendChild(select([["", "— not set —"], ...R.LIGHT.map((l) => [l, cap(l)])], room2.light || "", (v) => {
       A.updateEntity(id, { light: v || void 0 });
       refreshAll();
     }, { "aria-label": "Light" }));
     box.appendChild(lbl("Hazards (comma separated, e.g. fire, water)"));
-    box.appendChild(input((room.hazards || []).join(", "), (v) => A.updateEntity(id, { hazards: v.split(",").map((s) => s.trim()).filter(Boolean) }), { attrs: { "aria-label": "Hazards" } }));
+    box.appendChild(input((room2.hazards || []).join(", "), (v) => A.updateEntity(id, { hazards: v.split(",").map((s) => s.trim()).filter(Boolean) }), { attrs: { "aria-label": "Hazards" } }));
     const Z2 = A.zoneRules;
-    const auto = Z2.layoutFor(Object.assign({}, room, { combatSpace: void 0 }), A.exitsOf(id).map((e) => e.dir));
+    const auto = Z2.layoutFor(Object.assign({}, room2, { combatSpace: void 0 }), A.exitsOf(id).map((e) => e.dir));
     box.appendChild(lbl("Fighting space (zone combat)"));
     box.appendChild(select(
       [["", `Automatic: ${Z2.layoutName(auto)}`], ["small", "Small room — one zone"], ["large", "Large space — centre + 4 sides"], ["corridor", "Corridor — centre + its passages"]],
-      room.combatSpace || "",
+      room2.combatSpace || "",
       (v) => {
         A.updateEntity(id, { combatSpace: v || void 0 });
         renderInspector();
@@ -28951,7 +29184,7 @@ ${xl.join("\n")}`;
     ));
     const sw = el("label", { class: "rpm-map-check" });
     const sc = el("input", { type: "checkbox", "aria-label": "Secret room" });
-    sc.checked = !!room.secret;
+    sc.checked = !!room2.secret;
     sc.addEventListener("change", () => {
       A.updateEntity(id, { secret: sc.checked || void 0 });
       refreshAll();
@@ -29018,12 +29251,12 @@ ${xl.join("\n")}`;
       }
       const cur = encs[0];
       const monsters = cur ? cur.monsters.concat([{ key, count: Number(cIn.value) || 1 }]) : [{ key, count: Number(cIn.value) || 1 }];
-      A.saveEncounter({ id: cur && cur.id, name: cur ? cur.name : (room.name || "Room") + " encounter", monsters, locationId: id, personIds: cur ? cur.personIds : [] });
+      A.saveEncounter({ id: cur && cur.id, name: cur ? cur.name : (room2.name || "Room") + " encounter", monsters, locationId: id, personIds: cur ? cur.personIds : [] });
       renderInspector();
     }, { icon: "plus", title: "Add monster to this room's encounter", data: { monster: "add" } })]));
     box.appendChild(btn2(town ? "Delete place" : "Delete room", () => {
       const inner = A.roomsOf(id).length;
-      if (!confirm(`Delete "${room.name}"${inner ? ` and the ${inner} rooms inside it` : ""}? Its exits and features go with it.`)) return;
+      if (!confirm(`Delete "${room2.name}"${inner ? ` and the ${inner} rooms inside it` : ""}? Its exits and features go with it.`)) return;
       A.deleteEntity(id, { withRooms: true });
       M.selected = null;
       refreshAll();
@@ -29694,6 +29927,15 @@ ${xl.join("\n")}`;
       box.appendChild(csel);
       const resolved = A.resolvePersonCharacter(S2.selectedId);
       if (ent.characterRef) box.appendChild(el2("div", { style: `font-size:10px;margin-top:3px;color:${resolved ? "var(--rpm-success)" : "var(--rpm-quest)"}`, text: resolved ? `Linked: ${resolved.name}` : `Linked to "${ent.characterRef.name || ent.characterRef.id}" (not found in library)` }));
+      const joinWrap = el2("label", { style: "display:flex;align-items:center;gap:6px;margin-top:6px;color:var(--rpm-fg-muted);font-size:var(--rpm-fs-sm);cursor:pointer" });
+      const join = el2("input", { type: "checkbox", style: "cursor:pointer", "data-person": "can-join" });
+      join.checked = !!ent.canJoin;
+      join.addEventListener("change", () => {
+        A.updateEntity(S2.selectedId, { canJoin: join.checked || void 0 });
+      });
+      joinWrap.appendChild(join);
+      joinWrap.appendChild(document.createTextNode("Can join the party (travels with the player)"));
+      box.appendChild(joinWrap);
       box.appendChild(el2("div", { style: "display:flex;align-items:center;gap:8px;margin:14px 0 4px" }, [
         el2("span", { style: "color:var(--rpm-fg-muted);font-size:var(--rpm-fs-sm);font-weight:bold;flex:1", text: "Stats (d20)" }),
         ent.stats ? el2("span", { style: "cursor:pointer;color:var(--rpm-danger);font-size:10px", text: "remove", onclick: () => {
@@ -30020,6 +30262,51 @@ ${xl.join("\n")}`;
       });
       box.appendChild(ta);
       box.appendChild(el2("div", { style: "color:var(--rpm-fg-muted);font-size:10px;margin-top:3px", text: "Shown to the AI as [World Rules]. The Description above is shown as the world premise." }));
+      const st = A.worldStart() || {};
+      const card = el2("div", { class: "rpm-card", style: "margin-top:12px", "data-ui": "world-start" });
+      card.appendChild(el2("strong", { text: "Start of a new game" }));
+      card.appendChild(muted2('Where a new story in this world begins. Choosing the world for a new session starts here; "Back to start" returns here.', { style: "margin:4px 0 6px" }));
+      const locs = A.getGraph().nodes.filter((n) => n.type === "location");
+      const lsel = uiSelect({ "aria-label": "Start place", "data-start": "place" });
+      lsel.appendChild(el2("option", { value: "", text: "— no start place —" }));
+      for (const n of locs) {
+        const o = el2("option", { value: n.id, text: n.label || n.name });
+        if (st.locationId === n.id) o.selected = true;
+        lsel.appendChild(o);
+      }
+      lsel.addEventListener("change", () => {
+        A.setWorldStart({ locationId: lsel.value || null });
+      });
+      card.appendChild(lbl2("Place"));
+      card.appendChild(lsel);
+      const tsel = uiSelect({ "aria-label": "Start time of day", "data-start": "time" });
+      tsel.appendChild(el2("option", { value: "", text: "— morning (default) —" }));
+      for (const t of TIME_SLOTS_UI) {
+        const o = el2("option", { value: t, text: t });
+        if (st.clock && st.clock.time === t) o.selected = true;
+        tsel.appendChild(o);
+      }
+      tsel.addEventListener("change", () => {
+        A.setWorldStart({ clock: Object.assign({}, (A.worldStart() || {}).clock, { time: tsel.value || "morning" }) });
+      });
+      card.appendChild(lbl2("Time of day"));
+      card.appendChild(tsel);
+      const vsel = uiSelect({ "aria-label": "Start view", "data-start": "view" });
+      for (const [v, t] of [["", "Keep the current view"], ["player", "Player view"], ["creator", "Creator view"]]) {
+        const o = el2("option", { value: v, text: t });
+        if ((st.view || "") === v) o.selected = true;
+        vsel.appendChild(o);
+      }
+      vsel.addEventListener("change", () => {
+        A.setWorldStart({ view: vsel.value || null });
+      });
+      card.appendChild(lbl2("View"));
+      card.appendChild(vsel);
+      card.appendChild(uiBtn("Use the live game's place and time", () => {
+        A.setWorldStartFromLive();
+        renderInspector2();
+      }, { icon: "map-pin", block: true, id: "start-from-live", style: "margin-top:8px" }));
+      box.appendChild(card);
     }
     const ENC_STARTS = [["auto", "Across the room"], ["same", "Right beside the party"], ["near", "In the next zone"], ["outside", "Outside the room"]];
     function renderEncounterExtras(box, ent) {
@@ -30782,11 +31069,11 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
     }
     function updateSaveState2() {
       if (!S2.saveBtn) return;
-      const dirty = unsaved(), auto = autosave();
-      S2.saveBtn.textContent = dirty ? auto ? "Saving…" : "Save •" : "Saved";
-      S2.saveBtn.title = dirty ? auto ? "Autosave is on — saving shortly" : "Unsaved changes — click to save" : "All changes saved";
-      S2.saveBtn.classList.toggle("rpm-unsaved", dirty && !auto);
-      S2.revertBtn.hidden = !dirty || auto;
+      const dirty2 = unsaved(), auto = autosave();
+      S2.saveBtn.textContent = dirty2 ? auto ? "Saving…" : "Save •" : "Saved";
+      S2.saveBtn.title = dirty2 ? auto ? "Autosave is on — saving shortly" : "Unsaved changes — click to save" : "All changes saved";
+      S2.saveBtn.classList.toggle("rpm-unsaved", dirty2 && !auto);
+      S2.revertBtn.hidden = !dirty2 || auto;
     }
     function editorBeforeClose() {
       if (!unsaved() || autosave() || !S2.root) return true;
@@ -30859,6 +31146,13 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
       } catch (_) {
       }
     }
+    function applyWorldView(worldId) {
+      try {
+        const st = API3().worldStart(worldId);
+        if (st && (st.view === "player" || st.view === "creator")) setUiMode(st.view);
+      } catch (_) {
+      }
+    }
     function Shell2() {
       return window.KLITE_RPMod_Shell;
     }
@@ -30913,6 +31207,7 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
       sel2.addEventListener("change", () => {
         if (sel2.value) {
           A.useWorld(sel2.value);
+          applyWorldView(sel2.value);
           refreshPanel();
         }
       });
@@ -30927,6 +31222,8 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
         uiBtn("Export", () => exportFlow(), { icon: "download", grow: true })
       ], "margin:6px 0 8px"));
       if (exportOpen && A.activeWorld()) body.appendChild(exportCard(A));
+      const ADV = window.KLITE_RPMod_Adventures;
+      if (ADV && ADV.list().length) body.appendChild(uiBtn("Play an adventure", () => ADV.open(), { icon: "play", block: true, id: "play-adventure", style: "margin:0 0 8px", title: "Start a ready-made adventure with a pregenerated character" }));
       if (unsaved() && !autosave()) {
         body.appendChild(el2("div", { class: "rpm-card rpm-unsaved-card", "data-unsaved": "world", style: "margin:0 0 8px" }, [
           el2("div", { style: "font-weight:bold;margin-bottom:4px", text: "Unsaved world changes" }),
@@ -30991,16 +31288,22 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
     }
     function renderParty(box) {
       const A = API3();
-      const world = A.activeWorld();
-      const player = world && world.ruleset && world.ruleset.player || {};
-      const cb = world ? A.getCombat() : null;
+      const world2 = A.activeWorld();
+      const player = world2 && world2.ruleset && world2.ruleset.player || {};
+      const cb = world2 ? A.getCombat() : null;
       renderPersona(box, player, cb);
-      if (!world) {
+      if (!world2) {
         box.appendChild(muted2("No world loaded.", { style: "margin-top:6px" }));
         box.appendChild(uiBtn("Choose a world", () => openView("world"), { block: true, style: "margin-top:8px" }));
         return;
       }
       const rt = A.runtime || {};
+      const go = A.gameOver && A.gameOver();
+      if (go) box.appendChild(el2("div", { class: "rpm-card rpm-gameover-banner", "data-party": "gameover" }, [
+        el2("strong", { text: "Game over" }),
+        muted2("Everyone in the party has fallen."),
+        uiBtn("What now?", () => openView("gameover"), { block: true, variant: "danger", style: "margin-top:6px", id: "go-open" })
+      ]));
       const loc = rt.playerLocationId ? A.entityById(rt.playerLocationId) : null;
       const c = rt.clock || {};
       const locName = loc ? (A.phased(loc.id) || {}).name || loc.name || loc.id : "nowhere";
@@ -31009,12 +31312,30 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
       box.appendChild(muted2(`🕑 Day ${c.day || 1}, ${c.time || "—"}${c.weather ? " · " + c.weather : ""}`));
       const fighting = !!(cb && cb.active && !cb.outcome);
       const mates = A.partyStatus ? A.partyStatus() : [];
+      const travelling = new Set((A.partyMembers ? A.partyMembers() : []).map((m) => m.id));
       for (const m of mates) {
         const hp = fighting && cb.hp[m.id] != null ? cb.hp[m.id] : m.hp, max = fighting && cb.maxHp[m.id] ? cb.maxHp[m.id] : m.max;
         box.appendChild(el2("div", { class: "rpm-card", "data-party-member": m.id }, [
-          row2([el2("span", { class: "rpm-grow", style: "font-weight:bold", text: m.name }), el2("span", { class: "rpm-muted", text: `HP ${hp}/${max}${fighting ? " ⚔" : ""}` })]),
+          row2([
+            el2("span", { class: "rpm-grow", style: "font-weight:bold", text: m.name }),
+            el2("span", { class: "rpm-muted", text: `HP ${hp}/${max}${fighting ? " ⚔" : ""}` }),
+            travelling.has(m.id) && !fighting ? uiBtn("", () => {
+              A.leaveParty(m.id, { source: "ui" });
+            }, { icon: "x", title: `${m.name} leaves the party (stays here)`, id: "leave-party" }) : null
+          ]),
           hpBar2(hp, max)
         ]));
+      }
+      if (!fighting && loc) {
+        const g = A.getGraph();
+        for (const n of g.nodes.filter((n2) => n2.type === "npc")) {
+          const p = A.entityById(n.id);
+          const ph = A.phased(n.id) || p;
+          if (!p || !ph || ph.gone || !p.canJoin || p.isMonster || travelling.has(p.id) || !A.isHere(p.id)) continue;
+          box.appendChild(uiBtn(`Ask ${ph.name || p.name} to join`, () => {
+            A.joinParty(p.id, { source: "ui" });
+          }, { icon: "plus", block: true, style: "margin-top:6px", id: "join-party", title: "Travel together: they follow you and fight on your side" }));
+        }
       }
       if (!fighting) {
         box.appendChild(uiBtn("Long rest", () => {
@@ -31205,29 +31526,38 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
         refreshPanel();
       }, { block: true, variant: enabled ? "on" : null, style: "margin-bottom:10px" }));
       const slot = A.activeSlot || "working";
-      const slotBox = el2("div", { class: "rpm-card", style: "margin-bottom:6px" });
+      const slotBox = el2("div", { class: "rpm-card", style: "margin-bottom:6px", "data-ui": "game-state" });
       slotBox.appendChild(row2([
-        el2("span", { class: "rpm-muted rpm-grow", text: "State slot" }),
-        el2("span", { class: "rpm-chip " + (slot === "working" ? "rpm-chip-info" : "rpm-chip-quest"), text: slot === "working" ? "WORKING (live)" : "BASE (start)" })
+        el2("span", { class: "rpm-muted rpm-grow", text: "Game state" }),
+        el2("span", { class: "rpm-chip " + (slot === "working" ? "rpm-chip-info" : "rpm-chip-quest"), text: slot === "working" ? "Live game" : "Editing start state" })
       ], "margin-bottom:6px"));
-      slotBox.appendChild(row2([
-        uiBtn("Reset", () => {
-          if (confirm("Reset the working state to the base (start) state? Live changes are lost.")) {
-            A.resetToBase();
-            refreshPanel();
-          }
-        }, { icon: "rotate-ccw", grow: true, title: "Discard live changes, back to the start state" }),
-        uiBtn("Commit", () => {
-          if (confirm("Set the current working state as the new base (start)?")) {
-            A.commitToBase();
-            refreshPanel();
-          }
-        }, { icon: "check", grow: true, title: "Make the current live state the new start state" }),
-        uiBtn("Swap", () => {
+      if (slot === "working") {
+        const btns = [
+          uiBtn("Back to start", () => {
+            if (confirm("Go back to the start state? The world (place, time, quests, flags, explored rooms) returns to the start. The chat is not rewound, and your character sheet keeps its HP, XP and items.")) {
+              A.resetToBase();
+              refreshPanel();
+            }
+          }, { icon: "rotate-ccw", grow: true, id: "slot-reset", title: "Return the world to the start state" }),
+          uiBtn("Save as start", () => {
+            if (confirm("Make the current state the new start state?")) {
+              A.commitToBase();
+              refreshPanel();
+            }
+          }, { icon: "check", grow: true, id: "slot-commit", title: "The world as it is now becomes the start state" })
+        ];
+        slotBox.appendChild(row2(btns));
+        if (uiMode() === "creator") slotBox.appendChild(uiBtn("Edit start state", () => {
           A.swapActive();
           refreshPanel();
-        }, { icon: "arrow-left-right", grow: true, title: "Switch which slot is active" })
-      ]));
+        }, { icon: "pencil", block: true, id: "slot-edit-start", style: "margin-top:6px", title: "Changes you make now go to the start state, not the live game" }));
+      } else {
+        slotBox.appendChild(muted2("Changes now go to the start state. The live game waits until you switch back.", { style: "margin-bottom:6px" }));
+        slotBox.appendChild(uiBtn("Back to the live game", () => {
+          A.swapActive();
+          refreshPanel();
+        }, { icon: "play", block: true, id: "slot-live", title: "Continue the live game" }));
+      }
       box.appendChild(slotBox);
       const g = A.getGraph();
       const locs = g.nodes.filter((n) => n.type === "location");
@@ -31331,6 +31661,91 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
       if (/^-?\d+(\.\d+)?$/.test(v)) return Number(v);
       return v;
     }
+    const GO = { busy: false, msg: "", reset: false };
+    function newSessionOk() {
+      const story = Array.isArray(window.gametext_arr) ? window.gametext_arr.length : 0;
+      return !story || confirm("This begins a new session: the story that ended here is replaced. Save it first (Esolite's Save) if you want to keep it. Continue?");
+    }
+    async function gameOverAction(what, heroName) {
+      const A = API3();
+      const ADV = window.KLITE_RPMod_Adventures;
+      if (GO.busy) return;
+      const adv = ADV && A.activeWorld() && A.activeWorld().adventure ? ADV : null;
+      if (what !== "choose" && !newSessionOk()) return;
+      GO.busy = true;
+      GO.msg = "";
+      try {
+        Shell2()?.refresh(["gameover"]);
+      } catch (_) {
+      }
+      try {
+        if (what === "choose") {
+          Shell2()?.close("gameover");
+          adv.open();
+        } else if (adv) await adv.restart(Object.assign({ resetPregens: GO.reset }, heroName ? { hero: heroName } : {}));
+        else {
+          try {
+            if (typeof window.restart_new_game === "function") window.restart_new_game(false);
+          } catch (_) {
+          }
+          A.restartAtStart();
+          if (heroName) {
+            const T = window.KLITE_RPMod && window.KLITE_RPMod.panels && window.KLITE_RPMod.panels.TOOLS;
+            if (T && T.usePersona) T.usePersona({ name: heroName });
+          }
+        }
+        if (what !== "choose") {
+          Shell2()?.close("gameover");
+          openView("world");
+        }
+      } catch (e) {
+        GO.msg = "Could not start again: " + (e && e.message || e);
+      }
+      GO.busy = false;
+      refreshPanel();
+      try {
+        Shell2()?.refresh(["gameover", "party"]);
+      } catch (_) {
+      }
+    }
+    function renderGameOver(c) {
+      const A = API3();
+      const go = A.gameOver && A.gameOver();
+      const box = el2("div", { class: "rpm-gameover", "data-ui": "gameover" });
+      box.appendChild(el2("h2", { class: "rpm-gameover-title", text: "Game over" }));
+      if (!go) {
+        box.appendChild(muted2("Your party is alive. (This window shows when everyone in the party has died.)"));
+        c.appendChild(box);
+        return;
+      }
+      const fallen = (go.fallen || []).join(", ");
+      box.appendChild(el2("p", { text: (go.fallen || []).length > 1 ? `Everyone in your party has fallen: ${fallen}.` : `${fallen || "Your hero"} has fallen.` }));
+      box.appendChild(muted2("Send a message if you want the AI to tell how the story ends. Then start again:"));
+      const ADV = window.KLITE_RPMod_Adventures;
+      const adv = ADV && A.activeWorld() && A.activeWorld().adventure;
+      box.appendChild(uiBtn(adv ? "Restart the adventure from the start" : "Restart from the start", () => gameOverAction("restart"), { icon: "rotate-ccw", block: true, lg: true, id: "go-restart", title: "A new session: the world back at its start, you and your companions at full HP (level and gear are kept)" }));
+      if (adv) {
+        const lab = el2("label", { class: "rpm-muted", style: "display:flex;align-items:center;gap:6px;margin:4px 0 8px;cursor:pointer" });
+        const cb = el2("input", { type: "checkbox", "data-ui": "go-reset" });
+        cb.checked = GO.reset;
+        cb.addEventListener("change", () => {
+          GO.reset = cb.checked;
+        });
+        lab.appendChild(cb);
+        lab.appendChild(document.createTextNode("Also give the pregenerated characters their starting sheets back (level 1, starting gear)"));
+        box.appendChild(lab);
+      }
+      box.appendChild(uiBtn("Create a new hero", () => {
+        const B = window.KLITE_RPMod_Builder;
+        if (!B) return;
+        B.open({ onSaved: (name) => gameOverAction("restart", name) });
+      }, { icon: "wand-sparkles", block: true, id: "go-new-hero", style: "margin-top:6px", title: "Build a new character with the SRD rules, then start again with them" }));
+      if (adv) box.appendChild(uiBtn("Choose another character", () => gameOverAction("choose"), { icon: "id-card", block: true, id: "go-choose", style: "margin-top:6px" }));
+      if (GO.busy) box.appendChild(muted2("Starting…", { style: "margin-top:6px" }));
+      if (GO.msg) box.appendChild(el2("p", { class: "rpm-adv-msg", role: "status", text: GO.msg }));
+      box.appendChild(uiBtn("Close", () => Shell2()?.close("gameover"), { block: true, id: "go-close", style: "margin-top:12px", title: "Read the end of the story first; the Party section keeps these choices" }));
+      c.appendChild(box);
+    }
     function registerViews(sh) {
       const view = (render) => ({ mount: render, update: (c) => {
         clear2(c);
@@ -31349,6 +31764,7 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
         if (API3().activeWorld()) renderShop(c, () => refreshPanel());
         else c.appendChild(el2("div", { class: "rpm-muted", text: "No world loaded." }));
       })));
+      sh.registerView(Object.assign({ id: "gameover", title: "Game over", place: "window", window: { width: 420, height: 460, minWidth: 300, restore: false } }, view(renderGameOver)));
       sh.registerView(Object.assign({ id: "combat", title: "Combat", place: "window", window: { width: 460, height: 680, minWidth: 320 } }, view((c) => {
         if (API3().activeWorld()) renderCombatTab(c);
         else {
@@ -31406,6 +31822,15 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
         }
       };
       window.addEventListener("klite:persona-change", refreshParty);
+      window.addEventListener("klite:adventures-change", () => refreshPanel());
+      window.addEventListener("klite:game-over", () => {
+        GO.msg = "";
+        try {
+          sh.refresh(["party"]);
+        } catch (_) {
+        }
+        openView("gameover");
+      });
       window.addEventListener("klite:sheet-change", refreshParty);
       window.addEventListener("klite:worlds-dirty", () => {
         try {
@@ -31433,7 +31858,12 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
         } else if (tries > 300) clearInterval(timer);
       }, 100);
     }
-    window.KLITE_RPMod_WorldsUI = { openEditor, closeEditor, refreshPanel, openMapEditor, closeMapEditor };
+    window.KLITE_RPMod_WorldsUI = { openEditor, closeEditor, refreshPanel, openMapEditor, closeMapEditor, uiMode: () => uiMode(), setUiMode: (m) => {
+      if (m === "player" || m === "creator") {
+        setUiMode(m);
+        refreshPanel();
+      }
+    }, applyWorldView };
     if (document.readyState === "complete") whenReady();
     else window.addEventListener("load", whenReady, { once: true });
   }
@@ -31499,13 +31929,40 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
           'Pick or load a world in the World tab, then "Enable for this story".',
           "Set your current location and the time of day; RPmod tracks both as you play.",
           "The Map section on the left shows where you are. In a dungeon or town, click a neighbouring room to go there; locked doors refuse the move and the AI hears why.",
-          'State slots: "working" is the live game, "base" is the start. Reset returns to the start, Commit makes now the new start.'
+          "Game state: RPmod keeps the live game and a start state you can go back to (next chapter)."
         ] }
       ],
       show: [
         { label: "World tab", run: (c) => {
           c.open("world");
           c.highlight("#wm-panel", "Your world and its live state");
+        } }
+      ]
+    },
+    {
+      id: "game-state",
+      title: "Game state: start and live game",
+      blocks: [
+        { p: `For every story, RPmod keeps two copies of the world's state: the live game you are playing, and a start state you can return to. The example world brings its opening as the start state; in a world of your own, set up the opening (place, time) and press "Save as start".` },
+        { p: "The state is where you are, the time and weather, quests and their objectives, flags, reputation, rooms you explored, doors, companions and the story inventory. Both copies are saved with your story and its export." },
+        { table: [
+          ["Button", "What it does"],
+          ["Back to start", "The world returns to the start state, for example to replay an adventure or undo a wrong turn."],
+          ["Save as start", "The world as it is now becomes the new start state. A good checkpoint before a dangerous dungeon."],
+          ["Edit start state", 'Creator view only. Changes now go to the start state instead of the live game, for example to move where a new game begins. "Back to the live game" switches back.']
+        ] },
+        { p: "What the start state does not reset:" },
+        { list: [
+          'The chat. The AI still reads the story so far. After "Back to start", start a new session or tell the AI in a message that the story begins again.',
+          "Your character sheet. HP, XP, gold and items live on your character card and travel with it into other stories.",
+          "The world itself. Places, people and quests you changed in the editor stay changed; only the state of play goes back."
+        ] },
+        { tip: 'Tags in chat messages that RPmod already applied are not applied again after "Back to start". Only new replies change the world.' }
+      ],
+      show: [
+        { label: "Game state", run: (c) => {
+          c.open("world");
+          c.highlight('[data-ui="game-state"]', "Live game and start state");
         } }
       ]
     },
@@ -31543,7 +32000,8 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
           `Fights take place in zones of the room you are in: melee in the same zone, ranged by weapon range, moving one zone per turn, cover and hiding. The Guide's "Zone combat" tab explains it.`,
           "On your turn move, take cover or hide, pick weapon and target and press Attack, then End turn: the enemies act automatically until it is your turn again.",
           "Then write in the chat what you do — the AI narrates the rolls from the combat log.",
-          "After a victory your HP and the XP earned are saved to your persona's sheet.",
+          "After a victory your HP and the XP earned are saved to your persona's sheet. The XP is divided evenly among everyone who fought on your side; companions with a character sheet get their share too.",
+          "If everyone in the party dies, it is game over: the story ends, and RPmod offers to restart from the start or to begin again with a new hero.",
           "The AI can start a fight too: it writes <encounter>2 Wolf</encounter>."
         ] }
       ],
@@ -31611,6 +32069,7 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
           ["Command", "Does"],
           ["/go Forest Road · /look · /search · /open north", "move, look around, search, doors"],
           ["/talk Bram · /accept Bandit Bounty · /turnin …", "people and quests"],
+          ["/join Oona · /leave Oona", "companions travel with you"],
           ["/buy Torch x2 · /sell Rope · /inv · /shop", "trade and inventory"],
           ["/roll 1d20+3 · /check perception 12", "dice; checks with your persona's sheet"],
           ["/encounter 2 Wolf · /attack Wolf · /endturn · /rest", "fights"],
@@ -32340,6 +32799,15 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
           el("button", { type: "button", class: "btn btn-primary rpm-btn rpm-grow rpm-btn-icon", onclick: () => api.openGuide("welcome") }, [iconText("book-open", "Open the Guide")]),
           el("button", { type: "button", class: "btn btn-primary rpm-btn rpm-grow rpm-btn-icon", onclick: () => api.openQuickStart() }, [iconText("play", "Quick Start")])
         ]));
+        const advSlot = el("div", {});
+        box.appendChild(advSlot);
+        const showAdventure = () => {
+          const ADV = window.KLITE_RPMod_Adventures;
+          if (!ADV || !ADV.list().length || advSlot.firstChild) return;
+          advSlot.appendChild(el("button", { type: "button", class: "btn btn-primary rpm-btn rpm-block rpm-btn-icon", style: "margin-top:6px", "data-welcome": "adventure", onclick: () => ADV.open() }, [iconText("sparkles", "Play a starter adventure")]));
+        };
+        showAdventure();
+        window.addEventListener("klite:adventures-change", showAdventure);
         box.appendChild(el("button", {
           type: "button",
           class: "btn btn-primary rpm-btn rpm-block",
@@ -32414,7 +32882,11 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
         if (!A) throw new Error("Worlds engine not loaded");
         const sel2 = selection;
         if (sel2.id === EXAMPLE_ID && !A.hasExample()) await A.loadExample();
-        else A.useWorld(sel2.id);
+        else A.useWorld(sel2.id, { fresh: true });
+        try {
+          window.KLITE_RPMod_WorldsUI && window.KLITE_RPMod_WorldsUI.applyWorldView(A.activeWorld().id);
+        } catch (_) {
+        }
         A.enable();
         if (!(A.runtime && A.runtime.playerLocationId)) {
           const first = A.getGraph().nodes.find((n) => n.type === "location");
@@ -32831,6 +33303,7 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
 
   // src/characters/store.js
   var cache = /* @__PURE__ */ new Map();
+  var dirty = (e) => !!e && (Number(e.rev) || 0) > (Number(e.savedRev) || 0);
   var pending = /* @__PURE__ */ new Map();
   var k = (name) => String(name || "").trim().toLowerCase();
   function emit(name) {
@@ -32842,15 +33315,20 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
   async function loadSheet(name) {
     const rec = await loadCharacter(name);
     if (!rec) throw new Error("Character not found in the Library: " + name);
+    const cur = cache.get(k(name));
+    if (dirty(cur)) {
+      cur.text = cardText(rec.data);
+      return cur.sheet;
+    }
     const sheet = readSheet(rec.data);
-    cache.set(k(name), { name: rec.name || name, sheet, text: cardText(rec.data) });
+    cache.set(k(name), { name: rec.name || name, sheet, text: cardText(rec.data), rev: cur ? cur.rev : 0, savedRev: cur ? cur.rev : 0 });
     emit(name);
     return sheet;
   }
   function cardText(inner) {
     const d = inner && typeof inner === "object" ? inner : {};
-    const str3 = (v) => typeof v === "string" ? v : "";
-    return { personality: str3(d.personality), description: str3(d.description) };
+    const str4 = (v) => typeof v === "string" ? v : "";
+    return { personality: str4(d.personality), description: str4(d.description) };
   }
   function cachedEntry(name) {
     const hit = cache.get(k(name));
@@ -32877,12 +33355,24 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
     if (s.length > maxLen) s = s.slice(0, maxLen - 1) + "…";
     return s;
   }
-  async function saveSheet(name, sheet) {
+  async function saveSheet(name, sheet, opts) {
+    const rev = opts && opts.rev != null ? Number(opts.rev) : null;
     const rec = await loadCharacter(name);
     if (!rec) throw new Error("Character not found in the Library: " + name);
     const inner = writeSheet(rec.data, sheet ? normalizeSheet(sheet) : null);
+    const before = cache.get(k(name));
     const res = await saveCharacter({ inner, oldName: rec.name || name });
-    cache.set(k(res.name), { name: res.name, sheet: readSheet(inner), text: cardText(inner) });
+    const cur = cache.get(k(res.name)) || cache.get(k(name)) || before;
+    if (rev != null && cur && (Number(cur.rev) || 0) > rev) {
+      cur.savedRev = Math.max(Number(cur.savedRev) || 0, rev);
+      cur.name = res.name;
+      cur.text = cardText(inner);
+      cache.set(k(res.name), cur);
+      emit(res.name);
+      return cur.sheet;
+    }
+    const n = cur ? Number(cur.rev) || 0 : 0;
+    cache.set(k(res.name), { name: res.name, sheet: readSheet(inner), text: cardText(inner), rev: n, savedRev: n });
     emit(res.name);
     return readSheet(inner);
   }
@@ -32896,11 +33386,12 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
       const next = normalizeSheet(entry2.sheet);
       mutate(next);
       entry2.sheet = normalizeSheet(next);
+      entry2.rev = (Number(entry2.rev) || 0) + 1;
       emit(entry2.name);
       const key = k(entry2.name);
       const chain = (writes.get(key) || Promise.resolve()).then(() => {
         const latest = cache.get(key);
-        return latest && latest.sheet ? saveSheet(latest.name, latest.sheet) : null;
+        return latest && latest.sheet && dirty(latest) ? saveSheet(latest.name, latest.sheet, { rev: latest.rev }) : null;
       }).catch(() => {
       });
       writes.set(key, chain);
@@ -32927,8 +33418,7 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
   if (typeof window !== "undefined") {
     window.addEventListener("klite:library-change", (e) => {
       const d = e && e.detail || {};
-      if (d.oldName) forget(d.oldName);
-      if (d.name) forget(d.name);
+      for (const n of [d.oldName, d.name]) if (n && !dirty(cache.get(k(n)))) forget(n);
     });
   }
   function combatStatsFor(name) {
@@ -33217,6 +33707,7 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
       qty = Number(m[1]);
       name = m[2];
     }
+    name = name.replace(/\s*\(same as above\)$/i, "");
     if (qty > 1) {
       const candidates = [name.replace(/s$/, ""), name.replace(/es$/, ""), name.replace(/ies$/, "y")];
       const known = candidates.find((c) => SRD.weapons[c] || /^(Arrow|Bolt|Needle|Bullet|Pouch|Sheet)$/.test(c));
@@ -33526,7 +34017,7 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
         return false;
       }
     };
-    const dirty = () => !!(V.draft && JSON.stringify(V.draft) !== JSON.stringify(V.saved));
+    const dirty2 = () => !!(V.draft && JSON.stringify(V.draft) !== JSON.stringify(V.saved));
     function personaName() {
       try {
         const T = window.KLITE_RPMod?.panels?.TOOLS;
@@ -33545,7 +34036,7 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
       return [last, personaName()].find((n) => n && names.includes(n)) || names[0] || "";
     }
     async function select2(name) {
-      if (V.draft && dirty() && name !== V.name && !confirm(`Discard unsaved changes to ${V.name}'s sheet?`)) {
+      if (V.draft && dirty2() && name !== V.name && !confirm(`Discard unsaved changes to ${V.name}'s sheet?`)) {
         render();
         return;
       }
@@ -33589,7 +34080,7 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
       render();
     }
     function revert() {
-      if (!dirty() || !confirm("Undo all unsaved changes to this sheet?")) return;
+      if (!dirty2() || !confirm("Undo all unsaved changes to this sheet?")) return;
       V.draft = V.saved ? normalizeSheet(V.saved) : null;
       render();
     }
@@ -33599,7 +34090,7 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
       V.timer = null;
       if (autosave()) V.timer = setTimeout(() => {
         V.timer = null;
-        if (dirty()) save();
+        if (dirty2()) save();
       }, 1e3);
       setTimeout(render, 0);
     }
@@ -33829,7 +34320,7 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
       sel2.addEventListener("change", () => select2(sel2.value));
       const head = el("div", { class: "rpm-row" }, [sel2]);
       if (V.draft) {
-        const d = dirty(), auto = autosave();
+        const d = dirty2(), auto = autosave();
         const saveBtn = btn3(d ? auto ? "Saving…" : "Save •" : "Saved", () => save(), { variant: "success", title: d ? "Save the sheet into the card" : "All changes saved", cls: d && !auto ? "rpm-unsaved" : "" });
         saveBtn.setAttribute("data-save", "sheet");
         const revertBtn = btn3("Revert", () => revert(), { title: "Undo unsaved changes" });
@@ -33889,7 +34380,7 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
       root.appendChild(el("div", { class: "rpm-row", style: "margin:2px 0 6px;flex-wrap:wrap" }, [
         el("span", { class: "rpm-muted rpm-grow", text: `Proficiency bonus ${fmt(D.pb)} · XP ${s.xp}${s.alignment ? " · " + s.alignment : ""}` }),
         s.build && s.level < 20 && window.KLITE_RPMod_Builder ? btn3("Level up", () => {
-          if (dirty() && !confirm("Level up uses the saved sheet; discard unsaved changes?")) return;
+          if (dirty2() && !confirm("Level up uses the saved sheet; discard unsaved changes?")) return;
           window.KLITE_RPMod_Builder.levelUp(V.name);
         }, { icon: "sparkles", title: `Rebuild at level ${s.level + 1} with the builder (keeps inventory, coins and notes)` }) : null
       ]));
@@ -34097,7 +34588,7 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
       }
     }
     function beforeClose() {
-      if (!dirty() || autosave()) return true;
+      if (!dirty2() || autosave()) return true;
       const choice = confirm(`Save the changes to ${V.name}'s sheet before closing?
 
 OK = save and close · Cancel = close and discard them`);
@@ -34143,7 +34634,7 @@ OK = save and close · Cancel = close and discard them`);
         if (!V.box || !e.detail || e.detail.name !== V.name) return;
         const s = cachedSheet(V.name);
         if (!s) return;
-        if (!dirty()) {
+        if (!dirty2()) {
           V.saved = normalizeSheet(s);
           V.draft = normalizeSheet(s);
           render();
@@ -34190,7 +34681,7 @@ OK = save and close · Cancel = close and discard them`);
           return "";
         }
       },
-      current: () => ({ name: V.name, sheet: V.draft ? normalizeSheet(V.draft) : null, dirty: dirty() })
+      current: () => ({ name: V.name, sheet: V.draft ? normalizeSheet(V.draft) : null, dirty: dirty2() })
     };
     window.KLITE_RPMod_Characters = api;
     let tries = 0;
@@ -34223,15 +34714,15 @@ OK = save and close · Cancel = close and discard them`);
     }
   }
   function plainText(s) {
-    const str3 = String(s == null ? "" : s);
-    if (!/[<&]/.test(str3)) return str3;
+    const str4 = String(s == null ? "" : s);
+    if (!/[<&]/.test(str4)) return str4;
     try {
-      const body = new DOMParser().parseFromString(str3, "text/html").body;
+      const body = new DOMParser().parseFromString(str4, "text/html").body;
       body.querySelectorAll("script, style, template, noscript").forEach((n) => n.remove());
       body.querySelectorAll("br, p, div, li").forEach((n) => n.append(" "));
       return body.textContent || "";
     } catch (_) {
-      return str3.replace(/<[^>]*>/g, "");
+      return str4.replace(/<[^>]*>/g, "");
     }
   }
   var fillNames = (s, name) => String(s || "").replace(/\{\{char\}\}/gi, name || "the character").replace(/\{\{user\}\}/gi, "you");
@@ -35183,7 +35674,15 @@ OK = save and close · Cancel = close and discard them`);
         } catch (_) {
         }
         Shell2()?.close("builder", { force: true });
-        window.KLITE_RPMod_Characters?.open(name);
+        const done = V.onSaved;
+        V.onSaved = null;
+        if (typeof done === "function") {
+          try {
+            await done(name);
+          } catch (e) {
+            console.error("[RPmod builder] after saving", e);
+          }
+        } else window.KLITE_RPMod_Characters?.open(name);
       } catch (e) {
         V.busy = false;
         alert("Could not save the character: " + (e.message || e));
@@ -35255,6 +35754,7 @@ OK = save and close · Cancel = close and discard them`);
         V.levelUp = null;
         V.previous = null;
         V.c = fresh();
+        V.onSaved = typeof opts.onSaved === "function" ? opts.onSaved : null;
         if (opts.name) V.c.name = opts.name;
         Shell2()?.open("builder");
         return true;
@@ -35719,7 +36219,9 @@ OK = save and close · Cancel = close and discard them`);
     "search",
     "room",
     "door",
-    "light"
+    "light",
+    "join",
+    "leave"
   ];
   var LT = "(?:<|&lt;)";
   var GT = "(?:>|&gt;)";
@@ -36106,6 +36608,30 @@ Purse: ${iv.purseText}`);
           if (r.ok) r.log = `Talks with ${cleanArg(a)}.`;
           else if (!r.error) r.error = `No one called "${cleanArg(a)}" is known in this world.`;
           return r;
+        }
+      },
+      {
+        name: "join",
+        group: "World",
+        world: true,
+        usage: "/join <person>",
+        help: "Ask someone here to travel with you (only people who can join).",
+        run: (a) => {
+          if (!cleanArg(a)) return fail("Usage: /join <person>");
+          const r = W().joinParty(cleanArg(a), { source: "ui" });
+          return r.ok ? { ok: true } : { ok: false, error: r.reason };
+        }
+      },
+      {
+        name: "leave",
+        group: "World",
+        world: true,
+        usage: "/leave <person>",
+        help: "Part ways with a companion; they stay here.",
+        run: (a) => {
+          if (!cleanArg(a)) return fail("Usage: /leave <person>");
+          const r = W().leaveParty(cleanArg(a), { source: "ui" });
+          return r.ok ? { ok: true } : { ok: false, error: r.reason };
         }
       },
       { name: "map", group: "World", usage: "/map", help: "Open the Map window.", run: () => opened("map") },
@@ -36581,6 +37107,1121 @@ ${g.lines.join("\n")}`).join("\n\n") + "\n\nSeveral commands and a message in on
     else window.addEventListener("load", attempt, { once: true });
   }
 
+  // src/adventures/adventure-rules.js
+  var FORMAT = "rpmod-adventure";
+  var AUTHORED_PARTY = 2;
+  var FORBIDDEN_NAMES = [
+    // the starter set used as a size reference (and its German edition)
+    "Phandelver",
+    "Phandalin",
+    "Cragmaw",
+    "Redbrand",
+    "Redbrands",
+    "Rotbrenner",
+    "Glasstaff",
+    "Glasstab",
+    "Gundren",
+    "Rockseeker",
+    "Felsensucher",
+    "Sildar",
+    "Hallwinter",
+    "Klarg",
+    "Yeemik",
+    "Nezznar",
+    "Black Spider",
+    "Schwarze Spinne",
+    "Wave Echo",
+    "Wellenhall",
+    "Wellenhallhöhle",
+    "Thundertree",
+    "Donnerbaum",
+    "Conyberry",
+    "Tresendar",
+    "Wyvern Tor",
+    "Wyvernkuppe",
+    "Old Owl Well",
+    "Eulenbrunnen",
+    "Triboar",
+    "Venomfang",
+    "Iarno",
+    "Toblen",
+    "Halia Thornton",
+    "Linene",
+    "Graywind",
+    "Daran Edermath",
+    "Qelline",
+    "Alderleaf",
+    "Harbin Wester",
+    "Garaele",
+    "Reidoth",
+    "Hamun Kost",
+    "Dreieber",
+    // other reference adventures
+    "Frozen Sick",
+    "Palebank",
+    "Icewind Dale",
+    "Ten-Towns",
+    "Ten Towns",
+    "Hoard of the Dragon Queen",
+    "Greenest",
+    "Cult of the Dragon",
+    "Tiamat",
+    "Rezmir",
+    "Mondath",
+    "Cyanwrath",
+    // the setting
+    "Forgotten Realms",
+    "Vergessene Reiche",
+    "Vergessenen Reiche",
+    "Faerûn",
+    "Faerun",
+    "Sword Coast",
+    "Schwertküste",
+    "Neverwinter",
+    "Niewinter",
+    "Waterdeep",
+    "Tiefwasser",
+    "Baldur's Gate",
+    // product identity outside the SRD
+    "Dungeons & Dragons",
+    "Dungeons and Dragons",
+    "Beholder",
+    "Mind Flayer",
+    "Illithid",
+    "Displacer Beast",
+    "Githyanki",
+    "Githzerai",
+    "Yuan-ti",
+    "Carrion Crawler",
+    "Umber Hulk"
+  ];
+  var asArray4 = (v) => Array.isArray(v) ? v : [];
+  var str3 = (v) => v == null ? "" : String(v);
+  function strings(v, out = []) {
+    if (typeof v === "string") out.push(v);
+    else if (Array.isArray(v)) for (const x of v) strings(x, out);
+    else if (v && typeof v === "object") for (const x of Object.values(v)) strings(x, out);
+    return out;
+  }
+  var escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  function forbiddenNamesIn(value, names = FORBIDDEN_NAMES) {
+    const hits = [];
+    const texts = strings(value);
+    for (const name of names) {
+      const re = new RegExp(`(^|[^\\p{L}\\p{N}])${escapeRe(name)}(?=$|[^\\p{L}\\p{N}])`, "u");
+      for (const t of texts) {
+        const m = re.exec(t);
+        if (m) {
+          const at = m.index + m[1].length;
+          hits.push({ name, sample: t.slice(Math.max(0, at - 20), at + name.length + 20) });
+          break;
+        }
+      }
+    }
+    return hits;
+  }
+  function pregenOf(card) {
+    const r = card && card.data && card.data.extensions && card.data.extensions.klite_rpmod;
+    return r && r.pregen ? str3(r.pregen) : "";
+  }
+  function adventureOf(card) {
+    const r = card && card.data && card.data.extensions && card.data.extensions.klite_rpmod;
+    return r && r.adventure ? str3(r.adventure) : "";
+  }
+  function pregens(pkg) {
+    const cards = asArray4(pkg && pkg.characters);
+    const ids = asArray4(pkg && pkg.start && pkg.start.pregens);
+    const order = ids.length ? ids : cards.map(pregenOf).filter(Boolean);
+    const out = [];
+    for (const id of order) {
+      const card = cards.find((c) => pregenOf(c) === id);
+      if (!card) continue;
+      const r = card.data.extensions.klite_rpmod;
+      out.push({ id, name: str3(card.data.name), line: str3(r.line), pronouns: str3(r.pronouns), card });
+    }
+    return out;
+  }
+  function reachableLocations(world2, fromId) {
+    const locs = asArray4(world2 && world2.locations);
+    const byId = new Map(locs.map((l) => [l.id, l]));
+    const adj = new Map(locs.map((l) => [l.id, /* @__PURE__ */ new Set()]));
+    const link = (a, b) => {
+      if (adj.has(a) && adj.has(b)) {
+        adj.get(a).add(b);
+        adj.get(b).add(a);
+      }
+    };
+    for (const l of locs) {
+      for (const id of asArray4(l.connectedLocationIds)) link(l.id, id);
+      for (const ex of asArray4(l.exits)) link(l.id, ex.to || ex.locationId);
+      if (l.parentId) link(l.id, l.parentId);
+    }
+    const seen = /* @__PURE__ */ new Set();
+    if (!byId.has(fromId)) return seen;
+    const todo = [fromId];
+    while (todo.length) {
+      const id = todo.pop();
+      if (seen.has(id)) continue;
+      seen.add(id);
+      for (const n of adj.get(id) || []) if (!seen.has(n)) todo.push(n);
+    }
+    return seen;
+  }
+  function xpEstimate(world2, partySize = AUTHORED_PARTY) {
+    let quest = 0, combat = 0;
+    for (const q of asArray4(world2 && world2.quests)) for (const r of asArray4(q.rewards)) if ((r.type === "xp" || !r.type) && Number(r.xp) > 0) quest += Number(r.xp);
+    for (const e of asArray4(world2 && world2.encounters)) {
+      for (const m of asArray4(e.monsters)) {
+        const key = findMonster(m.key || m.name);
+        const mon = key && MONSTERS[key];
+        if (mon) combat += (Number(mon.xp) || 0) * Math.max(1, Number(m.count) || 1);
+      }
+    }
+    return { quest, combat, perCharacter: quest + Math.floor(combat / Math.max(1, partySize)) };
+  }
+  function validateAdventure(pkg) {
+    const errors = [], warnings = [];
+    const E = (m) => errors.push(m), Wn = (m) => warnings.push(m);
+    if (!pkg || typeof pkg !== "object") return { ok: false, errors: ["not an adventure package"], warnings, stats: {} };
+    if (pkg.format !== FORMAT) E(`format must be "${FORMAT}"`);
+    if (!(Number(pkg.version) >= 1)) E("version missing");
+    if (!str3(pkg.id).trim()) E("id missing");
+    if (!str3(pkg.title).trim()) E("title missing");
+    const w = pkg.world;
+    if (!w || typeof w !== "object" || !str3(w.id) || !str3(w.name)) {
+      E("world missing (needs id and name)");
+      return { ok: false, errors, warnings, stats: {} };
+    }
+    const cards = asArray4(pkg.characters);
+    const seen = /* @__PURE__ */ new Set();
+    for (const c of cards) {
+      const id = pregenOf(c);
+      if (!c || !c.data || !str3(c.data.name).trim()) {
+        E("a character without a name");
+        continue;
+      }
+      if (!id) E(`character "${c.data.name}" has no extensions.klite_rpmod.pregen`);
+      else if (seen.has(id)) E(`pregen id "${id}" used twice`);
+      else seen.add(id);
+      if (id && adventureOf(c) !== str3(pkg.id)) E(`character "${c.data.name}" belongs to adventure "${adventureOf(c)}", not "${pkg.id}"`);
+    }
+    const st = pkg.start || {};
+    for (const id of asArray4(st.pregens)) if (!seen.has(id)) E(`start.pregens names an unknown pregen "${id}"`);
+    if (st.view && st.view !== "player" && st.view !== "creator") E('start.view must be "player" or "creator"');
+    const ids = {};
+    const TYPES = { locations: "location", npcs: "person", factions: "faction", objects: "object", events: "event", quests: "quest", encounters: "encounter", globalLore: "lore" };
+    for (const [key, type] of Object.entries(TYPES)) for (const e of asArray4(w[key])) {
+      if (!e || !e.id) {
+        E(`a ${type} without an id`);
+        continue;
+      }
+      if (ids[e.id]) E(`id "${e.id}" used twice`);
+      ids[e.id] = type;
+    }
+    const need = (id, type, where) => {
+      if (id && ids[id] !== type) E(`${where}: unknown ${type} "${id}"`);
+    };
+    for (const l of asArray4(w.locations)) {
+      for (const id of asArray4(l.connectedLocationIds)) need(id, "location", `location ${l.id} link`);
+      for (const ex of asArray4(l.exits)) need(ex.to || ex.locationId, "location", `location ${l.id} exit`);
+      need(l.parentId, "location", `location ${l.id} parentId`);
+      for (const id of asArray4(l.npcIds)) need(id, "person", `location ${l.id} npcIds`);
+      for (const id of asArray4(l.objectIds)) need(id, "object", `location ${l.id} objectIds`);
+    }
+    for (const p of asArray4(w.npcs)) {
+      need(p.homeLocationId, "location", `person ${p.id} home`);
+      need(p.factionId, "faction", `person ${p.id} faction`);
+      for (const s of asArray4(p.schedule)) need(s.locationId, "location", `person ${p.id} schedule`);
+      const ref = p.characterRef;
+      if (ref && ref.pregen && !seen.has(ref.pregen)) E(`person ${p.id} links an unknown pregen "${ref.pregen}"`);
+    }
+    for (const f of asArray4(w.factions)) if (f.hqLocationId && f.hqLocationId !== "none") need(f.hqLocationId, "location", `faction ${f.id} headquarters`);
+    for (const q of asArray4(w.quests)) {
+      need(q.giverPersonId, "person", `quest ${q.id} giver`);
+      need(q.turninPersonId, "person", `quest ${q.id} turn-in`);
+      for (const id of asArray4(q.prerequisites && q.prerequisites.quests)) need(id, "quest", `quest ${q.id} prerequisite`);
+    }
+    for (const e of asArray4(w.encounters)) {
+      need(e.locationId, "location", `encounter ${e.id} place`);
+      for (const id of asArray4(e.personIds)) need(id, "person", `encounter ${e.id} person`);
+      for (const m of asArray4(e.monsters)) if (!findMonster(m.key || m.name)) E(`encounter ${e.id}: "${m.key || m.name}" is not an SRD 5.2.1 monster`);
+    }
+    for (const ev of asArray4(w.events)) for (const id of asArray4(ev.locationIds)) need(id, "location", `event ${ev.id} place`);
+    const qs = new Map(asArray4(w.quests).map((q) => [q.id, q]));
+    const state = /* @__PURE__ */ new Map();
+    const visit = (id, path) => {
+      if (state.get(id) === 2) return;
+      if (state.get(id) === 1) {
+        E(`quest prerequisites form a loop: ${[...path, id].join(" → ")}`);
+        return;
+      }
+      state.set(id, 1);
+      const q = qs.get(id);
+      for (const p of asArray4(q && q.prerequisites && q.prerequisites.quests)) if (qs.has(p)) visit(p, [...path, id]);
+      state.set(id, 2);
+    };
+    for (const id of qs.keys()) visit(id, []);
+    const levels = asArray4(pkg.levels).map(Number);
+    const maxLevel = levels[1] || levels[0] || 20;
+    for (const q of qs.values()) {
+      const lv = Number(q.prerequisites && q.prerequisites.level);
+      if (lv > maxLevel) E(`quest ${q.id} needs level ${lv}, above the adventure's ${maxLevel}`);
+    }
+    const ws = w.start || {};
+    if (!ws.locationId) E("world.start.locationId missing: where does the game begin?");
+    else if (ids[ws.locationId] !== "location") E(`world.start.locationId: unknown location "${ws.locationId}"`);
+    else {
+      const reach = reachableLocations(w, ws.locationId);
+      const lost = asArray4(w.locations).filter((l) => !reach.has(l.id)).map((l) => l.name || l.id);
+      if (lost.length) Wn(`not reachable from the start: ${lost.join(", ")}`);
+    }
+    const xp = xpEstimate(w);
+    if (levels.length === 2 && levels[1] > levels[0]) {
+      const needXp = xpForLevel(levels[1]) - xpForLevel(levels[0]);
+      if (xp.perCharacter < needXp) Wn(`XP per character ${xp.perCharacter} < ${needXp} needed for level ${levels[1]} (quests ${xp.quest}, fights ${xp.combat} / ${AUTHORED_PARTY})`);
+    }
+    for (const h of forbiddenNamesIn({ title: pkg.title, summary: pkg.summary, world: w, characters: cards, start: st })) E(`forbidden name "${h.name}" (…${h.sample}…)`);
+    const stats = { locations: asArray4(w.locations).length, persons: asArray4(w.npcs).length, quests: qs.size, encounters: asArray4(w.encounters).length, pregens: seen.size, xp };
+    return { ok: errors.length === 0, errors, warnings, stats };
+  }
+  var SRD_MONSTER_COUNT = Object.keys(MONSTERS || {}).length;
+
+  // src/adventures/content/drowned-lantern.js
+  var ID = "drowned-lantern";
+  var VERSION = 1;
+  var place = (id, name, description, extra = {}) => Object.assign({ id, name, description }, extra);
+  var room = (id, name, parentId, [x, y], description, extra = {}) => Object.assign({ id, name, parentId, map: { x, y, w: 4, h: 3 }, description }, extra);
+  var exit = (id, to, dir, type = "open", extra = {}) => Object.assign({ id, to, dir, type }, extra);
+  var flagIs = (key) => ({ type: "flag", key });
+  var questIs = (questId, state) => ({ type: "quest", questId, state });
+  var PREGENS = [
+    {
+      id: "oona",
+      pronouns: "she/her",
+      line: "Orc Fighter, Soldier · steady veteran with a prosthetic leg",
+      choices: {
+        name: "Oona Greycairn",
+        class: "fighter",
+        level: 1,
+        background: "soldier",
+        species: "orc",
+        method: "standard",
+        scores: { str: 15, dex: 13, con: 14, int: 8, wis: 12, cha: 10 },
+        bgBonus: { plus2: "str", plus1: "con" },
+        classSkills: ["perception", "survival"],
+        fightingStyle: "Great Weapon Fighting",
+        classEquipment: "A",
+        backgroundEquipment: "A",
+        alignment: "Lawful Good"
+      },
+      description: "Oona Greycairn (she/her) is an orc woman in her mid-forties, broad and weathered, with grey braids and a greatsword she carries like a walking staff. Her left leg ends below the knee in a prosthetic of carved oak and iron that she built and keeps repaired herself; she walks, runs and fights on it as she always has, and it creaks on cold mornings. For twenty years she guarded caravans between Brindlewick and the lake. Six years ago her crew was ambushed on the Forest Road and she was the only one to come home. She has worked odd jobs in the village since, and the vanishing carts have woken something in her.",
+      personality: "Steady, protective, dry humour; slow to speak and quick to act. Treats younger companions like recruits she has decided to keep alive. Hates waste and bragging. Softens around children and animals.",
+      notes: "Prosthetic left leg (oak and iron): part of who Oona is, not a weakness — no rules penalty. Bond: her old caravan crew was lost on the Forest Road."
+    },
+    {
+      id: "tove",
+      pronouns: "they/them",
+      line: "Dwarf Cleric, Acolyte · warm, loud, very short-sighted",
+      choices: {
+        name: "Tove Emberfall",
+        class: "cleric",
+        level: 1,
+        background: "acolyte",
+        species: "dwarf",
+        method: "standard",
+        scores: { str: 13, dex: 10, con: 14, int: 8, wis: 15, cha: 12 },
+        bgBonus: { plus2: "wis", plus1: "cha" },
+        classSkills: ["medicine", "persuasion"],
+        divineOrder: "protector",
+        classEquipment: "A",
+        backgroundEquipment: "A",
+        alignment: "Neutral Good",
+        spells: { cantrips: ["guidance", "sacred-flame", "thaumaturgy"], prepared: ["bless", "cure-wounds", "healing-word", "shield-of-faith"] },
+        magicInitiate: { background: { cantrips: ["spare-the-dying", "light"], spell: "sanctuary" } }
+      },
+      description: 'Tove Emberfall (they/them) is a dwarf cleric of the Still Water, an old order that tends shrines along rivers and lakes. Tove is very short-sighted and refuses to wear glasses ("my eyes are fine — the world is blurry"). They see their surroundings as soft shapes and colours, cannot tell faces apart beyond a few steps and recognise people by their voices, their footsteps and their smell of bread or smoke. Up close they notice everything. Their order once kept a chapel in a village that drowned when the old dam was built; Tove carries a copy of its prayer book and has always wanted to know what became of it.',
+      personality: "Warm, loud, curious and stubborn; laughs easily, hugs without asking first, greets strangers by the wrong name and does not mind being corrected. Deeply kind to the hurt and the frightened. Never admits the glasses would help.",
+      notes: "Very short-sighted, refuses glasses: sees the world as a blur beyond a few steps, knows people by voice. Story flavour only — no rules penalty. Bond: their order kept the chapel of the drowned village."
+    },
+    {
+      id: "kasimir",
+      pronouns: "he/him",
+      line: "Human Wizard, Sage · curious scholar of the drowned village",
+      choices: {
+        name: "Kasimir Adeyemi",
+        class: "wizard",
+        level: 1,
+        background: "sage",
+        species: "human",
+        method: "standard",
+        scores: { str: 8, dex: 13, con: 14, int: 15, wis: 12, cha: 10 },
+        bgBonus: { plus2: "int", plus1: "con" },
+        classSkills: ["investigation", "nature"],
+        speciesSkills: ["perception"],
+        originFeat: "Alert",
+        classEquipment: "A",
+        backgroundEquipment: "A",
+        alignment: "Chaotic Good",
+        spells: { cantrips: ["fire-bolt", "mage-hand", "minor-illusion"], spellbook: ["magic-missile", "shield", "sleep", "burning-hands", "detect-magic", "mage-armor"], prepared: ["magic-missile", "shield", "sleep", "burning-hands"] },
+        magicInitiate: { background: { cantrips: ["light", "prestidigitation"], spell: "find-familiar" } }
+      },
+      description: "Kasimir Adeyemi (he/him) is a young human wizard, twenty-three, tall and ink-stained, who came to the lake country to write the history of the village that drowned under Stillwater Mere when the old dam was built. He has maps, rumours and three notebooks, and no idea yet how dangerous the questions are. He talks to his notebook when he thinks, and his familiar (a small grey owl called Footnote) comments with disapproving hoots.",
+      personality: "Curious, earnest, over-prepared; explains too much when nervous and apologises for it. Brave in a surprised way. Loves old things, maps and a good argument.",
+      notes: "Bond: studies the drowned village and the dam. Familiar: Footnote, an owl (Find Familiar)."
+    },
+    {
+      id: "pell",
+      pronouns: "she/her",
+      line: "Halfling Rogue, Criminal · quick hands, guilty conscience",
+      choices: {
+        name: "Pell Marrow",
+        class: "rogue",
+        level: 1,
+        background: "criminal",
+        species: "halfling",
+        method: "standard",
+        scores: { str: 8, dex: 15, con: 14, int: 13, wis: 12, cha: 10 },
+        bgBonus: { plus2: "dex", plus1: "con" },
+        classSkills: ["acrobatics", "deception", "perception", "investigation"],
+        expertise: ["stealth", "perception"],
+        classEquipment: "A",
+        backgroundEquipment: "A",
+        alignment: "Chaotic Good"
+      },
+      description: "Pell Marrow (she/her) is a halfling in her early thirties with a quick grin, quicker hands and a boatman's shoulders. For two summers she rowed night crossings on Stillwater Mere for a crew of smugglers who wore reed-green cloaks; she left when the cargo stopped being barrels and started being things they would not let her see. She knows the lake's moods, a hidden beach and a few people she would rather not meet again. She is back in the lake country to make up for something, though she will not say what.",
+      personality: "Quick, funny, restless; deflects with jokes, notices exits first. Loyal once trust is earned, and ashamed of her past in a way she hides badly. Hates bullies.",
+      notes: "Bond: once rowed for the smugglers (the Reedcloaks) and knows the hidden beach; wants to make amends."
+    }
+  ];
+  function pregenCard(p) {
+    const sheet = buildSheet(p.choices);
+    sheet.notes = p.notes;
+    const data = writeSheet({
+      name: p.choices.name,
+      description: p.description,
+      personality: p.personality,
+      scenario: "",
+      first_mes: "",
+      mes_example: "",
+      alternate_greetings: [],
+      creator_notes: 'Pregenerated character for the RPmod starter adventure "The Drowned Lantern". Rules: SRD 5.2.1.',
+      system_prompt: "",
+      post_history_instructions: "",
+      tags: ["RPmod pregen", "The Drowned Lantern"],
+      creator: "KLITE RPmod",
+      character_version: String(VERSION),
+      extensions: {}
+    }, sheet);
+    Object.assign(data.extensions.klite_rpmod, { adventure: ID, pregen: p.id, line: p.line, pronouns: p.pronouns });
+    return { spec: "chara_card_v2", spec_version: "2.0", data };
+  }
+  var PREGEN_CHOICES = Object.fromEntries(PREGENS.map((p) => [p.id, p.choices]));
+  var pregenPerson = (p, x, y) => ({
+    id: `npc_${p.id}`,
+    name: p.choices.name,
+    characterRef: { pregen: p.id },
+    homeLocationId: "bw_heron",
+    canJoin: true,
+    phases: [{ id: "ph_you", label: "is you", conditions: [flagIs(`pregen_${p.id}`)], gone: true }],
+    ui: { x, y }
+  });
+  function world() {
+    return {
+      id: "world_drowned_lantern",
+      name: "The Drowned Lantern",
+      description: "The lake country around Stillwater Mere: the village of Brindlewick, the lakeside town of Lanternport, the roads between them and the drowned village under the lake. Supply carts between Brindlewick and Lanternport keep vanishing, and each place blames the other.",
+      rules: [
+        "Classic heroic fantasy with light humour; the lake and everything drowned are eerie and quiet, never gory.",
+        "Keep replies vivid but concise, and end on a moment the player can act on.",
+        "RPmod rolls the dice and runs every fight: never invent rolls, hits, damage or deaths — narrate the results RPmod reports.",
+        "People are what their descriptions say: respect pronouns and portray every trait (a prosthetic leg, short sight) as part of the person, never as a joke or a problem to fix."
+      ],
+      ruleset: { aiMode: "gm" },
+      ui: { x: 80, y: 300 },
+      start: { locationId: "bw_heron", clock: { day: 1, month: 4, year: 1, time: "morning", season: "spring", weather: "mist over the lake" }, view: "player" },
+      locations: [
+        // --- the world graph ---
+        place(
+          "loc_brindlewick",
+          "Brindlewick",
+          "A mill village of thatched roofs and stone walls where the Brindle stream leaves the hills for Stillwater Mere. Everyone knows everyone, and everyone is talking about the missing carts.",
+          {
+            kind: "town",
+            mapStyle: "plots",
+            atmosphere: "worried",
+            hub: true,
+            connectedLocationIds: ["loc_forest_road"],
+            ui: { x: 300, y: 300 },
+            phases: [{ id: "ph_relieved", label: "Goblins driven off", conditions: [questIs("q_hollow_oak", "turnedin")], atmosphere: "relieved", description: "A mill village of thatched roofs and stone walls. The mill wheel turns again, and people talk about the heroes of the Hollow Oak — and, more quietly, about the strange coin they found there." }]
+          }
+        ),
+        place(
+          "loc_forest_road",
+          "Forest Road",
+          "The old trade road east of Brindlewick, under oak and beech. Ferns crowd the verges; the ruts are deep from carts that no longer come. A side track runs north to a huge dead oak, and the sound of the river comes from the south.",
+          {
+            atmosphere: "tense",
+            connectedLocationIds: ["loc_brindlewick", "loc_hollow_oak", "loc_river_ford"],
+            ui: { x: 600, y: 300 },
+            localLore: [{ id: "ll_cart", content: "Liu Wen's cart lies overturned in the ferns a mile out of the village: the grain sacks are gone, the mule cut loose, and small bare footprints lead north towards the Hollow Oak.", keys: ["cart", "tracks", "footprints"] }]
+          }
+        ),
+        place(
+          "loc_hollow_oak",
+          "The Hollow Oak",
+          "A dead oak so old and vast that a whole goblin band lives in its trunk and in the burrows between its roots. It smells of smoke, wet earth and stolen bread.",
+          { kind: "dungeon", mapStyle: "stone", atmosphere: "menacing", connectedLocationIds: ["loc_forest_road"], ui: { x: 600, y: 110 } }
+        ),
+        place(
+          "loc_river_ford",
+          "River Ford",
+          "Where the Forest Road meets the Brindle river: a ford of flat stones for dry summers and Odo's rope ferry for the rest of the year. Reeds, herons, and now and then a green old coin washed out of the gravel.",
+          { atmosphere: "calm", connectedLocationIds: ["loc_forest_road"], ui: { x: 600, y: 490 } }
+        ),
+        // --- Brindlewick (town map) ---
+        room(
+          "bw_green",
+          "Village Green",
+          "loc_brindlewick",
+          [5, 4],
+          'Grass, geese and an old stone trough in the middle of Brindlewick. The notice board is covered in "missing" notes about carts and goods.',
+          { exits: [exit("ex_bw_green_heron", "bw_heron", "n"), exit("ex_bw_green_mill", "bw_mill", "w"), exit("ex_bw_green_smithy", "bw_smithy", "s"), exit("ex_bw_green_road", "loc_forest_road", "e")] }
+        ),
+        room(
+          "bw_heron",
+          "The Tipsy Heron",
+          "loc_brindlewick",
+          [5, 0],
+          "The village inn: low beams, a fire that never quite goes out, and a stuffed heron over the bar that leans a little to the left. Travellers and villagers share the long tables.",
+          { light: "bright", exits: [exit("ex_bw_heron_shrine", "bw_shrine", "e"), exit("ex_bw_heron_farm", "bw_farm", "w")] }
+        ),
+        room(
+          "bw_mill",
+          "Quill's Mill",
+          "loc_brindlewick",
+          [0, 4],
+          "The water mill on the Brindle stream. Its wheel stands still: the grain carts are gone, and something squeaks in the cellar.",
+          { exits: [exit("ex_bw_mill_farm", "bw_farm", "n"), exit("ex_bw_mill_cellar", "bw_mill_cellar", "down", "stairs", { door: { state: "closed", material: "wooden trapdoor" } })] }
+        ),
+        room(
+          "bw_mill_cellar",
+          "Mill Cellar",
+          "loc_brindlewick",
+          [0, 8],
+          "A damp cellar of flour sacks and gnawed beams. The rats have become bold since the goblins took the grain.",
+          { light: "dark", hazards: ["slippery flour dust"] }
+        ),
+        room(
+          "bw_smithy",
+          "Brandt's Smithy",
+          "loc_brindlewick",
+          [5, 8],
+          "An open forge, a stone anvil and racks of tools and weapons. Oskar Brandt sings while he hammers.",
+          { exits: [exit("ex_bw_smithy_elder", "bw_elder", "e")] }
+        ),
+        room(
+          "bw_shrine",
+          "Shrine of the Still Water",
+          "loc_brindlewick",
+          [10, 0],
+          "A small round shrine of river stones with a basin of still water at its heart. Candles float on it in paper boats.",
+          { light: "dim" }
+        ),
+        room("bw_elder", "Elder Holt's House", "loc_brindlewick", [10, 8], "A tidy house with a herb garden and a long table covered in ledgers: who owes what, whose cart went missing when."),
+        room("bw_farm", "Wen's Farm", "loc_brindlewick", [0, 0], "Fields, a goose pond and an empty cart shed. Liu Wen's mule came home alone two days ago."),
+        // --- the Hollow Oak (dungeon map) ---
+        room(
+          "ho_roots",
+          "Root Tunnel",
+          "loc_hollow_oak",
+          [0, 4],
+          "A tunnel between the oak's great roots, just high enough to walk bent over. Bones and bread crusts in the dirt.",
+          { light: "dark", exits: [exit("ex_ho_out", "loc_forest_road", "w"), exit("ex_ho_roots_pen", "ho_wolfpen", "e", "corridor")] }
+        ),
+        room(
+          "ho_wolfpen",
+          "Wolf Den",
+          "loc_hollow_oak",
+          [5, 4],
+          "A low cave under the trunk that stinks of wet fur. Gnawed harness straps from the stolen mules lie in the straw.",
+          { light: "dark", exits: [exit("ex_ho_pen_trunk", "ho_trunk", "n", "corridor"), exit("ex_ho_pen_stores", "ho_stores", "e", "door", { door: { state: "closed", material: "plank" } }), exit("ex_ho_pen_burrow", "ho_burrow", "s", "corridor")] }
+        ),
+        room(
+          "ho_trunk",
+          "Hollow Trunk",
+          "loc_hollow_oak",
+          [5, 0],
+          "Inside the dead trunk: a tall dark shaft with rope ladders up to a lookout knot-hole over the road.",
+          { light: "dim" }
+        ),
+        room(
+          "ho_stores",
+          "Stolen Stores",
+          "loc_hollow_oak",
+          [10, 4],
+          "Grain sacks, barrels and crates from the missing carts, stacked in a dry burrow — some still marked with the Brindlewick mill's stamp.",
+          { light: "dark", exits: [exit("ex_ho_stores_chief", "ho_chief", "s", "secret", { secretDC: 13 })] }
+        ),
+        room(
+          "ho_burrow",
+          "Sleeping Burrow",
+          "loc_hollow_oak",
+          [5, 8],
+          "A burrow of moss beds and stolen blankets where the goblins sleep, gamble and quarrel.",
+          { light: "dim", exits: [exit("ex_ho_burrow_flooded", "ho_flooded", "w", "corridor"), exit("ex_ho_burrow_chief", "ho_chief", "e", "door", { door: { state: "locked", material: "bone-studded plank", lockDC: 13, keyItem: "Bone Key" } })] }
+        ),
+        room(
+          "ho_flooded",
+          "Flooded Burrow",
+          "loc_hollow_oak",
+          [0, 8],
+          "A burrow where groundwater has risen knee-deep. Rats swarm over a half-sunken sack.",
+          { light: "dark", hazards: ["knee-deep muddy water"] }
+        ),
+        room(
+          "ho_chief",
+          "Chief's Hollow",
+          "loc_hollow_oak",
+          [10, 8],
+          "The goblin chief's hall: a firepit, a throne of cart wheels and a chest the chief never lets out of sight.",
+          { light: "dim", secret: false }
+        )
+      ],
+      objects: [
+        { id: "obj_notice_board", name: "Notice board", desc: '"MISSING: one cart of seed grain (Wen)." "MISSING: two barrels of cider (the Heron)." "Anyone travelling to Lanternport, ask for news of the Quill cart."', locationId: "bw_green", kind: "furniture" },
+        { id: "obj_wrecked_cart", name: "Liu Wen's cart", desc: "Overturned in the ferns, one wheel broken. Small bare footprints lead north towards a huge dead oak.", locationId: "loc_forest_road" },
+        { id: "obj_basin", name: "Basin of still water", desc: "Offerings to the Still Water float here. An old carving on the rim shows a lantern over a church roof.", locationId: "bw_shrine", kind: "furniture" },
+        { id: "obj_snare", name: "Snare line", desc: "A cord hidden in the dirt that drops a net of thorn branches.", locationId: "ho_roots", kind: "trap", trapDC: 12 },
+        { id: "obj_grain", name: "Stolen grain sacks", desc: "Three sacks with the mill's stamp, still dry.", locationId: "ho_stores", kind: "container", contains: ["Grain Sack x3"] },
+        { id: "obj_sunken_sack", name: "Half-sunken sack", desc: "Soggy, heavy, gnawed open at one corner; something hard inside.", locationId: "ho_flooded", kind: "container", contains: ["Bone Key", "6 sp"] },
+        { id: "obj_chief_chest", name: "The chief's chest", desc: "A battered strongbox under the cart-wheel throne.", locationId: "ho_chief", kind: "container", contains: ["Lake-green Coin", "14 gp", "Potion of Healing"] },
+        { id: "obj_firepit", name: "Firepit", desc: "Smoky and low; a good place to duck behind.", locationId: "ho_chief", kind: "light", lit: true }
+      ],
+      factions: [
+        {
+          id: "fac_brindlewick",
+          name: "Brindlewick",
+          description: "The villagers of Brindlewick: millers, farmers and one inn.",
+          hqLocationId: "loc_brindlewick",
+          startReputation: 0,
+          ui: { x: 80, y: 120 },
+          goals: "Get the carts moving again; find out who is behind the thefts (they suspect Lanternport)."
+        }
+      ],
+      npcs: [
+        {
+          id: "npc_maren",
+          name: "Elder Maren Holt",
+          personality: 'The village elder, sixty, sharp-eyed and dry; keeps ledgers of everything and suspects Lanternport of "letting the road go wild".',
+          factionId: "fac_brindlewick",
+          homeLocationId: "bw_elder",
+          mood: "worried",
+          schedule: [{ time: "morning", locationId: "bw_heron" }, { time: "noon", locationId: "bw_green" }],
+          ui: { x: 140, y: 420 }
+        },
+        { id: "npc_tobias", name: "Tobias Quill", personality: "The miller, round and anxious; his wheel stands still without grain, and his cellar is full of rats.", factionId: "fac_brindlewick", homeLocationId: "bw_mill", mood: "fretful", ui: { x: 140, y: 500 } },
+        {
+          id: "npc_ada",
+          name: "Ada Fenn",
+          personality: "Keeper of the Tipsy Heron; brisk, warm, hears every rumour and repeats the good ones.",
+          factionId: "fac_brindlewick",
+          homeLocationId: "bw_heron",
+          mood: "busy",
+          ui: { x: 140, y: 580 },
+          shop: { items: [{ item: "Hot meal", price: "3 sp" }, { item: "Ale", price: "4 cp" }, { item: "Rations", price: "" }, { item: "Torch", price: "" }, { item: "Waterskin", price: "" }, { item: "Oil", price: "" }, { item: "Potion of Healing", price: "", stock: 1 }], buys: true, note: "A bed in the loft is 5 sp a night; friends of the village eat for less." }
+        },
+        {
+          id: "npc_oskar",
+          name: "Oskar Brandt",
+          personality: "The smith, huge and gentle, sings while he works and haggles badly.",
+          factionId: "fac_brindlewick",
+          homeLocationId: "bw_smithy",
+          mood: "cheerful",
+          ui: { x: 220, y: 420 },
+          shop: { items: [{ item: "Dagger", price: "" }, { item: "Handaxe", price: "" }, { item: "Spear", price: "" }, { item: "Shortsword", price: "" }, { item: "Mace", price: "" }, { item: "Shield", price: "" }, { item: "Leather Armor", price: "" }, { item: "Chain Shirt", price: "", stock: 1 }, { item: "Arrows (20)", price: "1 gp" }], buys: true, note: 'He buys old iron and anything goblin-made, "for scrap".' }
+        },
+        {
+          id: "npc_imani",
+          name: "Sister Imani",
+          personality: "Keeper of the Shrine of the Still Water; calm, tall, speaks slowly and remembers the old lake stories.",
+          factionId: "fac_brindlewick",
+          homeLocationId: "bw_shrine",
+          mood: "serene",
+          ui: { x: 220, y: 500 },
+          shop: { items: [{ item: "Healer's Kit", price: "" }, { item: "Holy Water", price: "" }, { item: "Potion of Healing", price: "", stock: 2 }], buys: false, note: "Healing at the shrine is free for anyone hurt defending the village." }
+        },
+        {
+          id: "npc_liu",
+          name: "Liu Wen",
+          personality: "A farmer in her thirties, blunt and angry; her seed grain was on the lost cart and her mule came home alone.",
+          factionId: "fac_brindlewick",
+          homeLocationId: "bw_farm",
+          mood: "angry",
+          ui: { x: 220, y: 580 },
+          phases: [{ id: "ph_grateful", label: "Grain back", conditions: [questIs("q_hollow_oak", "turnedin")], mood: "grateful, a little embarrassed about her temper" }]
+        },
+        { id: "npc_odo", name: "Odo the ferryman", personality: "An old man with a pipe and a rope ferry; has seen everything the river carried in fifty years and believes half of it.", homeLocationId: "loc_river_ford", mood: "unhurried", ui: { x: 760, y: 560 } },
+        pregenPerson(PREGENS[0], 40, 640),
+        pregenPerson(PREGENS[1], 110, 640),
+        pregenPerson(PREGENS[2], 180, 640),
+        pregenPerson(PREGENS[3], 250, 640)
+      ],
+      quests: [
+        {
+          id: "q_missing_carts",
+          title: "Missing Carts",
+          giverPersonId: "npc_maren",
+          turninPersonId: "npc_maren",
+          ui: { x: 420, y: 420 },
+          description: "Liu Wen's grain cart never reached the mill. Elder Holt wants to know what happened on the Forest Road.",
+          offerText: "Third cart this month. Liu Wen's, with the seed grain — the mule came home alone. Lanternport says the road is our business; I say it's theirs. Talk to Liu, then go and look. Please.",
+          progressText: "Anything on the road?",
+          completionText: "Goblins? That close to the village… and here I was blaming Lanternport. Well. We'll have to do something about that oak.",
+          objectives: [{ id: "o1", kind: "talk", target: "npc_liu", text: "Ask Liu Wen about the cart" }, { id: "o2", kind: "visit", target: "loc_forest_road", text: "Find the cart on the Forest Road" }],
+          rewards: [{ type: "xp", xp: 50 }, { type: "gold", gold: 5 }, { type: "reputation", factionId: "fac_brindlewick", amount: 50 }]
+        },
+        {
+          id: "q_hollow_oak",
+          title: "The Hollow Oak",
+          giverPersonId: "npc_maren",
+          turninPersonId: "npc_tobias",
+          prerequisites: { quests: ["q_missing_carts"] },
+          ui: { x: 420, y: 500 },
+          description: "Goblins in the Hollow Oak are stealing from the road. Drive them out and bring the miller back his grain.",
+          offerText: "The goblins sit in that dead oak off the road and eat our winter. Drive them out — and bring Tobias his grain, or the wheel won't turn this spring.",
+          progressText: "The oak still full of goblins?",
+          completionText: "My grain! Oh, my grain. The wheel turns tonight — and you eat at the Heron on me for a week, I'll tell Ada.",
+          objectives: [{ id: "o1", kind: "kill", target: "Goblin Boss", count: 1, text: "Defeat the goblin chief" }, { id: "o2", kind: "collect", target: "Grain Sack", count: 3, text: "Bring back the grain sacks" }],
+          rewards: [
+            { type: "xp", xp: 150 },
+            { type: "gold", gold: 25 },
+            { type: "reputation", factionId: "fac_brindlewick", amount: 100 },
+            { type: "choice", options: [{ item: "Potion of Healing", qty: 2 }, { item: "Shield", qty: 1 }, { item: "Light Crossbow", qty: 1 }] }
+          ]
+        },
+        {
+          id: "q_old_coin",
+          title: "An Old Coin",
+          giverPersonId: "npc_imani",
+          turninPersonId: "npc_imani",
+          startItem: "Lake-green Coin",
+          ui: { x: 420, y: 580 },
+          description: "The goblin chief was paid in a strange green coin. Someone in the village may know where it comes from.",
+          offerText: "May I? …Lake-green, and the stamp is a lantern over a church roof. This is from Old Brindle — the village under the lake. Ask Odo at the ford; the river gives these up now and then.",
+          progressText: "What did Odo say?",
+          completionText: "Coins that washed out at the ford — and more of them in goblin hands. Someone is bringing things up from the drowned village. Follow the river, and ask the temple in Lanternport what the lantern means.",
+          objectives: [{ id: "o1", kind: "talk", target: "npc_imani", text: "Show the coin to Sister Imani" }, { id: "o2", kind: "talk", target: "npc_odo", text: "Ask Odo the ferryman about green coins" }, { id: "o3", kind: "visit", target: "loc_river_ford", text: "Go to the River Ford" }],
+          rewards: [{ type: "xp", xp: 100 }, { type: "reputation", factionId: "fac_brindlewick", amount: 25 }]
+        },
+        {
+          id: "q_mill_rats",
+          title: "Rats in the Mill",
+          giverPersonId: "npc_tobias",
+          turninPersonId: "npc_tobias",
+          ui: { x: 500, y: 420 },
+          description: "The rats in the mill cellar have grown bold. Tobias would be grateful.",
+          offerText: "Without grain the rats go for the sacks, the beams — my boots! There's a whole swarm down there. Would you…?",
+          progressText: "Still squeaking down there?",
+          completionText: "Quiet! Blessed quiet. Here — it isn't much.",
+          objectives: [{ id: "o1", kind: "kill", target: "Swarm of Rats", count: 1, text: "Clear the rats from the mill cellar" }],
+          rewards: [{ type: "xp", xp: 25 }, { type: "gold", gold: 5 }, { type: "reputation", factionId: "fac_brindlewick", amount: 25 }]
+        }
+      ],
+      encounters: [
+        { id: "enc_road_ambush", name: "Goblin ambush on the road", monsters: [{ key: "goblin-warrior", count: 2 }], personIds: [], locationId: "loc_forest_road", start: "near", ui: { x: 760, y: 300 } },
+        { id: "enc_mill_rats", name: "Rats in the mill cellar", monsters: [{ key: "swarm-of-rats", count: 1 }], personIds: [], locationId: "bw_mill_cellar", start: "same" },
+        { id: "enc_den_wolves", name: "Goblin wolves", monsters: [{ key: "wolf", count: 2 }], personIds: [], locationId: "ho_wolfpen", start: "auto" },
+        { id: "enc_den_lookout", name: "Lookouts in the trunk", monsters: [{ key: "goblin-warrior", count: 2 }], personIds: [], locationId: "ho_trunk", start: "auto" },
+        { id: "enc_den_burrow", name: "Goblins in the sleeping burrow", monsters: [{ key: "goblin-warrior", count: 3 }], personIds: [], locationId: "ho_burrow", start: "auto" },
+        { id: "enc_den_rats", name: "Rats in the flooded burrow", monsters: [{ key: "swarm-of-rats", count: 2 }], personIds: [], locationId: "ho_flooded", start: "auto" },
+        { id: "enc_den_chief", name: "Chief Snagtooth and a guard", monsters: [{ key: "goblin-boss", count: 1 }, { key: "goblin-warrior", count: 1 }], personIds: [], locationId: "ho_chief", start: "auto" }
+      ],
+      events: [
+        {
+          id: "ev_road_ambush",
+          name: "Ambush at the cart",
+          description: "Two goblins burst out of the ferns beside the wrecked cart, rusty blades up.",
+          triggers: [{ type: "onEnterLocation", locationId: "loc_forest_road" }],
+          conditions: [questIs("q_missing_carts", "active")],
+          effects: [{ type: "encounter", value: "enc_road_ambush" }],
+          repeatable: false,
+          ui: { x: 760, y: 200 }
+        }
+      ],
+      globalLore: [
+        { id: "gl_mere", label: "Stillwater Mere", content: "Stillwater Mere is the long lake south of Brindlewick. Fishermen say it is never quite still at night, and that bells ring under it in storms.", keys: ["mere", "lake", "Stillwater"] },
+        { id: "gl_old_brindle", label: "Old Brindle", content: "Two hundred years ago the old dam at the lake's outflow raised the water, and the village of Old Brindle, with its chapel of the Still Water, drowned. Its people moved uphill and founded Brindlewick.", keys: ["Old Brindle", "drowned village", "dam", "chapel"] },
+        { id: "gl_lanternport", label: "Lanternport", content: "Lanternport is the market town on the far side of the lake, famous for its spring Lantern Fair. Brindlewick sells it grain and buys its fish, and the two have argued about the road between them for as long as anyone remembers.", keys: ["Lanternport", "fair", "town"] },
+        { id: "gl_still_water", label: "The Still Water", content: "The Still Water is an old, quiet order of shrine keepers along rivers and lakes; their sign is a lantern reflected in water.", keys: ["Still Water", "shrine", "order"] }
+      ]
+    };
+  }
+  var OPENING = [
+    "Mist lies over Stillwater Mere this spring morning, and it creeps up the lane into Brindlewick, beading on the thatch of the Tipsy Heron.",
+    "Inside, the fire crackles, Ada Fenn is slicing bread faster than anyone can eat it, and the stuffed heron over the bar leans a little further to the left than yesterday.",
+    "The door bangs open. Elder Maren Holt comes in out of the mist, ledger under one arm, and looks around the common room at the villagers and the handful of travellers at the long tables.",
+    `"Another cart," she says, to no one and everyone. "Liu Wen's, with the seed grain. The mule came home alone." Her eyes settle on you. "You look like someone who can walk a road without losing it. Can I buy you breakfast and a question?"`
+  ].join("\n\n");
+  function drownedLantern() {
+    return {
+      format: "rpmod-adventure",
+      version: VERSION,
+      id: ID,
+      title: "The Drowned Lantern",
+      summary: "Supply carts keep vanishing between the village of Brindlewick and the lakeside town of Lanternport. Follow the trail from goblin raiders to smugglers on Stillwater Mere, and to what lies under the lake. A starter adventure for one character and a companion.",
+      levels: [1, 5],
+      credits: [SRD.attribution],
+      world: world(),
+      characters: PREGENS.map(pregenCard),
+      start: { view: "player", pregens: PREGENS.map((p) => p.id), opening: OPENING }
+    };
+  }
+
+  // src/adventures/adventures.js
+  var BUNDLED = [drownedLantern()];
+  var PREGEN_KEY = "KLITE.adventures.pregens";
+  function initAdventures() {
+    if (window.KLITE_RPMod_Adventures) return;
+    const registry = /* @__PURE__ */ new Map();
+    const Worlds = () => window.KLITE_RPMod_Worlds;
+    const Shell2 = () => window.KLITE_RPMod_Shell;
+    const deepClone = (o) => JSON.parse(JSON.stringify(o));
+    const V = { box: null, adventure: null, pregen: null, busy: false, msg: "" };
+    function register(pkg) {
+      const res = validateAdventure(pkg);
+      if (!res.ok) {
+        try {
+          console.error("[RPmod adventures] not registered:", pkg && pkg.id, res.errors);
+        } catch (_) {
+        }
+        return res;
+      }
+      registry.set(pkg.id, pkg);
+      if (V.box) render();
+      try {
+        window.dispatchEvent(new CustomEvent("klite:adventures-change"));
+      } catch (_) {
+      }
+      return res;
+    }
+    for (const p of BUNDLED) register(p);
+    const get = (id) => (id && typeof id === "object" ? id : registry.get(id)) || null;
+    function list3() {
+      return [...registry.values()].map((p) => ({
+        id: p.id,
+        title: p.title,
+        summary: p.summary || "",
+        levels: (p.levels || []).slice(),
+        pregens: pregens(p).map((g) => ({ id: g.id, name: g.name, line: g.line, pronouns: g.pronouns }))
+      }));
+    }
+    function remembered() {
+      try {
+        return JSON.parse(localStorage.getItem(PREGEN_KEY) || "{}") || {};
+      } catch (_) {
+        return {};
+      }
+    }
+    function remember(key, id) {
+      try {
+        const m = remembered();
+        m[key] = id;
+        localStorage.setItem(PREGEN_KEY, JSON.stringify(m));
+      } catch (_) {
+      }
+    }
+    const isPregen = (rec, advId, pregenId) => {
+      const r = rec && rec.data && rec.data.extensions && rec.data.extensions.klite_rpmod;
+      return !!(r && r.adventure === advId && r.pregen === pregenId);
+    };
+    async function findPregen(advId, g) {
+      const metas = characterList();
+      const key = `${advId}/${g.id}`;
+      const rid = remembered()[key];
+      const byId = rid && metas.find((m) => `${m.id}` === `${rid}`);
+      if (byId) {
+        const rec = await loadCharacter(byId.name);
+        if (isPregen(rec, advId, g.id)) return { id: byId.id, name: byId.name };
+      }
+      const base = String(g.name).toLowerCase();
+      for (const m of metas) {
+        const n = String(m.name || "").toLowerCase();
+        if (n !== base && !n.startsWith(base + "_") && !n.startsWith(base + " ")) continue;
+        const rec = await loadCharacter(m.name);
+        if (isPregen(rec, advId, g.id)) {
+          remember(key, m.id);
+          return { id: m.id, name: m.name };
+        }
+      }
+      return null;
+    }
+    async function installPregens(idOrPkg) {
+      const pkg = get(idOrPkg);
+      if (!pkg) throw new Error("unknown adventure");
+      const out = {};
+      for (const g of pregens(pkg)) {
+        const found = await findPregen(pkg.id, g);
+        if (found) {
+          out[g.id] = Object.assign(found, { added: false });
+          continue;
+        }
+        const saved = await saveCharacter({ inner: deepClone(g.card.data) });
+        remember(`${pkg.id}/${g.id}`, saved.id);
+        out[g.id] = { id: saved.id, name: saved.name, added: true };
+      }
+      return out;
+    }
+    async function installWorld(pkg, cards) {
+      const A = Worlds();
+      if (!A) throw new Error("Worlds engine not loaded");
+      const lib = A.library || {};
+      const version = Number(pkg.version) || 1;
+      let id = Object.keys(lib).find((k2) => lib[k2] && lib[k2].adventure && lib[k2].adventure.id === pkg.id && Number(lib[k2].adventure.version) === version) || null;
+      let w;
+      if (id) w = lib[id];
+      else {
+        w = deepClone(pkg.world);
+        w.adventure = { id: pkg.id, version };
+        if (lib[w.id]) {
+          let n = 2;
+          while (lib[`${w.id}_${n}`]) n++;
+          w.id = `${w.id}_${n}`;
+          w.name = `${w.name} (${n})`;
+        }
+      }
+      for (const p of w.npcs || []) {
+        const pid = p.characterRef && p.characterRef.pregen;
+        const c = pid && cards[pid];
+        if (c) p.characterRef = { source: "library", id: c.id, name: c.name, pregen: pid };
+      }
+      if (id) await A.saveActiveWorld?.();
+      else id = await A.importWorld(w, { activate: false });
+      return id;
+    }
+    async function start(idOrPkg, opts = {}) {
+      const pkg = get(idOrPkg);
+      if (!pkg) throw new Error("unknown adventure");
+      const A = Worlds();
+      if (!A) throw new Error("Worlds engine not loaded");
+      const check = validateAdventure(pkg);
+      if (!check.ok) throw new Error("adventure is broken: " + check.errors[0]);
+      const offered = pregens(pkg);
+      const hero = opts.hero ? String(opts.hero) : "";
+      const g = hero ? null : offered.find((x) => x.id === opts.pregen) || offered[0];
+      if (!g && !hero) throw new Error("adventure has no pregenerated characters");
+      const who = hero || g.name;
+      const story = Array.isArray(window.gametext_arr) ? window.gametext_arr.length : 0;
+      if (opts.confirm !== false && story > 0 && !window.confirm(`Start "${pkg.title}" as ${who}? This begins a new session: the current story is replaced (save it first to keep it).`)) return { cancelled: true };
+      const cards = await installPregens(pkg);
+      const worldId = await installWorld(pkg, cards);
+      try {
+        if (typeof window.restart_new_game === "function") window.restart_new_game(false);
+        else window.gametext_arr = [];
+      } catch (_) {
+        window.gametext_arr = [];
+      }
+      const opening = String(pkg.start && pkg.start.opening || "").trim();
+      if (opening) {
+        window.gametext_arr = [opening];
+      }
+      try {
+        window.render_gametext?.(true);
+      } catch (_) {
+      }
+      A.useWorld(worldId, { fresh: true });
+      if (g) A.setFlag(`pregen_${g.id}`, true);
+      A.commitToBase();
+      A.enable();
+      const me = g ? cards[g.id] : { name: hero };
+      try {
+        const T = window.KLITE_RPMod && window.KLITE_RPMod.panels && window.KLITE_RPMod.panels.TOOLS;
+        const rec = await loadCharacter(me.name);
+        const d = rec && rec.data || (g ? deepClone(g.card.data) : { name: hero });
+        if (T && T.usePersona) T.usePersona(Object.assign({}, d, { name: d.name || me.name, image: rec && rec.image || null, avatar: rec && rec.image || null, rawData: { data: d } }));
+      } catch (e) {
+        try {
+          console.error("[RPmod adventures] persona", e);
+        } catch (_) {
+        }
+      }
+      const view = pkg.start && pkg.start.view || (A.worldStart(worldId) || {}).view;
+      try {
+        if (view) window.KLITE_RPMod_WorldsUI?.setUiMode(view);
+      } catch (_) {
+      }
+      try {
+        Shell2()?.close("adventure");
+        Shell2()?.open("world");
+      } catch (_) {
+      }
+      return { worldId, persona: me.name, pregens: cards };
+    }
+    async function current() {
+      const A = Worlds();
+      const w = A && A.activeWorld && A.activeWorld();
+      const pkg = w && w.adventure ? registry.get(w.adventure.id) : null;
+      if (!pkg) return null;
+      const T = window.KLITE_RPMod && window.KLITE_RPMod.panels && window.KLITE_RPMod.panels.TOOLS;
+      const persona = T && T.personaEnabled && T.selectedPersona ? T.selectedPersona.name : "";
+      let pregen = null;
+      if (persona) {
+        const rec = await loadCharacter(persona);
+        const r = rec && rec.data && rec.data.extensions && rec.data.extensions.klite_rpmod;
+        if (r && r.adventure === pkg.id && r.pregen) pregen = r.pregen;
+      }
+      return { id: pkg.id, title: pkg.title, persona, pregen };
+    }
+    async function restart(opts = {}) {
+      const cur = await current();
+      if (!cur) throw new Error("the active world is not an adventure");
+      const A = Worlds();
+      try {
+        A.reviveParty();
+      } catch (_) {
+      }
+      if (opts.resetPregens) {
+        const pkg = registry.get(cur.id);
+        const C2 = window.KLITE_RPMod_Characters;
+        for (const g of pregens(pkg)) {
+          const found = await findPregen(pkg.id, g);
+          if (found && C2 && C2.saveSheet) await C2.saveSheet(found.name, deepClone(g.card.data.extensions.klite_rpmod.sheet));
+        }
+      }
+      return start(cur.id, opts.hero ? { hero: opts.hero, confirm: false } : cur.pregen ? { pregen: cur.pregen, confirm: false } : { hero: cur.persona, confirm: false });
+    }
+    const initials2 = (name) => String(name || "?").split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join("");
+    function render() {
+      const box = V.box;
+      if (!box) return;
+      clear(box);
+      const all = list3();
+      if (!all.length) {
+        box.appendChild(el("p", { class: "rpm-muted", text: "No adventures are installed yet." }));
+        return;
+      }
+      const adv = all.find((a) => a.id === V.adventure) || all[0];
+      V.adventure = adv.id;
+      if (all.length > 1) {
+        const sel2 = el("select", { class: "form-control rpm-input", "aria-label": "Adventure", "data-adv": "select" });
+        for (const a of all) {
+          const o = el("option", { value: a.id, text: a.title });
+          if (a.id === adv.id) o.selected = true;
+          sel2.appendChild(o);
+        }
+        sel2.addEventListener("change", () => {
+          V.adventure = sel2.value;
+          V.pregen = null;
+          render();
+        });
+        box.appendChild(sel2);
+      }
+      box.appendChild(el("h3", { class: "rpm-adv-title", text: adv.title }));
+      if (adv.levels.length === 2) box.appendChild(el("div", { class: "rpm-muted", text: `For characters of level ${adv.levels[0]} to ${adv.levels[1]}` }));
+      if (adv.summary) box.appendChild(el("p", { class: "rpm-adv-summary", text: adv.summary }));
+      box.appendChild(el("div", { class: "rpm-label", text: "Choose your character" }));
+      const grid = el("div", { class: "rpm-adv-pregens", role: "radiogroup", "aria-label": "Pregenerated characters" });
+      if (!adv.pregens.some((p) => p.id === V.pregen)) V.pregen = adv.pregens[0] && adv.pregens[0].id;
+      for (const p of adv.pregens) {
+        const on = p.id === V.pregen;
+        const card = el("button", {
+          type: "button",
+          class: "rpm-adv-pregen" + (on ? " rpm-active" : ""),
+          role: "radio",
+          "aria-checked": String(on),
+          "data-pregen": p.id,
+          onclick: () => {
+            V.pregen = p.id;
+            render();
+          }
+        }, [
+          el("span", { class: "rpm-adv-avatar", "aria-hidden": "true", text: initials2(p.name) }),
+          el("span", { class: "rpm-adv-who" }, [
+            el("strong", { text: p.name }),
+            p.pronouns ? el("span", { class: "rpm-muted", text: " (" + p.pronouns + ")" }) : null,
+            p.line ? el("span", { class: "rpm-adv-line", text: p.line }) : null
+          ])
+        ]);
+        grid.appendChild(card);
+      }
+      box.appendChild(grid);
+      box.appendChild(el("p", { class: "rpm-muted", text: "The others can join you as companions. Starting begins a new session: save your current story first if you want to keep it. Missing characters are added to your Library; characters already there are not changed." }));
+      if (V.msg) box.appendChild(el("p", { class: "rpm-adv-msg", role: "status", text: V.msg }));
+      box.appendChild(el("button", {
+        type: "button",
+        class: "btn btn-primary rpm-btn rpm-btn-icon rpm-block",
+        "data-adv": "start",
+        disabled: V.busy || !V.pregen ? "" : null,
+        onclick: async () => {
+          if (V.busy) return;
+          V.busy = true;
+          V.msg = "";
+          render();
+          try {
+            await start(adv.id, { pregen: V.pregen });
+          } catch (e) {
+            V.msg = "Could not start: " + (e && e.message || e);
+          }
+          V.busy = false;
+          render();
+        }
+      }, [iconText("play", V.busy ? "Starting…" : "Start the adventure")]));
+    }
+    function open(adventureId) {
+      const sh = Shell2();
+      if (!sh) return false;
+      if (adventureId) {
+        V.adventure = adventureId;
+        V.pregen = null;
+      }
+      V.msg = "";
+      sh.open("adventure");
+      render();
+      return true;
+    }
+    const api = {
+      list: list3,
+      get: (id) => {
+        const p = get(id);
+        return p ? deepClone(p) : null;
+      },
+      register,
+      validate: validateAdventure,
+      pregens: (id) => pregens(get(id)).map((g) => ({ id: g.id, name: g.name, line: g.line, pronouns: g.pronouns })),
+      installPregens,
+      start,
+      restart,
+      current,
+      open,
+      forbiddenNamesIn
+    };
+    window.KLITE_RPMod_Adventures = api;
+    function registerView() {
+      const sh = Shell2();
+      if (!sh) return false;
+      sh.registerView({
+        id: "adventure",
+        title: "Play an adventure",
+        place: "window",
+        window: { width: 520, height: 560, minWidth: 300, minHeight: 320, restore: false },
+        mount: (c) => {
+          V.box = el("div", { class: "rpm-adv" });
+          c.appendChild(V.box);
+          render();
+        },
+        unmount: () => {
+          V.box = null;
+        }
+      });
+      return true;
+    }
+    let tries = 0;
+    const attempt = () => {
+      if (!registerView() && ++tries < 120) setTimeout(attempt, 250);
+    };
+    if (document.readyState === "complete") attempt();
+    else window.addEventListener("load", attempt, { once: true });
+  }
+
   // src/main.js
   var MODULES = [
     ["shell/shell.js", initShell],
@@ -36594,6 +38235,7 @@ ${g.lines.join("\n")}`).join("\n\n") + "\n\nSeveral commands and a message in on
     ["rpmod/index.js", initRpmod],
     ["KLITE-RPmod_Worlds.js", initWorlds],
     ["KLITE-RPmod_WorldsUI.js", initWorldsUI],
+    ["adventures/adventures.js", initAdventures],
     ["onboarding/onboarding.js", initOnboarding],
     ["chat/slash.js", initChat]
   ];
