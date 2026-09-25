@@ -1,1 +1,1 @@
-HEAD @ f4d807885 feat: Auto release workflow
+origin/remoteManagement @ f4d807885 feat: Auto release workflow
