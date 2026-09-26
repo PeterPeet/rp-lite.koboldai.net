@@ -91,10 +91,21 @@ ${Object.entries(RPMOD_THEME_DEFAULTS).map(([k2, v]) => `    ${k2}: ${v};`).join
 }
 .rpm-dock-head .rpm-title { flex: 1; padding-left: var(--rpm-s1); }
 .rpm-dock-actions { display: flex; gap: 2px; }
-/* right dock: the tabs need the whole strip, so its icon buttons get their own row below them */
-.rpm-dock-right .rpm-dock-head { flex-wrap: wrap; row-gap: 4px; }
-.rpm-dock-right .rpm-dock-actions { flex-basis: 100%; justify-content: flex-end; }
+/* right dock: three named rows (RP tabs, Adventure tabs, Quick Links) beside the close button */
+.rpm-dock-right .rpm-dock-head { align-items: flex-start; }
 .rpm-dock-right .rpm-dock-actions:empty { display: none; }
+.rpm-tabrows { flex: 1 1 auto; min-width: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 6px; align-items: center; }
+.rpm-tabrow { display: contents; }
+.rpm-tabrow[hidden] { display: none; }
+.rpm-tabrow-label { font-size: var(--rpm-fs-sm); font-weight: normal; opacity: .8; white-space: nowrap; }
+.rpm-tabrows .rpm-tabs { flex-wrap: wrap; overflow: visible; }
+.rpm-links { display: flex; flex-wrap: wrap; gap: 3px; }
+.rpm-link {
+    display: inline-flex; align-items: center; gap: 4px; padding: 3px 7px; border-radius: 999px; cursor: pointer;
+    border: 1px solid var(--rpm-border); background: transparent; color: var(--rpm-accent-fg);
+    font-size: var(--rpm-fs-sm); font-weight: normal; white-space: nowrap;
+}
+.rpm-link:hover { background: var(--rpm-accent-bg-hi); border-color: var(--rpm-border-hi); color: var(--rpm-accent-fg-hi); }
 .rpm-iconbtn {
     display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto;
     width: 28px; height: 28px; padding: 0; border-radius: var(--rpm-radius);
@@ -275,6 +286,7 @@ button.rpm-chip, .rpm-chip[role=button] { cursor: pointer; }
 
 /* ---- Compendium window (R3): list | entry; one column in a narrow window ---- */
 .rpm-cmp-scroll { flex: 1 1 auto; min-height: 0; display: flex; container-type: inline-size; }
+.rpm-cmp-docked .rpm-cmp-list { max-height: 60vh; }
 .rpm-cmp { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: minmax(240px, 320px) 1fr; }
 .rpm-cmp-side { display: flex; flex-direction: column; min-height: 0; padding: var(--rpm-s3); border-right: 1px solid var(--rpm-border); }
 .rpm-cmp-list { flex: 1 1 auto; min-height: 0; overflow: auto; margin-top: var(--rpm-s2); display: flex; flex-direction: column; gap: 2px; }
@@ -411,6 +423,9 @@ button.rpm-chip, .rpm-chip[role=button] { cursor: pointer; }
 .rpm-map-large .rpm-map-boardwrap { cursor: default; }
 .rpm-map-board { display: block; width: 100%; height: auto; max-height: 220px; }
 .rpm-map-large .rpm-map-board { max-height: none; min-height: 260px; }
+.rpm-map-label { font-size: var(--rpm-fs-sm); margin-bottom: -2px; }
+.rpm-map-board.rpm-map-regionboard { max-height: 110px; }
+.rpm-map-large .rpm-map-board.rpm-map-regionboard { max-height: 240px; min-height: 160px; }
 .rpm-map-fog .rpm-map-roomrect { fill: transparent; stroke-dasharray: 4 3; opacity: .75; }
 .rpm-map-fog .rpm-map-name { fill: var(--rpm-fg-muted); }
 .rpm-map-room.rpm-here .rpm-map-roomrect { stroke: var(--rpm-quest); stroke-width: 3; }
@@ -461,6 +476,30 @@ button.rpm-chip, .rpm-chip[role=button] { cursor: pointer; }
 .rpm-sheet-prof { width: 22px; font-size: 15px; }
 .rpm-sheet-prof[data-prof="1"], .rpm-sheet-prof[data-prof="2"] { color: var(--rpm-success); }
 .rpm-sheet-modes .rpm-btn { flex: 1; }
+/* R8 sheet overhaul: Esolite's settings tabs (ul.nav.nav-tabs.settingsnav) inside the sheet window */
+.rpm-sheet-tabs { display: flex; flex-wrap: wrap; gap: 2px; margin: 6px 0 0; padding: 0; list-style: none; border-bottom: 1px solid var(--rpm-border); }
+.rpm-sheet-tabs > li { margin-bottom: -1px; }
+.rpm-sheet-tabs > li > a { display: block; padding: 5px 10px; border: 1px solid transparent; border-radius: var(--rpm-radius) var(--rpm-radius) 0 0; color: var(--rpm-accent-fg); text-decoration: none; font-weight: bold; font-size: var(--rpm-fs-sm); }
+.rpm-sheet-tabs > li > a:hover { background: var(--rpm-accent-bg-hi); color: var(--rpm-accent-fg-hi); }
+.rpm-sheet-tabs > li.active > a { background: var(--rpm-bg-alt); border-color: var(--rpm-border); border-bottom-color: var(--rpm-bg-alt); color: var(--rpm-fg-hi); }
+.rpm-sheet-tabbody { display: flex; flex-direction: column; gap: 4px; padding-top: 6px; min-height: 0; }
+.rpm-sheet-attack.rpm-inhand, .rpm-sheet-item.rpm-inhand > .rpm-sheet-line { box-shadow: inset 3px 0 0 var(--rpm-success); background: color-mix(in srgb, var(--rpm-success) 14%, transparent); border-radius: var(--rpm-radius); }
+.rpm-sheet-attack.rpm-inhand input:first-child, .rpm-sheet-item.rpm-inhand input[aria-label="Item name"] { color: var(--rpm-success); font-weight: bold; }
+.rpm-sheet-attack.rpm-stowed { opacity: .55; }
+.rpm-sheet-bp { width: auto; padding: 0 4px; font-size: var(--rpm-fs-sm); font-family: monospace; }
+.rpm-sheet-bp[data-bp="hand"] { color: var(--rpm-success); }
+.rpm-sheet-item { display: flex; flex-direction: column; gap: 1px; }
+.rpm-sheet-def { margin: 0 0 4px 34px; font-size: var(--rpm-fs-sm); }
+.rpm-sheet-def > summary { cursor: pointer; }
+.rpm-sheet-warn { color: var(--rpm-danger); }
+.rpm-sheet-rule { font-size: var(--rpm-fs-sm); margin-top: 4px; }
+.rpm-sheet-tab-features { flex: 1 1 auto; }
+.rpm-sheet-features { display: flex; flex-direction: column; gap: 4px; }
+.rpm-sheet-feature { border: 1px solid var(--rpm-border); border-radius: var(--rpm-radius); padding: 4px 8px; background: var(--rpm-bg-alt); }
+.rpm-sheet-feature > summary { cursor: pointer; }
+.rpm-sheet-note { min-height: 120px; }
+.rpm-sheet-notehint { font-size: var(--rpm-fs-sm); color: var(--rpm-fg-muted); }
+.rpm-sheet-notebtns { justify-content: flex-end; margin-bottom: 8px; }
 .rpm-toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 100002; background: var(--rpm-bg); color: var(--rpm-fg); border: 1px solid var(--rpm-border-hi); box-shadow: inset 3px 0 0 var(--rpm-success), var(--rpm-shadow); border-radius: var(--rpm-radius-lg); padding: 8px 16px; font-family: var(--rpm-font); font-size: var(--rpm-fs); }
 .rpm-toast-err { box-shadow: inset 3px 0 0 var(--rpm-danger), var(--rpm-shadow); }
 /* R6 quick replies (left dock) */
@@ -1080,6 +1119,7 @@ body.rpm-docked #maincontainer {
     let wm = null;
     let shownTab = null;
     const PLACES = /* @__PURE__ */ new Set(["left", "right", "window"]);
+    const TAB_GROUPS = [{ id: "rp", label: "RP" }, { id: "adventure", label: "Adventure" }];
     function sortedViews(place2) {
       return [...views.values()].filter((v) => v.def.place === place2).sort((a, b) => (a.def.order ?? 100) - (b.def.order ?? 100) || String(a.def.id).localeCompare(String(b.def.id)));
     }
@@ -1160,19 +1200,50 @@ body.rpm-docked #maincontainer {
       const list3 = sortedViews("right");
       return list3.some((v) => v.def.id === layout.right.tab) ? layout.right.tab : list3.length ? list3[0].def.id : null;
     }
+    const groupOf = (v) => TAB_GROUPS.some((g) => g.id === v.def.group) ? v.def.group : "adventure";
     function renderTabs() {
-      clear(dom.tabs);
+      for (const g of TAB_GROUPS) clear(dom.tabs[g.id]);
       const list3 = sortedViews("right");
       const active = currentTab();
       for (const v of list3) {
         const sel2 = v.def.id === active;
         v.tab = el("button", { class: "rpm-tab", type: "button", role: "tab", "aria-selected": String(sel2), "aria-controls": "rpm-view-" + v.def.id, "data-tab": v.def.id, text: v.def.title || v.def.id });
         v.tab.addEventListener("click", () => selectTab(v.def.id));
-        dom.tabs.appendChild(v.tab);
+        dom.tabs[groupOf(v)].appendChild(v.tab);
         v.container.classList.toggle("rpm-active", sel2);
         if (sel2 && (!v.mounted || v.dirty)) mountOrUpdate(v);
         if (sel2 && v.def.id !== shownTab) callShow(v);
       }
+      for (const g of TAB_GROUPS) dom.tabRows[g.id].hidden = !dom.tabs[g.id].childNodes.length;
+    }
+    const quickLinks = [];
+    function addQuickLink(link) {
+      if (!link || !link.id || typeof link.onClick !== "function" || quickLinks.some((l) => l.id === link.id)) return;
+      quickLinks.push(link);
+      quickLinks.sort((a, b) => (a.order ?? 100) - (b.order ?? 100));
+      renderLinks();
+    }
+    function renderLinks() {
+      if (!dom) return;
+      clear(dom.links);
+      for (const l of quickLinks) {
+        let show = true;
+        try {
+          show = typeof l.visible === "function" ? l.visible() !== false : true;
+        } catch (_) {
+        }
+        if (!show) continue;
+        const b = el("button", { class: "rpm-link", type: "button", title: l.help || l.title, "data-link": l.id }, [l.icon ? icon(l.icon, 14) : null, el("span", { text: l.title })]);
+        b.addEventListener("click", () => {
+          try {
+            l.onClick();
+          } catch (e) {
+            console.error("[RPmod shell] quick link failed:", l.id, e);
+          }
+        });
+        dom.links.appendChild(b);
+      }
+      dom.linkRow.hidden = !dom.links.childNodes.length;
     }
     function callShow(v) {
       shownTab = v.def.id;
@@ -1331,19 +1402,30 @@ body.rpm-docked #maincontainer {
       const head = el("div", { class: "rpm-dock-head" });
       const body = el("div", { class: "rpm-dock-body" });
       const dock = el("aside", { class: "rpm-dock rpm-dock-" + side, id: "rpm-dock-" + side, "aria-label": side === "left" ? "RPmod adventure panel" : "RPmod tools panel" }, [head, body]);
-      let tabs = null;
+      let tabs = null, tabRows = null, links = null, linkRow = null;
       const actions = el("div", { class: "rpm-dock-actions" });
       if (side === "left") {
         head.appendChild(el("span", { class: "rpm-title", text: "Adventure" }));
         head.appendChild(actions);
         head.appendChild(closeBtn);
       } else {
+        head.classList.add("rpm-dock-head-rows");
         head.appendChild(closeBtn);
-        tabs = el("div", { class: "rpm-tabs", role: "tablist", "aria-label": "RPmod tools" });
-        head.appendChild(tabs);
+        const rows = el("div", { class: "rpm-tabrows" });
+        tabs = {};
+        tabRows = {};
+        for (const g of TAB_GROUPS) {
+          tabs[g.id] = el("div", { class: "rpm-tabs", role: "tablist", "aria-label": g.label });
+          tabRows[g.id] = el("div", { class: "rpm-tabrow", "data-group": g.id }, [el("span", { class: "rpm-tabrow-label", text: g.label }), tabs[g.id]]);
+          rows.appendChild(tabRows[g.id]);
+        }
+        links = el("div", { class: "rpm-links", role: "toolbar", "aria-label": "Quick Links" });
+        linkRow = el("div", { class: "rpm-tabrow", "data-group": "links", hidden: true }, [el("span", { class: "rpm-tabrow-label", text: "Quick Links" }), links]);
+        rows.appendChild(linkRow);
+        head.appendChild(rows);
         head.appendChild(actions);
       }
-      return { dock, body, tabs, actions };
+      return { dock, body, tabs, tabRows, links, linkRow, actions };
     }
     function mount2() {
       if (dom || !document.body) return;
@@ -1358,8 +1440,9 @@ body.rpm-docked #maincontainer {
       const layer = el("div", { class: "rpm-windows" });
       const root = el("div", { id: "rpm-shell" }, [L.dock, R.dock, hl, hr, layer]);
       document.body.appendChild(root);
-      dom = { root, left: L.dock, right: R.dock, leftBody: L.body, rightBody: R.body, tabs: R.tabs, actions_left: L.actions, actions_right: R.actions, handle_left: hl, handle_right: hr, layer, navBtn: null };
+      dom = { root, left: L.dock, right: R.dock, leftBody: L.body, rightBody: R.body, tabs: R.tabs, tabRows: R.tabRows, links: R.links, linkRow: R.linkRow, actions_left: L.actions, actions_right: R.actions, handle_left: hl, handle_right: hr, layer, navBtn: null };
       for (const a of dockActions) renderDockAction(a);
+      renderLinks();
       wm = createWindowManager({
         layer,
         getGeom: (id) => layout.windows[id] || null,
@@ -1461,7 +1544,6 @@ body.rpm-docked #maincontainer {
     const RP_PANEL_TABS = [
       { key: "CHARS", id: "chars", title: "Chars", order: 50 },
       { key: "ROLES", id: "roles", title: "Roles", order: 51 },
-      { key: "SCENARIO", id: "scenario", title: "Scenario", order: 52 },
       { key: "TOOLS", id: "tools", title: "Tools", order: 53 }
     ];
     function adoptRpPanels() {
@@ -1481,6 +1563,7 @@ body.rpm-docked #maincontainer {
             title: tab.title,
             place: "right",
             order: tab.order,
+            group: "rp",
             mount() {
             },
             update() {
@@ -1515,6 +1598,8 @@ body.rpm-docked #maincontainer {
       setDockOpen,
       toggleDock,
       addDockAction,
+      addQuickLink,
+      refreshLinks: renderLinks,
       dockOpen: (side) => !!open[side],
       mode: () => mode2,
       views: () => [...views.keys()],
@@ -4860,6 +4945,15 @@ ${s.text}` : s.text : `[${s.title}]`;
           if (!keepMemory) {
             this.panels.TOOLS.rules = "";
           }
+          this.panels.TOOLS._selectionGen = (this.panels.TOOLS._selectionGen || 0) + 1;
+          try {
+            this.panels.TOOLS.saveSettings?.();
+          } catch (_) {
+          }
+          try {
+            this.updateUserAvatar?.(null);
+          } catch (_) {
+          }
           this.log("init", "Reset TOOLS panel character selections");
         }
         if (this.groupAvatars) {
@@ -5366,6 +5460,7 @@ ${s.text}` : s.text : `[${s.title}]`;
             this.panels.TOOLS.characterEnabled = !!bundle.rp.characterEnabled;
             this.panels.TOOLS.selectedPersona = bundle.rp.selectedPersona || null;
             this.panels.TOOLS.personaEnabled = !!bundle.rp.personaEnabled;
+            this.panels.TOOLS._selectionGen = (this.panels.TOOLS._selectionGen || 0) + 1;
             if (bundle.rp.autoSender) this.panels.TOOLS.autoSender = { ...bundle.rp.autoSender };
             if (Array.isArray(bundle.rp.quickActions)) this.panels.TOOLS.quickActions = [...bundle.rp.quickActions];
             if (Array.isArray(bundle.rp.chapters)) this.panels.TOOLS.chapters = [...bundle.rp.chapters];
@@ -6344,6 +6439,7 @@ ${s.text}` : s.text : `[${s.title}]`;
       },
       usePersona(char) {
         const tools = this;
+        tools._selectionGen++;
         tools.selectedPersona = char;
         tools.personaEnabled = true;
         try {
@@ -7104,16 +7200,28 @@ ${s.text}` : s.text : `[${s.title}]`;
           KLITE_RPMod.log("panels", "RP rules loaded from storage");
         }
       },
+      // Storage is read once per page (panel init runs again on every panel load): afterwards the
+      // panel's own state is newer. A choice made while the read was pending (usePersona, a New
+      // Session's reset) wins over the stored one (R8: the adventure's pregen was replaced by the
+      // persona read back from storage).
+      _settingsLoaded: false,
+      _selectionGen: 0,
       async loadSettings() {
+        if (this._settingsLoaded) return;
+        const gen = this._selectionGen;
         try {
           const raw = await KLITE_RPMod.loadFromLiteStorage("rpmod_playrp_settings");
+          this._settingsLoaded = true;
           if (raw && raw !== "offload_to_indexeddb") {
             const s = JSON.parse(raw);
+            const chosen = gen !== this._selectionGen;
             this.rules = typeof s.rules === "string" ? s.rules : this.rules;
-            this.selectedCharacter = s.selectedCharacter || this.selectedCharacter;
-            this.characterEnabled = !!s.characterEnabled;
-            this.selectedPersona = s.selectedPersona || this.selectedPersona;
-            this.personaEnabled = !!s.personaEnabled;
+            if (!chosen) {
+              this.selectedCharacter = s.selectedCharacter || this.selectedCharacter;
+              this.characterEnabled = !!s.characterEnabled;
+              this.selectedPersona = s.selectedPersona || this.selectedPersona;
+              this.personaEnabled = !!s.personaEnabled;
+            }
             if (s.autoSender) this.autoSender = { ...this.autoSender, ...s.autoSender };
             KLITE_RPMod.log("panels", "TOOLS (RP) settings loaded");
           }
@@ -7122,6 +7230,7 @@ ${s.text}` : s.text : `[${s.title}]`;
         }
       },
       saveSettings() {
+        this._selectionGen++;
         try {
           const s = {
             rules: this.rules || "",
@@ -8785,299 +8894,309 @@ ${wi.content}
             `;
       },
       actions: {
-        "scenario-start-roleplay": async () => {
-          try {
-            const getSelectedNames = () => {
-              const names = [];
-              try {
-                if (KLITE_RPMod.panels.ROLES?.enabled && Array.isArray(KLITE_RPMod.panels.ROLES.activeChars) && KLITE_RPMod.panels.ROLES.activeChars.length > 0) {
-                  KLITE_RPMod.panels.ROLES.activeChars.forEach((c) => {
-                    if (c?.name) names.push(c.name);
-                  });
-                } else if (KLITE_RPMod.panels.TOOLS?.selectedCharacter?.name) {
-                  names.push(KLITE_RPMod.panels.TOOLS.selectedCharacter.name);
-                } else if (window.localsettings?.chatopponent) {
-                  names.push(...window.localsettings.chatopponent.split("||$||").filter(Boolean).map((s) => s.trim()));
-                }
-              } catch (_) {
-              }
-              return [...new Set(names.filter(Boolean))];
-            };
-            const scenarioText = (document.getElementById("scenario-text")?.value || "").trim();
-            const firstMessageText = (document.getElementById("scenario-first-message")?.value || "").trim();
-            const selectedNames = getSelectedNames();
-            if (selectedNames.length === 0) {
-              KLITE_RPMod.log("status", "Start RP aborted: no characters selected");
-              return;
-            }
+        "scenario-start-roleplay": () => KLITE_RPMod.panels.SCENARIO.startRoleplay()
+      },
+      // Start Role Play: the selected characters (Roles, else the AI character, else Esolite's
+      // chat opponents), the persona, the scenario, example dialogue and first message go into
+      // World Info / the chat. vals = { scenario, example, first } (default: this panel's fields);
+      // opts.quiet: no alert (R8: Esolite's Quick Start runs it — src/onboarding/roleplayQuickStart.js).
+      // → { ok, participants, reason? }
+      async startRoleplay(vals, opts = {}) {
+        const field = (id) => (document.getElementById(id)?.value || "").trim();
+        vals = vals || { scenario: field("scenario-text"), example: field("scenario-example"), first: field("scenario-first-message") };
+        try {
+          const getSelectedNames = () => {
+            const names = [];
             try {
-              if (window.localsettings) {
-                window.localsettings.opmode = 3;
-                window.localsettings.multiline_replies = true;
-                window.save_settings?.();
+              if (KLITE_RPMod.panels.ROLES?.enabled && Array.isArray(KLITE_RPMod.panels.ROLES.activeChars) && KLITE_RPMod.panels.ROLES.activeChars.length > 0) {
+                KLITE_RPMod.panels.ROLES.activeChars.forEach((c) => {
+                  if (c?.name) names.push(c.name);
+                });
+              } else if (KLITE_RPMod.panels.TOOLS?.selectedCharacter?.name) {
+                names.push(KLITE_RPMod.panels.TOOLS.selectedCharacter.name);
+              } else if (window.localsettings?.chatopponent) {
+                names.push(...window.localsettings.chatopponent.split("||$||").filter(Boolean).map((s) => s.trim()));
               }
             } catch (_) {
             }
+            return [...new Set(names.filter(Boolean))];
+          };
+          const scenarioText = String(vals.scenario || "").trim();
+          const firstMessageText = String(vals.first || "").trim();
+          const selectedNames = getSelectedNames();
+          if (selectedNames.length === 0) {
+            KLITE_RPMod.log("status", "Start RP aborted: no characters selected");
+            return { ok: false, participants: [], reason: "no characters selected" };
+          }
+          try {
+            if (window.localsettings) {
+              window.localsettings.opmode = 3;
+              window.localsettings.multiline_replies = true;
+              window.save_settings?.();
+            }
+          } catch (_) {
+          }
+          for (const name of selectedNames) {
+            try {
+              await window.loadByCharacterNameIntoWI?.(name);
+            } catch (e) {
+              KLITE_RPMod.log("integration", `loadByCharacterNameIntoWI failed for ${name}: ${e?.message || e}`);
+            }
+          }
+          try {
+            if (!Array.isArray(window.current_wi)) window.current_wi = [];
             for (const name of selectedNames) {
               try {
-                await window.loadByCharacterNameIntoWI?.(name);
-              } catch (e) {
-                KLITE_RPMod.log("integration", `loadByCharacterNameIntoWI failed for ${name}: ${e?.message || e}`);
-              }
-            }
-            try {
-              if (!Array.isArray(window.current_wi)) window.current_wi = [];
-              for (const name of selectedNames) {
+                const data = await window.getCharacterData?.(name);
+                const raw = data?.data || {};
+                const description = String(raw.description || "").trim();
+                const personality = String(raw.personality || "").trim();
+                let examples = String(raw.mes_example || "").trim();
                 try {
-                  const data = await window.getCharacterData?.(name);
-                  const raw = data?.data || {};
-                  const description = String(raw.description || "").trim();
-                  const personality = String(raw.personality || "").trim();
-                  let examples = String(raw.mes_example || "").trim();
-                  try {
-                    if (examples && typeof window.formatExampleMessages === "function") examples = window.formatExampleMessages(examples);
-                  } catch (_) {
-                  }
-                  window.current_wi = window.current_wi.filter((wi) => !(wi?.wigroup === name && wi?.comment && wi.comment.endsWith("_imported_memory")));
-                  const base = { key: name, keyanti: "", folder: name, selective: false, constant: false, probability: 100, wigroup: name, widisabled: false, comment: `${name}_imported_memory` };
-                  if (description) {
-                    window.current_wi.push({ ...base, keysecondary: `${name} description, appearance`, content: description });
-                  }
-                  if (personality) {
-                    window.current_wi.push({ ...base, keysecondary: `${name} personality, traits`, content: personality });
-                  }
-                  if (examples) {
-                    window.current_wi.push({ ...base, keysecondary: `${name} examples, dialogue`, content: examples, widisabled: true });
-                  }
-                  try {
-                    const isOurDesc = (wi) => wi?.wigroup === name && wi?.comment?.endsWith("_imported_memory") && /description, appearance$/.test(wi?.keysecondary || "");
-                    const isOurPers = (wi) => wi?.wigroup === name && wi?.comment?.endsWith("_imported_memory") && /personality, traits$/.test(wi?.keysecondary || "");
-                    const isOurEx = (wi) => wi?.wigroup === name && wi?.comment?.endsWith("_imported_memory") && /examples, dialogue$/.test(wi?.keysecondary || "");
-                    const groupEntries = window.current_wi.filter((wi) => wi?.wigroup === name);
-                    const others = groupEntries.filter((wi) => !isOurDesc(wi) && !isOurPers(wi) && !isOurEx(wi));
-                    const desc = groupEntries.find(isOurDesc);
-                    const pers = groupEntries.find(isOurPers);
-                    const ex = groupEntries.find(isOurEx);
-                    const reordered = [];
-                    if (desc) reordered.push(desc);
-                    if (pers) reordered.push(pers);
-                    if (ex) reordered.push(ex);
-                    reordered.push(...others);
-                    window.current_wi = window.current_wi.filter((wi) => wi?.wigroup !== name).concat(reordered);
-                  } catch (_) {
-                  }
-                } catch (e) {
-                  KLITE_RPMod.log("integration", `Failed to enrich WI for ${name}: ${e?.message || e}`);
+                  if (examples && typeof window.formatExampleMessages === "function") examples = window.formatExampleMessages(examples);
+                } catch (_) {
                 }
-              }
-            } catch (_) {
-            }
-            try {
-              const tools = KLITE_RPMod.panels.TOOLS;
-              const chatname = (window.localsettings?.chatname || "User").trim();
-              if (tools?.personaEnabled && tools?.selectedPersona?.name && chatname) {
-                const personaCardName = tools.selectedPersona.name;
-                let description = "", personality = "", examples = "";
+                window.current_wi = window.current_wi.filter((wi) => !(wi?.wigroup === name && wi?.comment && wi.comment.endsWith("_imported_memory")));
+                const base = { key: name, keyanti: "", folder: name, selective: false, constant: false, probability: 100, wigroup: name, widisabled: false, comment: `${name}_imported_memory` };
+                if (description) {
+                  window.current_wi.push({ ...base, keysecondary: `${name} description, appearance`, content: description });
+                }
+                if (personality) {
+                  window.current_wi.push({ ...base, keysecondary: `${name} personality, traits`, content: personality });
+                }
+                if (examples) {
+                  window.current_wi.push({ ...base, keysecondary: `${name} examples, dialogue`, content: examples, widisabled: true });
+                }
                 try {
-                  const data = await window.getCharacterData?.(personaCardName);
-                  const raw = data?.data || {};
-                  description = String(raw.description || "").trim();
-                  personality = String(raw.personality || "").trim();
-                  examples = String(raw.mes_example || "").trim();
-                  if (examples) {
-                    try {
-                      if (typeof window.formatExampleMessages === "function") {
-                        examples = window.formatExampleMessages(examples);
-                      } else {
-                        examples = `Example messages:
-
-${examples}`;
-                      }
-                    } catch (_) {
+                  const isOurDesc = (wi) => wi?.wigroup === name && wi?.comment?.endsWith("_imported_memory") && /description, appearance$/.test(wi?.keysecondary || "");
+                  const isOurPers = (wi) => wi?.wigroup === name && wi?.comment?.endsWith("_imported_memory") && /personality, traits$/.test(wi?.keysecondary || "");
+                  const isOurEx = (wi) => wi?.wigroup === name && wi?.comment?.endsWith("_imported_memory") && /examples, dialogue$/.test(wi?.keysecondary || "");
+                  const groupEntries = window.current_wi.filter((wi) => wi?.wigroup === name);
+                  const others = groupEntries.filter((wi) => !isOurDesc(wi) && !isOurPers(wi) && !isOurEx(wi));
+                  const desc = groupEntries.find(isOurDesc);
+                  const pers = groupEntries.find(isOurPers);
+                  const ex = groupEntries.find(isOurEx);
+                  const reordered = [];
+                  if (desc) reordered.push(desc);
+                  if (pers) reordered.push(pers);
+                  if (ex) reordered.push(ex);
+                  reordered.push(...others);
+                  window.current_wi = window.current_wi.filter((wi) => wi?.wigroup !== name).concat(reordered);
+                } catch (_) {
+                }
+              } catch (e) {
+                KLITE_RPMod.log("integration", `Failed to enrich WI for ${name}: ${e?.message || e}`);
+              }
+            }
+          } catch (_) {
+          }
+          try {
+            const tools = KLITE_RPMod.panels.TOOLS;
+            const chatname = (window.localsettings?.chatname || "User").trim();
+            if (tools?.personaEnabled && tools?.selectedPersona?.name && chatname) {
+              const personaCardName = tools.selectedPersona.name;
+              let description = "", personality = "", examples = "";
+              try {
+                const data = await window.getCharacterData?.(personaCardName);
+                const raw = data?.data || {};
+                description = String(raw.description || "").trim();
+                personality = String(raw.personality || "").trim();
+                examples = String(raw.mes_example || "").trim();
+                if (examples) {
+                  try {
+                    if (typeof window.formatExampleMessages === "function") {
+                      examples = window.formatExampleMessages(examples);
+                    } else {
                       examples = `Example messages:
 
 ${examples}`;
                     }
-                  }
-                } catch (_) {
-                }
-                window.current_wi = window.current_wi.filter((wi) => !(wi?.wigroup === chatname && wi?.comment && wi.comment.endsWith("_imported_memory")));
-                const userBase = {
-                  key: chatname,
-                  keysecondary: "",
-                  keyanti: "",
-                  folder: chatname,
-                  selective: false,
-                  constant: false,
-                  probability: 100,
-                  wigroup: chatname,
-                  widisabled: false,
-                  comment: `${chatname}_imported_memory`
-                };
-                if (description) {
-                  window.current_wi.push({ ...userBase, keysecondary: `${chatname} description, appearance`, content: description });
-                }
-                if (personality) {
-                  window.current_wi.push({ ...userBase, keysecondary: `${chatname} personality, traits`, content: personality });
-                }
-                if (examples) {
-                  window.current_wi.push({ ...userBase, keysecondary: `${chatname} examples, dialogue`, content: examples, widisabled: true });
-                }
-              }
-            } catch (_) {
-            }
-            try {
-              if (scenarioText) {
-                if (!Array.isArray(window.current_wi)) window.current_wi = [];
-                const scenarioWI = {
-                  key: "Scenario",
-                  keysecondary: "Group scenario, setting",
-                  keyanti: "",
-                  content: scenarioText,
-                  comment: "GroupScenario_active",
-                  folder: "GroupScenario",
-                  selective: false,
-                  constant: true,
-                  // always include as active scenario
-                  probability: 100,
-                  wigroup: "GroupScenario",
-                  widisabled: false
-                };
-                window.current_wi = window.current_wi.filter((wi) => wi?.comment !== scenarioWI.comment);
-                window.current_wi.push(scenarioWI);
-                KLITE_RPMod.log("storage", "Scenario imported into WI (active)", { len: scenarioText.length });
-              }
-            } catch (e) {
-              KLITE_RPMod.log("storage", "Failed to add scenario WI:", e?.message || e);
-            }
-            try {
-              for (const name of selectedNames) {
-                try {
-                  const data = await window.getCharacterData?.(name);
-                  const raw = data?.data || {};
-                  const charScenario = (raw.scenario || "").trim();
-                  if (charScenario) {
-                    const charScenarioWI = {
-                      key: name,
-                      keysecondary: `${name} scenario, background`,
-                      keyanti: "",
-                      content: charScenario,
-                      comment: `${name}_imported_scenario`,
-                      folder: name,
-                      selective: false,
-                      constant: false,
-                      probability: 100,
-                      wigroup: "GroupScenario",
-                      widisabled: true
-                    };
-                    window.current_wi = window.current_wi.filter((wi) => wi?.comment !== charScenarioWI.comment);
-                    window.current_wi.push(charScenarioWI);
-                  }
-                } catch (_) {
-                }
-              }
-            } catch (_) {
-            }
-            try {
-              const exampleGroupText = (document.getElementById("scenario-example")?.value || "").trim();
-              if (exampleGroupText) {
-                const groupExamplesWI = {
-                  key: "Group Example Dialogue",
-                  keysecondary: "Example dialogue for group",
-                  keyanti: "",
-                  content: exampleGroupText,
-                  comment: "GroupScenario_examples",
-                  folder: "GroupScenario",
-                  selective: false,
-                  constant: false,
-                  probability: 100,
-                  wigroup: "GroupScenario",
-                  widisabled: true
-                };
-                window.current_wi = window.current_wi.filter((wi) => wi?.comment !== groupExamplesWI.comment);
-                window.current_wi.push(groupExamplesWI);
-              }
-            } catch (_) {
-            }
-            try {
-              const tools = KLITE_RPMod.panels.TOOLS;
-              const chatname = (window.localsettings?.chatname || "User").trim();
-              if (tools?.selectedPersona && chatname) {
-                const sel2 = tools.selectedPersona;
-                const personaCardName = sel2.name;
-                let userScenario = "";
-                try {
-                  userScenario = String(sel2.scenario || sel2.rawData?.data?.scenario || sel2.data?.scenario || "").trim();
-                } catch (_) {
-                }
-                if (!userScenario && personaCardName) {
-                  try {
-                    const data = await window.getCharacterData?.(personaCardName);
-                    const raw = data?.data || {};
-                    userScenario = String(raw.scenario || "").trim();
                   } catch (_) {
+                    examples = `Example messages:
+
+${examples}`;
                   }
                 }
-                if (userScenario) {
-                  const userScenarioWI = {
-                    key: chatname,
-                    keysecondary: `${chatname} scenario, background`,
+              } catch (_) {
+              }
+              window.current_wi = window.current_wi.filter((wi) => !(wi?.wigroup === chatname && wi?.comment && wi.comment.endsWith("_imported_memory")));
+              const userBase = {
+                key: chatname,
+                keysecondary: "",
+                keyanti: "",
+                folder: chatname,
+                selective: false,
+                constant: false,
+                probability: 100,
+                wigroup: chatname,
+                widisabled: false,
+                comment: `${chatname}_imported_memory`
+              };
+              if (description) {
+                window.current_wi.push({ ...userBase, keysecondary: `${chatname} description, appearance`, content: description });
+              }
+              if (personality) {
+                window.current_wi.push({ ...userBase, keysecondary: `${chatname} personality, traits`, content: personality });
+              }
+              if (examples) {
+                window.current_wi.push({ ...userBase, keysecondary: `${chatname} examples, dialogue`, content: examples, widisabled: true });
+              }
+            }
+          } catch (_) {
+          }
+          try {
+            if (scenarioText) {
+              if (!Array.isArray(window.current_wi)) window.current_wi = [];
+              const scenarioWI = {
+                key: "Scenario",
+                keysecondary: "Group scenario, setting",
+                keyanti: "",
+                content: scenarioText,
+                comment: "GroupScenario_active",
+                folder: "GroupScenario",
+                selective: false,
+                constant: true,
+                // always include as active scenario
+                probability: 100,
+                wigroup: "GroupScenario",
+                widisabled: false
+              };
+              window.current_wi = window.current_wi.filter((wi) => wi?.comment !== scenarioWI.comment);
+              window.current_wi.push(scenarioWI);
+              KLITE_RPMod.log("storage", "Scenario imported into WI (active)", { len: scenarioText.length });
+            }
+          } catch (e) {
+            KLITE_RPMod.log("storage", "Failed to add scenario WI:", e?.message || e);
+          }
+          try {
+            for (const name of selectedNames) {
+              try {
+                const data = await window.getCharacterData?.(name);
+                const raw = data?.data || {};
+                const charScenario = (raw.scenario || "").trim();
+                if (charScenario) {
+                  const charScenarioWI = {
+                    key: name,
+                    keysecondary: `${name} scenario, background`,
                     keyanti: "",
-                    content: userScenario,
-                    comment: `${chatname}_imported_scenario`,
-                    folder: chatname,
+                    content: charScenario,
+                    comment: `${name}_imported_scenario`,
+                    folder: name,
                     selective: false,
                     constant: false,
                     probability: 100,
                     wigroup: "GroupScenario",
                     widisabled: true
                   };
-                  window.current_wi = window.current_wi.filter((wi) => wi?.comment !== userScenarioWI.comment);
-                  window.current_wi.push(userScenarioWI);
+                  window.current_wi = window.current_wi.filter((wi) => wi?.comment !== charScenarioWI.comment);
+                  window.current_wi.push(charScenarioWI);
                 }
+              } catch (_) {
               }
-            } catch (_) {
             }
-            try {
-              if (firstMessageText) {
-                if (!Array.isArray(window.gametext_arr)) window.gametext_arr = [];
-                const firstSpeaker = selectedNames[0] || (window.localsettings?.chatopponent || "AI");
-                const inInstruct = window.localsettings?.opmode === 4 && !!window.localsettings?.inject_chatnames_instruct;
-                const prefix = inInstruct ? window.get_instructendplaceholder?.() || "" : "\n";
-                const line = `${prefix}${firstSpeaker}: ${firstMessageText}`;
-                const beforeCount = window.gametext_arr.length;
-                window.gametext_arr.push(line);
-                KLITE_RPMod.log("chat", "First message inserted", { speaker: firstSpeaker, len: line.length, chat_count_before: beforeCount, chat_count_after: window.gametext_arr.length });
+          } catch (_) {
+          }
+          try {
+            const exampleGroupText = String(vals.example || "").trim();
+            if (exampleGroupText) {
+              const groupExamplesWI = {
+                key: "Group Example Dialogue",
+                keysecondary: "Example dialogue for group",
+                keyanti: "",
+                content: exampleGroupText,
+                comment: "GroupScenario_examples",
+                folder: "GroupScenario",
+                selective: false,
+                constant: false,
+                probability: 100,
+                wigroup: "GroupScenario",
+                widisabled: true
+              };
+              window.current_wi = window.current_wi.filter((wi) => wi?.comment !== groupExamplesWI.comment);
+              window.current_wi.push(groupExamplesWI);
+            }
+          } catch (_) {
+          }
+          try {
+            const tools = KLITE_RPMod.panels.TOOLS;
+            const chatname = (window.localsettings?.chatname || "User").trim();
+            if (tools?.selectedPersona && chatname) {
+              const sel2 = tools.selectedPersona;
+              const personaCardName = sel2.name;
+              let userScenario = "";
+              try {
+                userScenario = String(sel2.scenario || sel2.rawData?.data?.scenario || sel2.data?.scenario || "").trim();
+              } catch (_) {
+              }
+              if (!userScenario && personaCardName) {
                 try {
-                  window.render_gametext?.(true);
+                  const data = await window.getCharacterData?.(personaCardName);
+                  const raw = data?.data || {};
+                  userScenario = String(raw.scenario || "").trim();
                 } catch (_) {
                 }
               }
-            } catch (e) {
-              KLITE_RPMod.log("chat", "Failed to insert first message:", e?.message || e);
-            }
-            try {
-              if (window.localsettings) {
-                const existing = (window.localsettings.chatopponent || "").split("||$||").filter(Boolean).map((s) => s.trim());
-                const merged = [.../* @__PURE__ */ new Set([...existing, ...selectedNames])];
-                window.localsettings.chatopponent = merged.join("||$||");
-                window.save_settings?.();
-                window.handle_bot_name_onchange?.();
+              if (userScenario) {
+                const userScenarioWI = {
+                  key: chatname,
+                  keysecondary: `${chatname} scenario, background`,
+                  keyanti: "",
+                  content: userScenario,
+                  comment: `${chatname}_imported_scenario`,
+                  folder: chatname,
+                  selective: false,
+                  constant: false,
+                  probability: 100,
+                  wigroup: "GroupScenario",
+                  widisabled: true
+                };
+                window.current_wi = window.current_wi.filter((wi) => wi?.comment !== userScenarioWI.comment);
+                window.current_wi.push(userScenarioWI);
               }
-            } catch (_) {
             }
-            try {
-              window.autosave?.();
-            } catch (_) {
-            }
-            KLITE_RPMod.log("status", "Role play initialized", { participants: selectedNames });
-            try {
-              alert("Role Play data configured in WorldInfo. Have fun!");
-            } catch (_) {
+          } catch (_) {
+          }
+          try {
+            if (firstMessageText) {
+              if (!Array.isArray(window.gametext_arr)) window.gametext_arr = [];
+              const firstSpeaker = selectedNames[0] || (window.localsettings?.chatopponent || "AI");
+              const inInstruct = window.localsettings?.opmode === 4 && !!window.localsettings?.inject_chatnames_instruct;
+              const prefix = inInstruct ? window.get_instructendplaceholder?.() || "" : "\n";
+              const line = `${prefix}${firstSpeaker}: ${firstMessageText}`;
+              const beforeCount = window.gametext_arr.length;
+              window.gametext_arr.push(line);
+              KLITE_RPMod.log("chat", "First message inserted", { speaker: firstSpeaker, len: line.length, chat_count_before: beforeCount, chat_count_after: window.gametext_arr.length });
+              try {
+                window.render_gametext?.(true);
+              } catch (_) {
+              }
             }
           } catch (e) {
-            KLITE_RPMod.log("errors", "scenario-start-roleplay handler error:", e?.message || e);
+            KLITE_RPMod.log("chat", "Failed to insert first message:", e?.message || e);
           }
+          try {
+            if (window.localsettings) {
+              const existing = (window.localsettings.chatopponent || "").split("||$||").filter(Boolean).map((s) => s.trim());
+              const merged = [.../* @__PURE__ */ new Set([...existing, ...selectedNames])];
+              window.localsettings.chatopponent = merged.join("||$||");
+              window.save_settings?.();
+              window.handle_bot_name_onchange?.();
+            }
+          } catch (_) {
+          }
+          try {
+            window.autosave?.();
+          } catch (_) {
+          }
+          KLITE_RPMod.log("status", "Role play initialized", { participants: selectedNames });
+          if (!opts.quiet) try {
+            alert("Role Play data configured in WorldInfo. Have fun!");
+          } catch (_) {
+          }
+          return { ok: true, participants: selectedNames };
+        } catch (e) {
+          KLITE_RPMod.log("errors", "scenario-start-roleplay handler error:", e?.message || e);
+          return { ok: false, participants: [], reason: String(e?.message || e) };
         }
       }
     };
@@ -12652,6 +12771,53 @@ ${char.mes_example}
     }
   }
 
+  // src/context/storyCopy.js
+  var PREFIX = "rpmod_storycopy_";
+  var timers = {};
+  function chatFingerprint() {
+    let text = "";
+    try {
+      text = JSON.stringify(Array.isArray(window.gametext_arr) ? window.gametext_arr : []);
+    } catch (_) {
+    }
+    let h1 = 3735928559, h2 = 1103547991;
+    for (let i = 0; i < text.length; i++) {
+      const c = text.charCodeAt(i);
+      h1 = Math.imul(h1 ^ c, 2654435761);
+      h2 = Math.imul(h2 ^ c, 1597334677);
+    }
+    h1 = Math.imul(h1 ^ h1 >>> 16, 2246822507) ^ Math.imul(h2 ^ h2 >>> 13, 3266489909);
+    h2 = Math.imul(h2 ^ h2 >>> 16, 2246822507) ^ Math.imul(h1 ^ h1 >>> 13, 3266489909);
+    return `${text.length}:${(h2 >>> 0).toString(36)}${(h1 >>> 0).toString(36)}`;
+  }
+  function saveStoryCopy(key, data) {
+    if (typeof window.indexeddb_save !== "function") return;
+    clearTimeout(timers[key]);
+    let json;
+    try {
+      json = JSON.stringify({ fp: chatFingerprint(), data: data == null ? null : data });
+    } catch (_) {
+      return;
+    }
+    timers[key] = setTimeout(() => {
+      try {
+        window.indexeddb_save(PREFIX + key, json);
+      } catch (_) {
+      }
+    }, 400);
+  }
+  async function loadStoryCopy(key) {
+    if (typeof window.indexeddb_load !== "function") return void 0;
+    try {
+      const raw = await window.indexeddb_load(PREFIX + key, "");
+      if (!raw || raw === "offload_to_indexeddb") return void 0;
+      const c = JSON.parse(raw);
+      return c && c.fp === chatFingerprint() ? c.data : void 0;
+    } catch (_) {
+      return void 0;
+    }
+  }
+
   // src/rpmod/boot.js
   function installBoot(S2) {
     function waitForKobold() {
@@ -12827,18 +12993,37 @@ ${char.mes_example}
           } catch (_) {
           }
         };
+        let resetPending = false;
         const wrapResetAll = () => {
           try {
             const origReset = window.reset_all_settings;
             if (typeof origReset === "function" && !origReset.__rpmod_reset_wrapped) {
               window.reset_all_settings = function(...args) {
-                try {
-                  KLITE_RPMod._clearAllPersistent?.();
-                } catch (_) {
-                }
+                resetPending = true;
                 return origReset.apply(this, args);
               };
               window.reset_all_settings.__rpmod_reset_wrapped = true;
+            }
+            const origRestart = window.restart_new_game;
+            if (typeof origRestart === "function" && !origRestart.__rpmod_resetall_wrapped) {
+              const restart = function(...args) {
+                const res = origRestart.apply(this, args);
+                if (resetPending && args.length === 0) {
+                  resetPending = false;
+                  try {
+                    KLITE_RPMod._clearAllPersistent?.();
+                  } catch (_) {
+                  }
+                  try {
+                    window.dispatchEvent(new CustomEvent("klite:reset-all"));
+                  } catch (_) {
+                  }
+                }
+                return res;
+              };
+              for (const k2 of Object.keys(origRestart)) restart[k2] = origRestart[k2];
+              restart.__rpmod_resetall_wrapped = true;
+              window.restart_new_game = restart;
             }
           } catch (_) {
           }
@@ -12928,6 +13113,7 @@ ${char.mes_example}
                     try {
                       const bundle = window.KLITE_RPMod.getSaveBundle?.();
                       if (bundle) obj.rpmod = bundle;
+                      saveStoryCopy("rp", bundle || null);
                     } catch (_) {
                     }
                     return obj;
@@ -12940,6 +13126,7 @@ ${char.mes_example}
                 if (!window._rpmod_orig_kai_json_load && typeof window.kai_json_load === "function" && window.KLITE_RPMod) {
                   window._rpmod_orig_kai_json_load = window.kai_json_load;
                   window.kai_json_load = function() {
+                    window._rpmod_story_loaded = true;
                     try {
                       const storyobj = arguments[0];
                       if (storyobj && storyobj.rpmod) {
@@ -12961,6 +13148,15 @@ ${char.mes_example}
               } catch (e) {
                 console.warn("[RPMod] Load hook error:", e);
               }
+              setTimeout(async () => {
+                try {
+                  if (window._rpmod_story_loaded) return;
+                  const bundle = await loadStoryCopy("rp");
+                  if (bundle && !window._rpmod_story_loaded && window.KLITE_RPMod?.restoreFromSaveBundle) window.KLITE_RPMod.restoreFromSaveBundle(bundle);
+                } catch (e) {
+                  console.warn("[RPMod] restore after a reload failed:", e);
+                }
+              }, 200);
             }
           } catch (e) {
             console.warn("[RPMod] bootstrap init error:", e);
@@ -20433,7 +20629,13 @@ ${char.mes_example}
         return "";
     }
   }
-  var OBJECTIVE_KINDS = ["manual", "kill", "collect", "talk", "visit"];
+  var OBJECTIVE_KINDS = ["manual", "kill", "collect", "talk", "visit", "check"];
+  var ABILITY_WORDS = { str: "Strength", dex: "Dexterity", con: "Constitution", int: "Intelligence", wis: "Wisdom", cha: "Charisma" };
+  function checkWhat(o) {
+    if (o && o.skill) return String(o.skill).split(/[_\s]+/).map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+    return ABILITY_WORDS[o && o.ability] || "Ability";
+  }
+  var checkDC = (o) => Math.max(1, Number(o && o.dc) || 10);
   var objectiveKind = (o) => o && OBJECTIVE_KINDS.includes(o.kind) ? o.kind : "manual";
   var objectiveCount = (o) => Math.max(1, Number(o && o.count) || 1);
   function objectiveStatus(o, progress, have) {
@@ -20451,6 +20653,7 @@ ${char.mes_example}
   }
   function objectiveLabel(o, st) {
     const t = norm2(o && o.text);
+    if (objectiveKind(o) === "check") return `${t} (${checkWhat(o)} check, DC ${checkDC(o)})`;
     return objectiveKind(o) === "kill" || objectiveKind(o) === "collect" ? `${t} (${st.current}/${st.needed})` : t;
   }
   var REPEAT_KINDS = ["", "repeatable", "daily"];
@@ -20470,6 +20673,7 @@ ${char.mes_example}
     if (Number(p.level) > 1 && (Number(facts.level) || 1) < Number(p.level)) out.push(`Requires level ${p.level}`);
     for (const id of p.quests || []) if (facts.questState(id) !== "turnedin") out.push(`Requires the quest "${facts.questTitle && facts.questTitle(id) || id}"`);
     for (const k2 of p.flags || []) if (!facts.flag(k2)) out.push(`Requires: ${k2}`);
+    for (const k2 of p.notFlags || []) if (facts.flag(k2)) out.push(`No longer: ${k2}`);
     if (p.reputation && p.reputation.factionId && p.reputation.tier) {
       if (!tierAtLeastOrWorse(facts.tierOf(p.reputation.factionId), p.reputation.tier)) out.push(`Requires ${p.reputation.tier}${tierIndex(p.reputation.tier) < tierIndex("Neutral") ? " (or worse)" : ""} with ${facts.factionName && facts.factionName(p.reputation.factionId) || p.reputation.factionId}`);
     }
@@ -21042,17 +21246,17 @@ ${char.mes_example}
     for (let part of s.slice(eq + 1).split(/[,;]/)) {
       part = part.trim();
       if (!part) continue;
-      const low2 = part.toLowerCase();
+      const low3 = part.toLowerCase();
       let m;
       if (m = /^key\s*[:=]?\s*(.+)$/i.exec(part)) {
         out.keyItem = m[1].trim();
         continue;
       }
-      if (m = /^(?:lock\s*)?dc\s*(\d+)$/i.exec(low2)) {
+      if (m = /^(?:lock\s*)?dc\s*(\d+)$/i.exec(low3)) {
         out.lockDC = Number(m[1]);
         continue;
       }
-      const word = low2.replace(/\b(the|a|an|door|is|now)\b/g, " ").trim();
+      const word = low3.replace(/\b(the|a|an|door|is|now)\b/g, " ").trim();
       if (word === "unlocked" || word === "shut") {
         out.state = "closed";
         continue;
@@ -21233,8 +21437,8 @@ ${char.mes_example}
     let fit2 = pool.filter((m) => m.xp > 0 && m.xp <= target && m.xp >= target / 8);
     if (!fit2.length) fit2 = pool.filter((m) => m.xp > 0 && m.xp <= target);
     if (!fit2.length) {
-      const low2 = pool.filter((m) => m.xp > 0).sort((a, b) => a.xp - b.xp)[0];
-      return low2 ? [{ key: low2.key, count: 1 }] : [];
+      const low3 = pool.filter((m) => m.xp > 0).sort((a, b) => a.xp - b.xp)[0];
+      return low3 ? [{ key: low3.key, count: 1 }] : [];
     }
     const first = pick(R, fit2);
     const count = Math.max(1, Math.min(6, Math.floor(target / first.xp) - (chance(R, 0.4) ? 1 : 0)));
@@ -22030,11 +22234,11 @@ ${char.mes_example}
     const up = upcastStep(s, "damage");
     return up && slotLevel > up.above ? addDice(s.damage, (slotLevel - up.above) * up.count, up.sides) : s.damage;
   }
-  function castHealing(s, abilityMod3, slotLevel) {
+  function castHealing(s, abilityMod4, slotLevel) {
     if (!s || !s.heal) return "";
     const up = upcastStep(s, "healing");
     const expr = up && slotLevel > up.above ? addDice(s.heal, (slotLevel - up.above) * up.count, up.sides) : s.heal;
-    const m = Number(abilityMod3) || 0;
+    const m = Number(abilityMod4) || 0;
     return expr.replace("+mod", m ? m > 0 ? "+" + m : String(m) : "");
   }
   function dartCount(slotLevel) {
@@ -22127,7 +22331,7 @@ ${char.mes_example}
       build: null,
       // builder choices (builder-rules.js) — used for level up
       inventory: [],
-      // [{ name, qty, notes }]
+      // [{ name, qty, notes, inHand? }] — inHand (R8, additive): held or worn; missing = in the backpack
       coins: { cp: 0, sp: 0, gp: 0, pp: 0 },
       features: "",
       notes: "",
@@ -22166,7 +22370,7 @@ ${char.mes_example}
       damage: str2(a.damage),
       notes: str2(a.notes)
     }));
-    s.inventory = (Array.isArray(s.inventory) ? s.inventory : []).filter((i) => i && str2(i.name)).map((i) => ({ name: str2(i.name), qty: Math.max(1, int(i.qty, 1)), notes: str2(i.notes) }));
+    s.inventory = (Array.isArray(s.inventory) ? s.inventory : []).filter((i) => i && str2(i.name)).map((i) => Object.assign({ name: str2(i.name), qty: Math.max(1, int(i.qty, 1)), notes: str2(i.notes) }, i.inHand ? { inHand: true } : {}));
     const coins = Object.assign({}, d.coins, s.coins && typeof s.coins === "object" ? s.coins : {});
     for (const c of Object.keys(d.coins)) coins[c] = Math.max(0, int(coins[c], 0));
     s.coins = coins;
@@ -22272,11 +22476,203 @@ ${char.mes_example}
       lines.push(`Spellcasting (${sp.ability.toUpperCase()}): save DC ${sp.saveDC}, spell attack ${fmt(sp.attack)}` + (sp.slots.length ? `, slots ${sp.slots.map((n, i) => n ? `L${i + 1}×${n}` : "").filter(Boolean).join(" ")}` : "") + (chosen ? `
 Spells: ${chosen}` : "") + (sp.spells ? `${chosen ? "; " : "\nSpells: "}${sp.spells}` : ""));
     }
-    if (s.inventory.length) lines.push("Inventory: " + s.inventory.map((i) => i.name + (i.qty > 1 ? ` x${i.qty}` : "")).join(", "));
+    const held = s.inventory.filter((i) => i.inHand), packed = s.inventory.filter((i) => !i.inHand);
+    const list3 = (items) => items.map((i) => i.name + (i.qty > 1 ? ` x${i.qty}` : "")).join(", ");
+    if (held.length) lines.push("In hand / worn: " + list3(held));
+    if (packed.length) lines.push((held.length ? "Backpack: " : "Inventory: ") + list3(packed));
     const coins = Object.entries(s.coins).filter(([, v]) => v > 0).map(([k2, v]) => `${v} ${k2}`);
     if (coins.length) lines.push("Coins: " + coins.join(", "));
     return lines.join("\n");
   }
+
+  // src/compendium/rules.js
+  var KINDS3 = { monster: "Monsters", spell: "Spells", item: "Magic items", equipment: "Equipment", rule: "Rules" };
+  var ATTRIBUTION = SRD.attribution;
+  var norm4 = (s) => String(s == null ? "" : s).toLowerCase().replace(/[’']/g, "'").replace(/\s+/g, " ").trim();
+  var cap = (s) => String(s || "").replace(/\b[a-z]/g, (c) => c.toUpperCase());
+  var levelSchool2 = (s) => s.level ? `Level ${s.level} ${s.school}` : `${s.school} cantrip`;
+  var INDEX = null;
+  function index() {
+    if (INDEX) return INDEX;
+    const out = [];
+    for (const [key, m] of Object.entries(MONSTERS)) out.push({ kind: "monster", key, name: m.name, sub: `CR ${m.cr} · ${m.type}` });
+    for (const [key, s] of Object.entries(SPELLS)) out.push({ kind: "spell", key, name: s.name, sub: `${levelSchool2(s)} · ${s.classes.map(cap).join(", ")}` });
+    for (const [key, it] of Object.entries(COMPENDIUM.magicItems)) out.push({ kind: "item", key, name: it.name, sub: it.type });
+    for (const [name, w] of Object.entries(SRD.weapons)) out.push({ kind: "equipment", key: "weapon:" + name, name, sub: `Weapon · ${cap(w.category)} · ${w.damage} ${w.type}` });
+    for (const [name, a] of Object.entries(SRD.armor)) out.push({ kind: "equipment", key: "armor:" + name, name, sub: `Armor · ${cap(a.category)}` });
+    for (const [key, g] of Object.entries(COMPENDIUM.gear)) out.push({ kind: "equipment", key: "gear:" + key, name: g.name, sub: `${g.kind === "tool" ? "Tool" : "Adventuring gear"} · ${g.cost}` });
+    for (const [key, r] of Object.entries(COMPENDIUM.glossary)) out.push({ kind: "rule", key, name: r.name, sub: r.tag || "Rule" });
+    INDEX = out;
+    return out;
+  }
+  function entry(kind, key) {
+    if (kind === "monster") return MONSTERS[key] ? { kind, key, name: MONSTERS[key].name, data: MONSTERS[key] } : null;
+    if (kind === "spell") return SPELLS[key] ? { kind, key, name: SPELLS[key].name, data: SPELLS[key] } : null;
+    if (kind === "item") {
+      const d = COMPENDIUM.magicItems[key];
+      return d ? { kind, key, name: d.name, data: d } : null;
+    }
+    if (kind === "rule") {
+      const d = COMPENDIUM.glossary[key];
+      return d ? { kind, key, name: d.name, data: d } : null;
+    }
+    if (kind === "equipment") {
+      const [t, k2] = String(key).split(/:(.*)/s);
+      if (t === "weapon" && SRD.weapons[k2]) return { kind, key, name: k2, data: Object.assign({ equipment: "weapon" }, SRD.weapons[k2]) };
+      if (t === "armor" && SRD.armor[k2]) return { kind, key, name: k2, data: Object.assign({ equipment: "armor" }, SRD.armor[k2]) };
+      if (t === "gear" && COMPENDIUM.gear[k2]) return { kind, key, name: COMPENDIUM.gear[k2].name, data: Object.assign({ equipment: COMPENDIUM.gear[k2].kind }, COMPENDIUM.gear[k2]) };
+    }
+    return null;
+  }
+  var TEXT = /* @__PURE__ */ new Map();
+  function textOf(e) {
+    const id = e.kind + "|" + e.key;
+    if (!TEXT.has(id)) {
+      const r = entry(e.kind, e.key);
+      const d = r && r.data || {};
+      const parts = [];
+      const walk = (v) => {
+        if (typeof v === "string") parts.push(v);
+        else if (Array.isArray(v)) v.forEach(walk);
+        else if (v && typeof v === "object") Object.values(v).forEach(walk);
+      };
+      walk([d.text, d.higher, d.upgrade, d.traits, d.actions, d.bonusActions, d.reactions, d.legendary]);
+      TEXT.set(id, norm4(parts.join(" ")));
+    }
+    return TEXT.get(id);
+  }
+  function search(q, kind, limit = 150) {
+    const list3 = index().filter((e) => !kind || e.kind === kind);
+    const t = norm4(q);
+    if (!t) return list3.slice().sort((a, b) => a.name.localeCompare(b.name)).slice(0, limit).map((e) => Object.assign({ score: 5 }, e));
+    const words = t.split(" ");
+    const hits = [];
+    for (const e of list3) {
+      const n = norm4(e.name), s = norm4(e.sub);
+      let score = -1;
+      if (n === t) score = 0;
+      else if (n.startsWith(t)) score = 1;
+      else if (words.every((w) => n.includes(w))) score = 2;
+      else if (words.every((w) => (n + " " + s).includes(w))) score = 3;
+      else if (t.length >= 4 && textOf(e).includes(t)) score = 4;
+      if (score >= 0) hits.push(Object.assign({ score }, e));
+    }
+    return hits.sort((a, b) => a.score - b.score || a.name.localeCompare(b.name)).slice(0, limit);
+  }
+  function find(q, kind) {
+    const r = search(q, kind, 1)[0];
+    return r && r.score <= 2 ? r : null;
+  }
+  var abilityMod2 = (score) => Math.floor(((Number(score) || 10) - 10) / 2);
+  var signed = (n) => (n >= 0 ? "+" : "") + n;
+
+  // src/characters/equipment-rules.js
+  var low2 = (s) => String(s == null ? "" : s).trim().toLowerCase();
+  var abilityMod3 = (score) => Math.floor(((Number(score) || 10) - 10) / 2);
+  function baseWeapon(name) {
+    const n = low2(name).replace(/^\+\d\s+/, "").replace(/\s+\+\d$/, "");
+    const hit = Object.keys(SRD.weapons).find((w) => low2(w) === n) || Object.keys(SRD.weapons).find((w) => n.startsWith(low2(w) + " of "));
+    return hit || "";
+  }
+  function weaponOf(name) {
+    const b = baseWeapon(name);
+    return b ? Object.assign({ name: b }, SRD.weapons[b]) : null;
+  }
+  var isRangedWeapon = (w) => !!w && /ranged$/.test(w.category);
+  var isTwoHanded = (w) => !!w && /Two-Handed/i.test(w.properties || "");
+  var ITEM_NAMES = null;
+  function weaponNames() {
+    return ["Unarmed Strike", ...Object.keys(SRD.weapons).sort()];
+  }
+  function itemNames() {
+    if (ITEM_NAMES) return ITEM_NAMES;
+    const set = /* @__PURE__ */ new Set([...Object.keys(SRD.weapons), ...Object.keys(SRD.armor), "Shield"]);
+    for (const e of index()) if (e.kind === "equipment" || e.kind === "item") set.add(e.name);
+    ITEM_NAMES = [...set].sort((a, b) => a.localeCompare(b));
+    return ITEM_NAMES;
+  }
+  function itemInfo(name) {
+    const n = String(name || "").trim();
+    if (!n) return null;
+    const w = weaponOf(n);
+    if (w) {
+      const magic = low2(n) !== low2(w.name) ? magicEntry(n) : null;
+      return {
+        kind: "weapon",
+        name: w.name,
+        hands: isTwoHanded(w) ? 2 : 1,
+        summary: `${cap2(w.category)} weapon · ${w.damage} ${w.type}${w.properties ? " · " + w.properties : ""}${w.mastery ? " · Mastery: " + w.mastery : ""} · ${w.cost}`,
+        text: magic ? magic.text : [],
+        ref: magic ? magic.ref : { kind: "equipment", key: "weapon:" + w.name }
+      };
+    }
+    if (low2(n) === "shield") return { kind: "shield", name: "Shield", hands: 1, summary: `Shield · +2 AC · ${SRD.shieldCost || "10 GP"}`, text: [], ref: entry("equipment", "armor:Shield") ? { kind: "equipment", key: "armor:Shield" } : null };
+    const armorName = Object.keys(SRD.armor).find((a) => low2(a) === low2(n));
+    if (armorName) {
+      const a = SRD.armor[armorName];
+      const ac = `AC ${a.base}${a.dexCap === 0 ? "" : a.dexCap == null ? " + Dex modifier" : ` + Dex modifier (max ${a.dexCap})`}`;
+      return { kind: "armor", name: armorName, hands: 0, summary: `${cap2(a.category)} armor · ${ac} · ${a.cost}`, text: [], ref: { kind: "equipment", key: "armor:" + armorName } };
+    }
+    const eq = find(n, "equipment");
+    if (eq && low2(eq.name) === low2(n)) {
+      const e = entry(eq.kind, eq.key);
+      const d = e && e.data || {};
+      const kind = d.equipment === "tool" ? "tool" : "gear";
+      return { kind, name: e.name, hands: 1, summary: [kind === "tool" ? "Tool" : "Adventuring gear", d.weight, d.cost].filter(Boolean).join(" · "), text: (d.text || []).slice(), ref: { kind: eq.kind, key: eq.key } };
+    }
+    const m = magicEntry(n);
+    if (m) return { kind: "magic", name: m.name, hands: 1, summary: m.summary, text: m.text, ref: m.ref };
+    return null;
+  }
+  function magicEntry(n) {
+    const hit = find(n, "item");
+    if (!hit || low2(hit.name) !== low2(n)) return null;
+    const e = entry(hit.kind, hit.key);
+    const d = e && e.data || {};
+    return { name: e.name, summary: [d.type || "Magic item", d.attunement ? "requires attunement" : ""].filter(Boolean).join(" · "), text: (d.text || []).slice(), ref: { kind: hit.kind, key: hit.key } };
+  }
+  function cap2(s) {
+    s = String(s || "");
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  }
+  function attackFromWeapon(name, abilities) {
+    const w = weaponOf(name);
+    if (!w) return null;
+    const ab = abilities || {};
+    const ranged = isRangedWeapon(w), finesse = /Finesse/.test(w.properties || "");
+    let ability = ranged ? "dex" : "str";
+    if (finesse && abilityMod3(ab.dex) > abilityMod3(ab.str)) ability = "dex";
+    const mod2 = abilityMod3(ab[ability]);
+    return {
+      name: String(name).trim(),
+      ability,
+      proficient: true,
+      bonus: 0,
+      damage: w.damage + (mod2 ? (mod2 > 0 ? "+" : "") + mod2 : ""),
+      notes: [w.type, w.properties, w.mastery && "Mastery: " + w.mastery].filter(Boolean).join(" · ")
+    };
+  }
+  function itemForAttack(inventory, attackName) {
+    const inv = Array.isArray(inventory) ? inventory : [];
+    const n = low2(attackName);
+    if (!n) return null;
+    return inv.find((i) => i && low2(i.name) === n) || (weaponOf(attackName) ? inv.find((i) => i && weaponOf(i.name) && low2(i.name) === n) : null) || null;
+  }
+  function attackInHand(inventory, attackName) {
+    const it = itemForAttack(inventory, attackName);
+    if (!it || !weaponOf(it.name)) return null;
+    return !!it.inHand;
+  }
+  function handsUsed(inventory) {
+    let n = 0;
+    for (const it of Array.isArray(inventory) ? inventory : []) {
+      if (!it || !it.inHand) continue;
+      const info = itemInfo(it.name);
+      n += info ? info.hands : 1;
+    }
+    return n;
+  }
+  var HAND_RULE = "SRD: you can draw or stow one weapon as part of each attack you make with it; getting out or putting away any other item takes the Utilize action.";
 
   // src/KLITE-RPmod_Worlds.js
   function initWorlds() {
@@ -22354,6 +22750,8 @@ Spells: ${chosen}` : "") + (sp.spells ? `${chosen ? "; " : "\nSpells: "}${sp.spe
         // non-repeatable events already fired
         startedEncounters: [],
         // saved encounters already started (R7: "waiting here" hint)
+        // (added when needed, R8) adventureNotes: { [character name]: text } — the character sheet's
+        //   Adventure notes: live game only (never in the start state), gone after Back to start
         lastParsedIndex: chatLength(),
         // gametext_arr index up to which tags were applied (a new state starts at the current chat: older tags are not replayed)
         // R7 exploration of dungeons/towns (map-rules.js): { [roomId]: 'known'|'discovered'|'visited' },
@@ -22891,7 +23289,73 @@ Spells: ${chosen}` : "") + (sp.spells ? `${chosen ? "; " : "\nSpells: "}${sp.spe
       const rooms = roomsOf(mapId);
       if (!rooms.length) return null;
       const outward = (r) => exitsOfLoc(r.id).filter((e) => !isInsideLocation(e.to, mapId) && e.to !== mapId);
-      return fromId && rooms.find((r) => outward(r).some((e) => e.to === fromId || isInsideLocation(fromId, e.to))) || rooms.find((r) => outward(r).length) || rooms[0];
+      const fromAnchor = fromId && graphAnchor(fromId);
+      return fromId && rooms.find((r) => outward(r).some((e) => e.to === fromId || isInsideLocation(fromId, e.to))) || fromAnchor && fromAnchor !== fromId && rooms.find((r) => outward(r).some((e) => graphAnchor(e.to) === fromAnchor)) || rooms.find((r) => outward(r).length) || rooms[0];
+    }
+    function routeSteps(locId) {
+      const out = [];
+      for (const e of playerExits(locId)) if (!blocksMove(doorState(e, rt().doorState))) out.push({ to: e.to, exit: e });
+      const m = mapOf(locId);
+      if (m && (kindOf(m) === "town" || (entranceRoom(m.id) || {}).id === locId)) {
+        for (const e of exitsOfLoc(m.id)) {
+          if (isInsideLocation(e.to, m.id) || e.to === m.id || !visibleExit(e, foundState()) || blocksMove(doorState(e, rt().doorState))) continue;
+          const to = locOf(e.to);
+          if (!to) continue;
+          const dest = isContainer(to) ? entranceRoom(to.id, m.id) || to : to;
+          if (!out.some((s) => s.to === dest.id)) out.push({ to: dest.id, exit: null });
+        }
+      }
+      return out;
+    }
+    function routeTo(fromId, toId, opts = {}) {
+      if (!fromId || !toId || fromId === toId) return null;
+      const r = rt();
+      normalizeExploration(r);
+      const passable = (id) => {
+        const m = mapOf(id);
+        if (m && kindOf(m) === "town") return true;
+        if (!opts.quick) return false;
+        if (m) return exploreRank((r.explored || {})[id]) >= exploreRank("discovered");
+        return asArray5(r.visitedLocationIds).includes(id);
+      };
+      const prev = /* @__PURE__ */ new Map([[fromId, null]]);
+      const todo = [fromId];
+      while (todo.length) {
+        const id = todo.shift();
+        if (id !== fromId && !passable(id)) continue;
+        for (const s of routeSteps(id)) {
+          if (prev.has(s.to)) continue;
+          prev.set(s.to, id);
+          if (s.to === toId) {
+            const path = [toId];
+            let p = id;
+            while (p && p !== fromId) {
+              path.unshift(p);
+              p = prev.get(p);
+            }
+            return path;
+          }
+          todo.push(s.to);
+        }
+      }
+      return null;
+    }
+    function townWays(locId) {
+      const m = mapOf(locId);
+      if (!m || kindOf(m) !== "town") return [];
+      const out = [];
+      const prev = /* @__PURE__ */ new Set([locId]);
+      const todo = [locId];
+      while (todo.length) {
+        const id = todo.shift();
+        for (const s of routeSteps(id)) {
+          if (prev.has(s.to)) continue;
+          prev.add(s.to);
+          if (isInsideLocation(s.to, m.id)) todo.push(s.to);
+          else out.push(s.to);
+        }
+      }
+      return out;
     }
     function unexploredExit(exits, key, curId) {
       if (!/^unexplored( room)?$/.test(key) || !curId) return null;
@@ -22927,6 +23391,7 @@ Spells: ${chosen}` : "") + (sp.spells ? `${chosen ? "; " : "\nSpells: "}${sp.spe
         gameLog(msg, "map");
         return { ok: false, reason: msg };
       };
+      if (opts.source === "quicktravel" && rt().combat && rt().combat.active) return refuse("a fight is going on");
       let dest = resolveGoTarget(target, curId);
       if (!dest) return refuse("there is no such place");
       const destIsMap = isContainer(dest);
@@ -22940,10 +23405,41 @@ Spells: ${chosen}` : "") + (sp.spells ? `${chosen ? "; " : "\nSpells: "}${sp.spe
         }
       }
       if (cur && dest.id === curId) return { ok: true, to: dest.id, same: true };
-      let ex = null, opened = false;
+      let ex = null, opened = false, via = [];
       if (cur && (mapOf(curId) || mapOf(dest.id))) {
         ex = playerExits(curId).find((e) => e.to === dest.id) || null;
-        if (!ex && !(viaEntrance && !mapOf(curId))) return refuse(`there is no known way from ${placeName(curId)} to ${placeName(dest.id, curId)}`);
+        if (!ex && !(viaEntrance && !mapOf(curId))) {
+          const route = routeTo(curId, dest.id, { quick: opts.source === "quicktravel" });
+          if (!route) return refuse(`there is no known way from ${placeName(curId)} to ${placeName(dest.id, curId)}`);
+          let at = curId;
+          for (const id of route) {
+            const e = playerExits(at).find((x) => x.to === id);
+            if (e && doorState(e, rt().doorState) === "closed") {
+              rt().doorState[e.id] = "open";
+              opened = true;
+            }
+            at = id;
+            if (id === dest.id) {
+              ex = e || null;
+              break;
+            }
+            via.push(id);
+            rt().playerLocationId = id;
+            markVisitedRoom(id);
+            passiveNotice(id);
+            let fired = [];
+            try {
+              fired = fireTriggers("enter:" + id);
+            } catch (_) {
+            }
+            if (fired.length || rt().combat && rt().combat.active) {
+              via.pop();
+              const fight = !!(rt().combat && rt().combat.active);
+              gameLog(`${opts.source === "quicktravel" ? "Quick travel" : "The way"} to ${placeName(dest.id, curId)} stops at ${placeName(id, curId)}${via.length ? ` (via ${via.map((v) => playerPlaceName(v, curId)).join(", ")})` : ""}: ${fight ? "a fight starts here" : "something happens here"}.`, "map");
+              return { ok: true, to: id, stopped: true, fight, dest: dest.id, opened, via };
+            }
+          }
+        }
         if (ex) {
           const st = doorState(ex, rt().doorState);
           const mat = ex.door && norm5(ex.door.material);
@@ -22958,14 +23454,15 @@ Spells: ${chosen}` : "") + (sp.spells ? `${chosen ? "; " : "\nSpells: "}${sp.spe
       rt().entry = ex && RING.includes(ex.dir) ? { roomId: dest.id, dir: mirrorDir(ex.dir) } : null;
       markVisitedRoom(dest.id);
       passiveNotice(dest.id);
-      const dir = ex && ex.dir ? dirName(ex.dir) : "";
-      if (opts.source === "ui") gameLog(`${opened ? "Opens the door and goes" : "Goes"}${dir ? " " + dir : ""} to ${placeName(dest.id, curId)}.`, "map");
+      const dir = ex && ex.dir && !via.length ? dirName(ex.dir) : "";
+      const viaTxt = via.length ? ` via ${via.map((id) => playerPlaceName(id, curId)).join(", ")}` : "";
+      if (opts.source === "ui" || via.length && opts.source !== "quicktravel") gameLog(`${opened ? "Opens the door and goes" : "Goes"}${dir ? " " + dir : ""}${viaTxt} to ${placeName(dest.id, curId)}.`, "map");
       if (opts.source === "quicktravel") gameLog(`Quick travel: the player skipped the journey and is now at ${placeName(dest.id, curId)}${opened ? " (a door was opened on the way)" : ""}. Describe the arrival briefly.`, "map");
       try {
         fireTriggers("enter:" + dest.id);
       } catch (_) {
       }
-      return { ok: true, to: dest.id, dir: ex ? ex.dir : null, opened };
+      return { ok: true, to: dest.id, dir: ex ? ex.dir : null, opened, via };
     }
     function exitLines(locId) {
       const r = rt();
@@ -22985,7 +23482,8 @@ Spells: ${chosen}` : "") + (sp.spells ? `${chosen ? "; " : "\nSpells: "}${sp.spe
       return asciiMap(b.rooms.map((x) => ({ id: x.id, name: x.named ? x.name : "unexplored", rect: x.rect })), b.exits.map((e) => [e.from, e.to]), b.here);
     }
     function featureVisible(o) {
-      if (o.hidden) return false;
+      if (phasedEntity(o).gone) return false;
+      if (o.hidden) return asArray5(foundState().secrets).includes(o.id);
       return o.kind !== "trap" || asArray5(foundState().traps).includes(o.id);
     }
     const isDoorExit = (e) => !!e && (e.type === "door" || e.type === "secret");
@@ -23032,7 +23530,7 @@ Spells: ${chosen}` : "") + (sp.spells ? `${chosen ? "; " : "\nSpells: "}${sp.spe
       }
       const st = playerStatsBlock();
       if (Number.isFinite(Number(st.skills[skill]))) return Number(st.skills[skill]);
-      return abilityMod3(st.abilities[SKILL_ABILITY[skill] || "wis"]);
+      return abilityMod4(st.abilities[SKILL_ABILITY[skill] || "wis"]);
     }
     function passivePerception() {
       return 10 + playerSkill("perception");
@@ -23053,7 +23551,7 @@ Spells: ${chosen}` : "") + (sp.spells ? `${chosen ? "; " : "\nSpells: "}${sp.spe
         } catch (_) {
         }
       }
-      return abilityMod3(playerStatsBlock().abilities.dex);
+      return abilityMod4(playerStatsBlock().abilities.dex);
     }
     function rollText(r) {
       return `${r.total} [d20 ${r.die}${r.mod ? (r.mod > 0 ? "+" : "") + r.mod : ""}]`;
@@ -23112,7 +23610,7 @@ Spells: ${chosen}` : "") + (sp.spells ? `${chosen ? "; " : "\nSpells: "}${sp.spe
       for (const e of exitsOfLoc(locId)) {
         const to = locOf(e.to);
         const dirTxt = e.dir ? ` (${dirName(e.dir)})` : "";
-        if (isSecret(e) && !asArray5(f.secrets).includes(e.id)) out.push({ kind: "secret", id: e.id, dc: Number(e.secretDC) || DEFAULT_DC, label: `a secret door${dirTxt}`, room: to && to.secret && !roomFound(to) ? to.id : null, exit: e });
+        if (isSecret(e) && !asArray5(f.secrets).includes(e.id)) out.push({ kind: "secret", id: e.id, dc: Number(e.secretDC) || DEFAULT_DC, label: `${isDoorExit(e) ? "a secret door" : "a hidden way"}${dirTxt}`, room: to && to.secret && !roomFound(to) ? to.id : null, exit: e });
         else if (to && to.secret && !roomFound(to) && visibleExit(e, f)) out.push({ kind: "room", id: to.id, dc: Number(to.secretDC) || DEFAULT_DC, label: `a hidden way${dirTxt}`, exit: e });
       }
       for (const o of asArray5(activeWorld() && activeWorld().objects)) {
@@ -23457,7 +23955,7 @@ Spells: ${chosen}` : "") + (sp.spells ? `${chosen ? "; " : "\nSpells: "}${sp.spe
       return t;
     }
     const ABILITIES2 = ["str", "dex", "con", "int", "wis", "cha"];
-    function abilityMod3(score) {
+    function abilityMod4(score) {
       return Math.floor(((Number(score) || 10) - 10) / 2);
     }
     function fmtMod(m) {
@@ -23493,8 +23991,8 @@ Spells: ${chosen}` : "") + (sp.spells ? `${chosen ? "; " : "\nSpells: "}${sp.spe
     function statSummary(stats) {
       if (!stats) return "";
       const s = normalizeStats(stats);
-      const abil = ABILITIES2.map((a) => `${a.toUpperCase()} ${s.abilities[a]}(${fmtMod(abilityMod3(s.abilities[a]))})`).join(" ");
-      const init2 = s.initiativeMod || abilityMod3(s.abilities.dex);
+      const abil = ABILITIES2.map((a) => `${a.toUpperCase()} ${s.abilities[a]}(${fmtMod(abilityMod4(s.abilities[a]))})`).join(" ");
+      const init2 = s.initiativeMod || abilityMod4(s.abilities.dex);
       const atk = asArray5(s.attacks).map((a) => norm5(a && a.name)).filter(Boolean).join(", ");
       return `AC ${s.ac}, HP ${s.hpMax}, ${abil}, Init ${fmtMod(init2)}` + (atk ? `; Attacks: ${atk}` : "");
     }
@@ -23740,6 +24238,59 @@ Spells: ${chosen}` : "") + (sp.spells ? `${chosen ? "; " : "\nSpells: "}${sp.spe
       const t = o && o.target;
       const p = findById(w && w.npcs, t) || findById(w && w.locations, t);
       return p ? norm5(p.name) : norm5(t);
+    }
+    function checksHere(locId) {
+      const w = activeWorld();
+      const r = rt();
+      if (!w || !r) return [];
+      const day = absoluteDay(r.clock);
+      const out = [];
+      for (const q of asArray5(w.quests)) {
+        if (questStateOf(q) !== "active") continue;
+        for (const o of asArray5(q.objectives)) {
+          if (objectiveKind(o) !== "check" || o.hidden || objectiveStatusOf(q, o).done) continue;
+          if (o.at && !(locId && isInsideLocation(locId, o.at))) continue;
+          if (r.checkTries && r.checkTries[q.id + "." + o.id] === day) continue;
+          out.push({ questId: q.id, objId: o.id, quest: questTitle(q), text: norm5(o.text), what: checkWhat(o), dc: checkDC(o) });
+        }
+      }
+      return out;
+    }
+    function checkBonus(o) {
+      const sh = personaSheet();
+      if (sh) {
+        try {
+          const d = derive(sh);
+          const v = o.skill ? d.skills[o.skill] : d.mods[o.ability];
+          if (Number.isFinite(v)) return v;
+        } catch (_) {
+        }
+      }
+      const st = playerStatsBlock();
+      if (o.skill && Number.isFinite(Number(st.skills[o.skill]))) return Number(st.skills[o.skill]);
+      return abilityMod4(st.abilities[o.ability || SKILL_ABILITY[o.skill] || "str"]);
+    }
+    function tryObjective(target, opts = {}) {
+      if (!activeWorld() || !ensureRuntime()) return { ok: false, reason: "No world is active." };
+      const here2 = checksHere(rt().playerLocationId);
+      const key = nameKey(norm5(target));
+      const c = here2.find((x) => `${x.questId}.${x.objId}` === norm5(target)) || here2.find((x) => nameKey(x.text) === key) || here2.find((x) => nameKey(x.quest) === key) || (here2.length === 1 && !key ? here2[0] : null);
+      if (!c) {
+        const msg = `Try ${norm5(target) || "that"} refused: there is nothing like that to try here${here2.length ? "" : " (or you tried it today already)"}.`;
+        gameLog(msg, "quest");
+        return { ok: false, reason: msg };
+      }
+      const q = questById(c.questId);
+      const o = asArray5(q.objectives).find((x) => x.id === c.objId);
+      const r = rollD20(checkBonus(o), opts.mode);
+      const success = r.total >= c.dc;
+      rt().checkTries = Object.assign({}, rt().checkTries, { [c.questId + "." + c.objId]: absoluteDay(rt().clock) });
+      gameLog(`${c.text} — ${c.what} check (DC ${c.dc}): ${rollText(r)} — ${success ? "success" : "not this time (try again tomorrow)"}.`, "quest");
+      if (success) {
+        setObjProgress(q.id, o.id, true);
+        updateQuestProgress();
+      }
+      return { ok: true, success, roll: r, quest: q.id, objective: o.id };
     }
     function questEvent(kind, info) {
       const w = activeWorld();
@@ -24480,6 +25031,15 @@ The player's purse: ${formatPrice(wealthCp(purse()))}. When the player buys or s
           if (fid) changeReputation(fid, Number(effect.amount) || 0, "event");
           break;
         }
+        // R8: a secret exit or room, or a hidden feature, becomes known (someone shows the way; a boat is hired)
+        case "reveal": {
+          const id = norm5(effect.id);
+          if (!id) break;
+          normalizeExploration(rt());
+          if (!rt().found.secrets.includes(id)) rt().found.secrets.push(id);
+          sigs.push("reveal:" + id);
+          break;
+        }
         default:
           break;
       }
@@ -24685,7 +25245,7 @@ The player's purse: ${formatPrice(wealthCp(purse()))}. When the player buys or s
       const statOf = (id) => stats[id] || (id === "__player__" ? normalizeStats(personaSheetStats() || playerCombatCfg().stats || {}) : combatantStatsNoCombat(id));
       const order = entries.map((e) => {
         const st = statOf(e.id);
-        const init2 = rollD20(st.initiativeMod != null ? st.initiativeMod : abilityMod3(st.abilities.dex)).total;
+        const init2 = rollD20(st.initiativeMod != null ? st.initiativeMod : abilityMod4(st.abilities.dex)).total;
         const side = e.kind === "monster" ? "enemy" : sideOf(e.id, opts);
         return { id: e.id, name: e.name || (e.id === "__player__" ? personaSheet() && personaName() || norm5(playerCombatCfg().name) || personaName() || "You" : combatantNameNoCombat(e.id)), init: init2, isPlayer: e.id === "__player__", side, kind: e.kind, key: e.key };
       });
@@ -24919,6 +25479,19 @@ The player's purse: ${formatPrice(wealthCp(purse()))}. When the player buys or s
       checkOutcome();
       return left;
     }
+    function drawForAttack(attackerId, atk, who) {
+      const n = sheetNameOf(attackerId);
+      const C2 = window.KLITE_RPMod_Characters;
+      if (!n || !C2 || !C2.cachedSheet || !C2.setItemInHand || !atk) return;
+      try {
+        const s = C2.cachedSheet(n);
+        const it = s && s.inventory.find((i) => norm5(i.name).toLowerCase() === norm5(atk.name).toLowerCase());
+        if (!it || it.inHand || !weaponOf(it.name)) return;
+        C2.setItemInHand(n, it.name, true);
+        combatLog(`${who} draws the ${it.name} as part of the attack.`);
+      } catch (_) {
+      }
+    }
     function combatAttack(attackerId, targetId, attackIndex, opts = {}) {
       const cb = getCombat();
       if (!cb) return null;
@@ -24936,7 +25509,8 @@ The player's purse: ${formatPrice(wealthCp(purse()))}. When the player buys or s
         }
       }
       const tSt = zc && zc.cover ? Object.assign({}, tSt0, { ac: tSt0.ac + coverBonus(zc.cover) }) : tSt0;
-      const toHit = (atk.toHit != null ? Number(atk.toHit) : aSt.proficiency + abilityMod3(aSt.abilities.str)) - (zc ? zc.penalty : 0);
+      if (!opts.atk) drawForAttack(attackerId, atk, A);
+      const toHit = (atk.toHit != null ? Number(atk.toHit) : aSt.proficiency + abilityMod4(aSt.abilities.str)) - (zc ? zc.penalty : 0);
       const ranged = zc ? zc.ranged : opts.atk ? !!(P && P.ranged && !P.melee) : isRanged(atk);
       const m = isV2(cb) ? attackMode(conds(attackerId), conds(targetId), ranged, opts.mode) : { mode: opts.mode || null, autoCrit: false, why: [] };
       const hit = rollD20(toHit, m.mode);
@@ -25001,7 +25575,7 @@ The player's purse: ${formatPrice(wealthCp(purse()))}. When the player buys or s
     function savingThrow(id, ability, dc, opts = {}) {
       const st = combatantStats(id);
       const ab = norm5(ability).toLowerCase().slice(0, 3);
-      const mod2 = st.saves && st.saves[ab] != null && typeof st.saves[ab] === "number" ? st.saves[ab] : abilityMod3(st.abilities[ab] != null ? st.abilities[ab] : 10);
+      const mod2 = st.saves && st.saves[ab] != null && typeof st.saves[ab] === "number" ? st.saves[ab] : abilityMod4(st.abilities[ab] != null ? st.abilities[ab] : 10);
       const autoFail = (ab === "str" || ab === "dex") && cannotAct(conds(id)) && !conds(id).some((c) => c.name === "Incapacitated" && conds(id).length === 1);
       const r = rollD20(mod2, opts.mode);
       const success = !autoFail && r.total >= Number(dc);
@@ -25361,7 +25935,7 @@ The player's purse: ${formatPrice(wealthCp(purse()))}. When the player buys or s
     function abilityCheck(id, ability, dc, mode2) {
       const st = combatantStats(id);
       const ab = norm5(ability).toLowerCase();
-      const mod2 = abilityMod3(st.abilities[ab] != null ? st.abilities[ab] : 10);
+      const mod2 = abilityMod4(st.abilities[ab] != null ? st.abilities[ab] : 10);
       const r = rollD20(mod2, mode2);
       const success = r.total >= Number(dc);
       combatLog(`${combatantName(id)} ${ab.toUpperCase()} check: ${r.total} vs DC ${dc} — ${success ? "success" : "fail"}`);
@@ -25406,7 +25980,7 @@ The player's purse: ${formatPrice(wealthCp(purse()))}. When the player buys or s
     function attackOf(id, idx) {
       const st = combatantStats(id);
       const list3 = asArray5(st.attacks);
-      const atk = list3[Number(idx) || 0] || { name: "Unarmed Strike", toHit: st.proficiency + abilityMod3(st.abilities.str), damage: String(Math.max(1, 1 + abilityMod3(st.abilities.str))) };
+      const atk = list3[Number(idx) || 0] || { name: "Unarmed Strike", toHit: st.proficiency + abilityMod4(st.abilities.str), damage: String(Math.max(1, 1 + abilityMod4(st.abilities.str))) };
       let reach = atk.reach;
       const o = getCombat() && zOrder(getCombat(), id);
       if (!reach && o && o.key && MONSTERS[o.key]) {
@@ -25529,7 +26103,7 @@ The player's purse: ${formatPrice(wealthCp(purse()))}. When the player buys or s
         const p = /passive perception\s*(\d+)/i.exec(text);
         if (p) return Number(p[1]) - 10;
       }
-      return abilityMod3(st.abilities[SKILL_ABILITY[skill] || "dex"]);
+      return abilityMod4(st.abilities[SKILL_ABILITY[skill] || "dex"]);
     }
     function zoneHide(id) {
       const cb = getCombat();
@@ -25801,6 +26375,7 @@ ${recent}` : "");
         if (id && name && id !== loc.id && !ways.some((x) => x.id === id)) ways.push({ id, name, dir: dir || null, door: door || null });
       };
       for (const e of playerExits(loc.id)) add(e.to, playerPlaceName(e.to, loc.id), e.dir, e.type === "door" || e.type === "secret" ? doorState(e, rt().doorState) : null);
+      for (const id of townWays(loc.id)) add(id, placeName(id, loc.id));
       if (!mapOf(loc.id)) {
         for (const l of connectedLocations(w, loc, 1)) add(l.id, placeName(l.id, loc.id));
         for (const l of innerPlaces(loc)) add(l.id, phasedEntity(l).name);
@@ -25822,7 +26397,8 @@ ${recent}` : "");
         if (st === "available" && ids.has(q.giverPersonId) && !questLocks(q).length) quests.push({ id: q.id, title: questTitle(q), action: "accept" });
         else if (st === "complete" && ids.has(q.turninPersonId)) quests.push({ id: q.id, title: questTitle(q), action: "turnin" });
       }
-      return { place: norm5(phasedEntity(loc).name), inMap: !!mapOf(loc.id), ways, people, quests, trade: vendorsHere().length > 0 };
+      const checks = checksHere(loc.id).map((c) => ({ questId: c.questId, objId: c.objId, text: c.text, what: c.what, dc: c.dc }));
+      return { place: norm5(phasedEntity(loc).name), inMap: !!mapOf(loc.id), ways, people, quests, checks, trade: vendorsHere().length > 0 };
     }
     function computeActiveSlice(opts) {
       const mutate = !!(opts && opts.mutate);
@@ -25941,6 +26517,7 @@ ${xl.join("\n")}`;
         }).filter(Boolean);
         questLines.push(`- ${title} [${st}]${track}` + (desc ? `: ${desc}` : "") + (objs.length ? "\n" + objs.join("\n") : ""));
       }
+      if (questLines.some((l) => /check, DC \d+\)/.test(l))) questLines.push("(Contests and other checks are rolled by RPmod when the player tries them; narrate the result from the game log.)");
       push("Active Quests", 45, questLines.join("\n"));
       const reps = reputationList().filter((r) => r.tier !== "Neutral" && !r.gone);
       push("Reputation", 42, reps.map((r) => `- ${r.name}: ${r.tier}${r.effect ? ` — ${r.effect}` : ""}`).join("\n"));
@@ -26045,6 +26622,33 @@ ${xl.join("\n")}`;
       } catch (_) {
       }
     }
+    function resetStoryState() {
+      W.config.enabled = false;
+      W.activeWorldId = null;
+      W.runtime = null;
+      W.parked = {};
+      removeWorldsEntries();
+      syncLive();
+    }
+    let storyLoaded = false;
+    async function restoreFromAutosave() {
+      try {
+        if (storyLoaded || W.activeWorldId || W.runtime) return false;
+        const st = await loadStoryCopy("worlds");
+        if (!st || storyLoaded || W.activeWorldId) return false;
+        restoreSaveState(st);
+        try {
+          if (rt() && Array.isArray(window.gametext_arr)) rt().lastParsedIndex = window.gametext_arr.length;
+        } catch (_) {
+        }
+        syncLive();
+        dbg("world state restored after a page reload");
+        return true;
+      } catch (e) {
+        err("restore after reload failed", e);
+        return false;
+      }
+    }
     function installSaveWrappers() {
       if (typeof window.generate_savefile === "function" && !window.generate_savefile.__worlds_wrapped) {
         const origGen = window.generate_savefile;
@@ -26056,6 +26660,7 @@ ${xl.join("\n")}`;
             }
             const st = collectSaveState();
             if (obj && st) obj[SAVE_KEY2] = st;
+            saveStoryCopy("worlds", st || null);
           } catch (e) {
             err("save embed failed", e);
           }
@@ -26065,9 +26670,25 @@ ${xl.join("\n")}`;
         window.generate_savefile = wrappedGen;
         dbg("generate_savefile wrapped");
       }
+      if (typeof window.restart_new_game === "function" && !window.restart_new_game.__worlds_wrapped) {
+        const origRestart = window.restart_new_game;
+        const wrappedRestart = function() {
+          const res = origRestart.apply(this, arguments);
+          try {
+            resetStoryState();
+          } catch (e) {
+            err("new session reset failed", e);
+          }
+          return res;
+        };
+        wrappedRestart.__worlds_wrapped = true;
+        window.restart_new_game = wrappedRestart;
+        dbg("restart_new_game wrapped");
+      }
       if (typeof window.kai_json_load === "function" && !window.kai_json_load.__worlds_wrapped) {
         const origLoad = window.kai_json_load;
         const wrappedLoad = function() {
+          storyLoaded = true;
           let pending2 = null;
           try {
             const s = arguments[0];
@@ -26083,13 +26704,7 @@ ${xl.join("\n")}`;
               } catch (_) {
               }
               syncLive();
-            } else {
-              W.config.enabled = false;
-              W.activeWorldId = null;
-              W.runtime = null;
-              W.parked = {};
-              removeWorldsEntries();
-            }
+            } else resetStoryState();
           } catch (e) {
             err("restore failed", e);
           }
@@ -26171,12 +26786,25 @@ ${xl.join("\n")}`;
           nodes.push(n);
         }
       }
+      const exitEdges = /* @__PURE__ */ new Map();
+      const addExitEdge = (fromId, toId, exitId) => {
+        const a = graphAnchor(fromId), b = graphAnchor(toId);
+        if (a === b) return;
+        const key = [a, b].sort().join("|");
+        let e = exitEdges.get(key);
+        if (!e) {
+          e = { from: a, to: b, kind: "exit" };
+          exitEdges.set(key, e);
+          edges.push(e);
+        }
+        if (exitId) (e.via = e.via || []).push({ from: fromId, to: toId, exitId });
+      };
       for (const l of asArray5(world2.locations)) {
         edges.push({ from: "__world__", to: l.id, kind: "contains" });
-        for (const cid of asArray5(l.connectedLocationIds)) if (findById(world2.locations, cid)) edges.push({ from: l.id, to: cid, kind: "exit" });
+        for (const cid of asArray5(l.connectedLocationIds)) if (findById(world2.locations, cid)) addExitEdge(l.id, cid);
         for (const ex of asArray5(l.exits)) {
           const to = ex && (ex.to || ex.locationId);
-          if (to && to !== l.id && findById(world2.locations, to) && !asArray5(l.connectedLocationIds).includes(to)) edges.push({ from: l.id, to, kind: "exit", exitId: ex.id });
+          if (to && to !== l.id && findById(world2.locations, to)) addExitEdge(l.id, to, ex.id);
         }
       }
       for (const n of asArray5(world2.npcs)) {
@@ -26397,6 +27025,14 @@ ${xl.join("\n")}`;
       if (!world2) return false;
       const a = entityById(world2, fromId), b = entityById(world2, toId);
       if (!a || !b) return false;
+      if (entityType(world2, fromId) === "location" && entityType(world2, toId) === "location" && !isInsideLocation(fromId, toId) && !isInsideLocation(toId, fromId)) {
+        const inA = (id) => isInsideLocation(id, fromId), inB = (id) => isInsideLocation(id, toId);
+        for (const l of asArray5(world2.locations)) if (Array.isArray(l.exits) && (inA(l.id) || inB(l.id)))
+          l.exits = l.exits.filter((ex) => {
+            const to = ex && (ex.to || ex.locationId);
+            return !to || !(inA(l.id) && inB(to) || inB(l.id) && inA(to));
+          });
+      }
       for (const [x, yId] of [[a, toId], [b, fromId]]) {
         if (Array.isArray(x.connectedLocationIds)) x.connectedLocationIds = x.connectedLocationIds.filter((v) => v !== yId);
         if (Array.isArray(x.exits)) x.exits = x.exits.filter((ex) => !ex || (ex.to || ex.locationId) !== yId);
@@ -26757,6 +27393,7 @@ ${xl.join("\n")}`;
       if (!W.runtime) return false;
       keepChatPosition(() => {
         W.runtime.working = deepClone(W.runtime.base);
+        delete W.runtime.working.adventureNotes;
       });
       dbg("reset working <- base");
       return true;
@@ -26764,7 +27401,25 @@ ${xl.join("\n")}`;
     function commitToBase() {
       if (!W.runtime) return false;
       W.runtime.base = deepClone(W.runtime.working);
+      delete W.runtime.base.adventureNotes;
       dbg("commit base <- working");
+      return true;
+    }
+    function adventureNote(name) {
+      const r = W.runtime && W.runtime.working;
+      const n = norm5(name);
+      return r && n && r.adventureNotes && typeof r.adventureNotes[n] === "string" ? r.adventureNotes[n] : "";
+    }
+    function setAdventureNote(name, text) {
+      const n = norm5(name);
+      if (!n || !activeWorld()) return false;
+      ensureRuntime();
+      const r = W.runtime.working;
+      const t = String(text == null ? "" : text);
+      r.adventureNotes = Object.assign({}, r.adventureNotes);
+      if (t.trim()) r.adventureNotes[n] = t;
+      else delete r.adventureNotes[n];
+      if (!Object.keys(r.adventureNotes).length) delete r.adventureNotes;
       return true;
     }
     function swapActive() {
@@ -26805,6 +27460,12 @@ ${xl.join("\n")}`;
       resetToBase() {
         const ok = resetToBase();
         if (ok) syncLive();
+        return ok;
+      },
+      adventureNote,
+      setAdventureNote(name, text) {
+        const ok = setAdventureNote(name, text);
+        if (ok) notifyChange();
         return ok;
       },
       commitToBase,
@@ -26879,7 +27540,7 @@ ${xl.join("\n")}`;
         if (p) delete p.stats;
         return true;
       },
-      abilityMod: abilityMod3,
+      abilityMod: abilityMod4,
       statSummary,
       // ----- Quests (Phase D) -----
       listQuests(mode2) {
@@ -27210,6 +27871,13 @@ ${xl.join("\n")}`;
         syncLive();
         return r;
       },
+      combatantSheetName: (id) => sheetNameOf(id),
+      tryObjective(target, opts) {
+        const r = tryObjective(target, opts || {});
+        syncLive();
+        return r;
+      },
+      // R8: contests (check objectives)   // R8: the character sheet behind a combatant ('' = none)
       combatSpells: (id) => combatSpells(id || "__player__"),
       castSpell(id, key, opts) {
         const r = castSpell(id || "__player__", key, opts || {});
@@ -27405,6 +28073,16 @@ ${xl.join("\n")}`;
         const id = await createWorld(name);
         syncLive();
         return id;
+      },
+      // R8 (World Management): a new name for the active world (saved like any world edit)
+      renameWorld(name) {
+        const w = activeWorld();
+        name = norm5(name);
+        if (!w || !name) return null;
+        w.name = name;
+        markDirty();
+        syncLive();
+        return name;
       },
       loadExample() {
         return loadExample();
@@ -27672,6 +28350,7 @@ ${xl.join("\n")}`;
       if (W.ready) return;
       await libraryReady();
       installSaveWrappers();
+      await restoreFromAutosave();
       installReplyHook();
       registerProvider();
       registerSettingAndGuards();
@@ -28195,6 +28874,16 @@ ${xl.join("\n")}`;
         btn("End turn", endTurn, { icon: "arrow-right", grow: true, id: "end-turn" })
       ], "margin-top:6px"));
       wrap.appendChild(muted("Then tell the AI in the chat what you do — it narrates the rolls from the log.", { style: "margin-top:4px" }));
+      const sheetName = A.combatantSheetName ? A.combatantSheetName(cur.id) : "";
+      const sheet = sheetName && window.KLITE_RPMod_Characters ? window.KLITE_RPMod_Characters.cachedSheet(sheetName) : null;
+      const chosen = (st.attacks || [])[U.atk];
+      if (sheet && chosen) {
+        const held = attackInHand(sheet.inventory, chosen.name);
+        if (held === false) wrap.appendChild(muted(`${chosen.name} is in the backpack: it is drawn as part of this attack.`, { "data-cb": "draw", style: "margin-top:4px" }));
+        const hands = handsUsed(sheet.inventory);
+        if (hands > 2) wrap.appendChild(el("div", { class: "rpm-muted", "data-cb": "hands", role: "alert", style: "margin-top:4px;color:var(--rpm-danger)", text: `${hands} hands in use — more than two. Put something away (character sheet → Inventory).` }));
+      }
+      wrap.appendChild(muted(HAND_RULE, { "data-cb": "hand-rule", style: "margin-top:4px" }));
       return;
     }
     wrap.appendChild(row([
@@ -28680,7 +29369,7 @@ ${xl.join("\n")}`;
     s = String(s || "");
     return s.length > n ? s.slice(0, n - 1) + "…" : s;
   }
-  var cap = (s) => String(s || "").charAt(0).toUpperCase() + String(s || "").slice(1);
+  var cap3 = (s) => String(s || "").charAt(0).toUpperCase() + String(s || "").slice(1);
   function openMapEditor(mapId) {
     const A = API();
     if (!A || !A.entityById(mapId)) return false;
@@ -28747,7 +29436,7 @@ ${xl.join("\n")}`;
     const root = el("div", { class: "wm-editor rpm-map", id: "rpm-map-editor" });
     M.crumbs = el("div", { class: "rpm-map-crumbs" });
     M.addBtn = btn2("Add room", () => addRoom(), { icon: "plus", data: { map: "add" } });
-    M.toolBtns = ["select", "connect"].map((t) => btn2(cap(t), () => setTool(t), { icon: t === "select" ? "mouse-pointer-2" : "link-2", data: { tool: t }, title: t === "select" ? "Select, move and resize rooms" : "Click two rooms to connect them" }));
+    M.toolBtns = ["select", "connect"].map((t) => btn2(cap3(t), () => setTool(t), { icon: t === "select" ? "mouse-pointer-2" : "link-2", data: { tool: t }, title: t === "select" ? "Select, move and resize rooms" : "Click two rooms to connect them" }));
     M.zoomLbl = el("span", { class: "rpm-map-zoom", text: "100%" });
     M.saveBtn = btn2("Save", async () => {
       await API().saveActiveWorld();
@@ -29070,7 +29759,7 @@ ${xl.join("\n")}`;
       if (GEN.level == null) GEN.level = party.level;
       if (GEN.partySize == null) GEN.partySize = party.size;
       box.appendChild(lbl("Size"));
-      box.appendChild(select(Object.entries(G.SIZES).map(([k2, n2]) => [k2, `${cap(k2)} (${n2} rooms + a secret one)`]), GEN.size, (v) => {
+      box.appendChild(select(Object.entries(G.SIZES).map(([k2, n2]) => [k2, `${cap3(k2)} (${n2} rooms + a secret one)`]), GEN.size, (v) => {
         GEN.size = v;
       }, { "aria-label": "Size", "data-gen": "size" }));
       box.appendChild(lbl("Theme"));
@@ -29153,7 +29842,7 @@ ${xl.join("\n")}`;
     box.appendChild(lbl("Description"));
     box.appendChild(input(map.description, (v) => A.updateEntity(M.mapId, { description: v }), { area: true, attrs: { "aria-label": "Map description" } }));
     box.appendChild(lbl("Style"));
-    box.appendChild(select(MR().STYLES[M.board.kind].map((s) => [s, cap(s)]), M.board.style, (v) => {
+    box.appendChild(select(MR().STYLES[M.board.kind].map((s) => [s, cap3(s)]), M.board.style, (v) => {
       A.updateEntity(M.mapId, { mapStyle: v });
       rebuild();
     }, { "aria-label": "Map style" }));
@@ -29196,7 +29885,7 @@ ${xl.join("\n")}`;
     }, { "aria-label": "Room kind" }));
     if (R.isContainer(room2)) box.appendChild(btn2(`Open ${R.kindOf(room2) === "town" ? "district" : "level"} (${A.roomsOf(id).length})`, () => openMapEditor(id), { icon: "door-open", block: true, data: { open: id } }));
     box.appendChild(lbl("Light"));
-    box.appendChild(select([["", "— not set —"], ...R.LIGHT.map((l) => [l, cap(l)])], room2.light || "", (v) => {
+    box.appendChild(select([["", "— not set —"], ...R.LIGHT.map((l) => [l, cap3(l)])], room2.light || "", (v) => {
       A.updateEntity(id, { light: v || void 0 });
       refreshAll();
     }, { "aria-label": "Light" }));
@@ -29319,13 +30008,13 @@ ${xl.join("\n")}`;
     };
     const row1 = el("div", { class: "rpm-row" }, [
       select([["", "— direction —"], ...R.DIRS.map((d) => [d, R.dirName(d)])], e.dir || "", (v) => patch({ dir: v ? mirrored ? R.mirrorDir(v) : v : null }), { "aria-label": "Direction" }),
-      select(R.EXIT_TYPES.map((t) => [t, cap(t)]), e.type || "open", (v) => patch({ type: v }), { "aria-label": "Connection type" })
+      select(R.EXIT_TYPES.map((t) => [t, cap3(t)]), e.type || "open", (v) => patch({ type: v }), { "aria-label": "Connection type" })
     ]);
     card.appendChild(row1);
     if (e.type === "door" || e.type === "secret") {
       const d = e.door || {};
       card.appendChild(el("div", { class: "rpm-row" }, [
-        select(R.DOOR_STATES.map((s) => [s, cap(s)]), d.state || "closed", (v) => patch({ door: { state: v } }), { "aria-label": "Door state" }),
+        select(R.DOOR_STATES.map((s) => [s, cap3(s)]), d.state || "closed", (v) => patch({ door: { state: v } }), { "aria-label": "Door state" }),
         input(d.material, (v) => patch({ door: { material: v || void 0 } }), { attrs: { placeholder: "material (wood, iron …)", "aria-label": "Door material" } })
       ]));
       card.appendChild(el("div", { class: "rpm-row" }, [
@@ -29356,7 +30045,7 @@ ${xl.join("\n")}`;
     const up = (p) => A.updateEntity(f.id, p);
     card.appendChild(el("div", { class: "rpm-row" }, [
       input(f.name, (v) => up({ name: v }), { attrs: { "aria-label": "Feature name", class: "form-control rpm-input rpm-grow" } }),
-      select(R.FEATURE_KINDS.map((k2) => [k2, cap(k2)]), f.kind, (v) => {
+      select(R.FEATURE_KINDS.map((k2) => [k2, cap3(k2)]), f.kind, (v) => {
         up({ kind: v });
         renderInspector();
       }, { "aria-label": "Feature kind" }),
@@ -29443,18 +30132,18 @@ ${xl.join("\n")}`;
     refresh();
     return r;
   }
-  function renderPlaces(A, hereId, large, quick) {
+  function renderPlaces(A, hereId, large, quick, region) {
     const g = A.getGraph();
-    const around = new Set((A.zonePath(hereId) || []).map((z) => z.id));
-    const places = g.nodes.filter((n) => n.type === "location" && !n.mapId && !around.has(n.id));
-    const byId = new Map(places.map((n) => [n.id, n]));
-    const rt = A.runtime || {};
-    const visited = new Set((rt.visitedLocationIds || []).filter((id) => byId.has(id)));
     const anchorOf = (id) => {
       const n = g.nodes.find((x) => x.id === id);
       return n && n.graphId ? n.graphId : id;
     };
     const cur = anchorOf(hereId);
+    const around = new Set((A.zonePath(hereId) || []).map((z) => z.id).filter((id) => id !== cur));
+    const places = g.nodes.filter((n) => n.type === "location" && !n.mapId && !around.has(n.id));
+    const byId = new Map(places.map((n) => [n.id, n]));
+    const rt = A.runtime || {};
+    const visited = new Set((rt.visitedLocationIds || []).filter((id) => byId.has(id)));
     const near = new Set(((A.here() || {}).ways || []).map((w2) => anchorOf(w2.id)).filter((id) => byId.has(id) && id !== cur));
     const shown = places.filter((n) => n.id === cur || visited.has(n.id) || near.has(n.id));
     if (!shown.length) return null;
@@ -29489,7 +30178,7 @@ ${xl.join("\n")}`;
     const xs = [...pos.values()].map((p) => p.x), ys = [...pos.values()].map((p) => p.y);
     const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
     const pad = 70, w = Math.max(maxX - minX, 1) + pad * 2, h = Math.max(maxY - minY, 1) + pad * 2;
-    const s = svg2("svg", { class: "rpm-map-board rpm-map-places", role: "img", "aria-label": "Map of the places you know", viewBox: `${minX - pad} ${minY - pad} ${w} ${h}`, preserveAspectRatio: "xMidYMid meet" });
+    const s = svg2("svg", { class: "rpm-map-board rpm-map-places" + (region ? " rpm-map-regionboard" : ""), role: "img", "aria-label": "Map of the places you know", viewBox: `${minX - pad} ${minY - pad} ${w} ${h}`, preserveAspectRatio: "xMidYMid meet" });
     const scale = Math.max(w / (large ? 560 : 240), h / (large ? 420 : 200), 0.5);
     const gl = svg2("g"), gn = svg2("g");
     s.appendChild(gl);
@@ -29528,12 +30217,12 @@ ${xl.join("\n")}`;
     const root = el("div", { class: "rpm-map rpm-map-player" + (large ? " rpm-map-large" : ""), "data-map-view": large ? "window" : "dock" });
     box.appendChild(root);
     if (!A || !A.activeWorld()) {
-      root.appendChild(el("div", { class: "rpm-muted", text: "No world loaded. Load one (or the example) in the World tab." }));
+      root.appendChild(el("div", { class: "rpm-muted", text: "No world loaded. Choose one in World Management (right panel)." }));
       return;
     }
     const hereId = A.runtime && A.runtime.playerLocationId;
     if (!hereId || !A.entityById(hereId)) {
-      root.appendChild(el("div", { class: "rpm-muted", text: "Nowhere yet — choose a starting place in the World tab." }));
+      root.appendChild(el("div", { class: "rpm-muted", text: "Nowhere yet — choose a starting place in World Creation (State editor)." }));
       return;
     }
     const R = A.mapRules;
@@ -29548,6 +30237,16 @@ ${xl.join("\n")}`;
       large ? null : el("button", { type: "button", class: "rpm-iconbtn", title: "Open the map", "aria-label": "Open the map", "data-map-open": "1", onclick: () => window.KLITE_RPMod_Shell?.open("map") }, [iconText("map", "", 16)])
     ]));
     let drawing = null;
+    if (mapId) {
+      const regionMap = renderPlaces(A, hereId, large, quick, true);
+      if (regionMap) {
+        root.appendChild(el("div", { class: "rpm-map-label rpm-muted", text: "Region" }));
+        const rw = el("div", { class: "rpm-map-boardwrap rpm-map-region", "data-map-region": "1", title: large ? null : "Click to open the map" }, [regionMap]);
+        if (!large) rw.addEventListener("click", () => window.KLITE_RPMod_Shell?.open("map"));
+        root.appendChild(rw);
+        root.appendChild(el("div", { class: "rpm-map-label rpm-muted", text: (A.phased(mapId) || {}).name || A.entityById(mapId).name }));
+      }
+    }
     if (mapId) {
       const board = A.mapBoard(mapId, { player: true });
       root.setAttribute("data-kind", board.kind);
@@ -29758,6 +30457,13 @@ ${xl.join("\n")}`;
         S2.gNodes.appendChild(g);
       }
     }
+    function viaText(e) {
+      const rooms = [...new Set((e.via || []).flatMap((v) => [v.from, v.to]).filter((id) => {
+        const n = nodeById(id);
+        return n && n.graphId;
+      }))];
+      return rooms.length ? ` (${rooms.map((id) => nodeById(id).name).join(", ")})` : "";
+    }
     function clip2(s, n) {
       s = String(s || "");
       return s.length > n ? s.slice(0, n - 1) + "…" : s;
@@ -29781,6 +30487,7 @@ ${xl.join("\n")}`;
           S2.linkSource = null;
           reloadGraph();
           draw2();
+          renderInspector2();
         } else {
           S2.linkSource = null;
           draw2();
@@ -29962,7 +30669,7 @@ ${xl.join("\n")}`;
         const otherId = e.from === S2.selectedId ? e.to : e.from;
         const other = nodeById(otherId);
         const row3 = el2("div", { style: "display:flex;align-items:center;justify-content:space-between;background:var(--rpm-bg-alt);border:1px solid var(--rpm-border);border-radius:6px;padding:4px 8px;margin-top:4px" }, [
-          el2("span", { style: "font-size:var(--rpm-fs-sm);color:var(--rpm-fg)" }, [`→ ${clip2(other ? other.name : otherId, 18)} `, el2("span", { style: "color:var(--rpm-fg-muted)", text: e.kind })]),
+          el2("span", { style: "font-size:var(--rpm-fs-sm);color:var(--rpm-fg)" }, [`→ ${clip2(other ? other.name : otherId, 18)} `, el2("span", { style: "color:var(--rpm-fg-muted)", text: e.kind + viaText(e) })]),
           el2("span", { style: "cursor:pointer;color:var(--rpm-danger);font-size:var(--rpm-fs);padding:0 4px", text: "×", onclick: () => {
             API3().disconnect(e.from, e.to);
             reloadGraph();
@@ -30248,7 +30955,7 @@ ${xl.join("\n")}`;
       }
       const OK = S2._objKind = S2._objKind || { kind: "manual" };
       const kindSel = el2("select", { style: inputCss(false) + ";width:auto", "aria-label": "Objective kind" });
-      for (const [v, t] of [["manual", "Manual"], ["kill", "Defeat"], ["collect", "Collect"], ["talk", "Talk to"], ["visit", "Go to"]]) {
+      for (const [v, t] of [["manual", "Manual"], ["kill", "Defeat"], ["collect", "Collect"], ["talk", "Talk to"], ["visit", "Go to"], ["check", "Check (contest)"]]) {
         const o = el2("option", { value: v, text: t });
         if (OK.kind === v) o.selected = true;
         kindSel.appendChild(o);
@@ -30264,8 +30971,20 @@ ${xl.join("\n")}`;
         target = el2("select", { style: inputCss(false), "aria-label": "Objective target" });
         target.appendChild(el2("option", { value: "", text: OK.kind === "talk" ? "— person —" : "— place —" }));
         for (const n of g.nodes.filter((n2) => n2.type === (OK.kind === "talk" ? "npc" : "location"))) target.appendChild(el2("option", { value: n.id, text: locLabel(n) }));
+      } else if (OK.kind === "check") {
+        target = el2("select", { style: inputCss(false), "aria-label": "Check skill or ability" });
+        for (const [v, t] of [
+          ["ability:str", "Strength"],
+          ["ability:dex", "Dexterity"],
+          ["ability:con", "Constitution"],
+          ["ability:int", "Intelligence"],
+          ["ability:wis", "Wisdom"],
+          ["ability:cha", "Charisma"],
+          ...["acrobatics", "animal_handling", "arcana", "athletics", "deception", "history", "insight", "intimidation", "investigation", "medicine", "nature", "perception", "performance", "persuasion", "religion", "sleight_of_hand", "stealth", "survival"].map((k2) => ["skill:" + k2, k2.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())])
+        ])
+          target.appendChild(el2("option", { value: v, text: t }));
       } else if (OK.kind !== "manual") target = el2("input", { type: "text", style: inputCss(false), "aria-label": "Objective target", placeholder: OK.kind === "kill" ? "monster or person name, e.g. Wolf" : "item name, e.g. Wolf Pelt" });
-      const count = OK.kind === "kill" || OK.kind === "collect" ? el2("input", { type: "number", min: "1", value: "1", style: inputCss(false) + ";width:4.5em", "aria-label": "Objective count" }) : null;
+      const count = OK.kind === "kill" || OK.kind === "collect" ? el2("input", { type: "number", min: "1", value: "1", style: inputCss(false) + ";width:4.5em", "aria-label": "Objective count" }) : OK.kind === "check" ? el2("input", { type: "number", min: "1", max: "30", value: "13", style: inputCss(false) + ";width:4.5em", "aria-label": "Check DC", title: "DC" }) : null;
       const oIn = el2("input", { type: "text", placeholder: "objective text (optional for kinds)", style: inputCss(false), "aria-label": "Objective text" });
       box.appendChild(el2("div", { style: "display:flex;gap:5px;margin-top:5px;flex-wrap:wrap" }, [kindSel, target, count]));
       box.appendChild(el2("div", { style: "display:flex;gap:5px;margin-top:5px" }, [
@@ -30275,11 +30994,16 @@ ${xl.join("\n")}`;
           const n = count ? Math.max(1, Number(count.value) || 1) : 1;
           if (OK.kind !== "manual" && !tv) return;
           const tName = target && target.tagName === "SELECT" ? (g.nodes.find((x) => x.id === tv) || {}).name : tv;
-          const auto = { kill: `Defeat ${n > 1 ? n + " " : ""}${tName}`, collect: `Collect ${n > 1 ? n + " " : ""}${tName}`, talk: `Talk to ${tName}`, visit: `Go to ${tName}` }[OK.kind];
+          const checkName = OK.kind === "check" ? target.options[target.selectedIndex].text : "";
+          const auto = { kill: `Defeat ${n > 1 ? n + " " : ""}${tName}`, collect: `Collect ${n > 1 ? n + " " : ""}${tName}`, talk: `Talk to ${tName}`, visit: `Go to ${tName}`, check: `Pass a ${checkName} check` }[OK.kind];
           const t = oIn.value.trim() || auto;
           if (!t) return;
           const ob = asArrayU(ent.objectives);
-          ob.push(Object.assign({ id: "obj_" + Math.random().toString(36).slice(2, 7), text: t, hidden: false }, OK.kind === "manual" ? {} : { kind: OK.kind, target: tv }, count ? { count: n } : {}));
+          const base = { id: "obj_" + Math.random().toString(36).slice(2, 7), text: t, hidden: false };
+          if (OK.kind === "check") {
+            const [how, key] = tv.split(":");
+            ob.push(Object.assign(base, { kind: "check", dc: n }, how === "skill" ? { skill: key } : { ability: key }));
+          } else ob.push(Object.assign(base, OK.kind === "manual" ? {} : { kind: OK.kind, target: tv }, count ? { count: n } : {}));
           A.updateEntity(S2.selectedId, { objectives: ob });
           renderInspector2();
         } }, [icon("plus", 15)])
@@ -30551,7 +31275,9 @@ ${xl.join("\n")}`;
       fireEvent: [["eventId", "event"]],
       encounter: [["value", "encounter"]],
       // a saved encounter (id; older effects: its name or "2 Wolf, Goblin Warrior")
-      reputation: [["factionId", "faction"], ["amount", "number"]]
+      reputation: [["factionId", "faction"], ["amount", "number"]],
+      reveal: [["id", "text"]]
+      // R8: id of a secret exit/room or a hidden feature
     };
     function paramInput(kind, value, onChange) {
       const A = API3();
@@ -31101,7 +31827,7 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
       const A = API3();
       if (!A || !A.activeWorld()) {
         container.appendChild(el2("div", { class: "rpm-view-pad" }, [
-          el2("p", { class: "rpm-muted", text: "No world loaded. Create one or load the example from the World tab." }),
+          el2("p", { class: "rpm-muted", text: "No world loaded. Create one or load a premade world in World Management." }),
           uiBtn("Create a world", () => openEditor())
         ]));
         return;
@@ -31202,7 +31928,7 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
     }
     let panelEl = null;
     const TIME_SLOTS_UI = ["morning", "noon", "afternoon", "evening", "night"];
-    const VIEW_IDS = ["world", "party", "quest-tracker", "questlog", "reputation", "questeditor", "combat", "shop", ...MINIMAP_VIEWS];
+    const VIEW_IDS = ["world", "worldcreate", "party", "inventory", "quest-tracker", "rep-tracker", "questlog", "questlog-all", "reputation", "repeditor", "questeditor", "combat", "shop", ...MINIMAP_VIEWS];
     function uiBtn(text, onclick, opts) {
       opts = opts || {};
       const cls = "btn btn-primary rpm-btn" + (opts.block ? " rpm-block" : "") + (opts.grow ? " rpm-grow" : "") + (opts.variant ? " rpm-" + opts.variant : "") + (opts.lg ? " rpm-lg" : "") + (opts.icon ? " rpm-btn-icon" : "");
@@ -31241,6 +31967,10 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
         localStorage.setItem("KLITE.worlds.uiMode", m);
       } catch (_) {
       }
+      try {
+        Shell2()?.refreshLinks?.();
+      } catch (_) {
+      }
     }
     function applyWorldView(worldId) {
       try {
@@ -31271,27 +32001,7 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
       const A = API3();
       const body = panelEl;
       clear2(body);
-      const mode2 = uiMode();
-      body.appendChild(row2([
-        el2("span", { class: "rpm-heading rpm-grow", text: "Worlds" }),
-        el2("span", {
-          role: "button",
-          tabindex: "0",
-          title: "Toggle Creator / Player view",
-          class: "rpm-chip " + (mode2 === "creator" ? "rpm-chip-quest" : "rpm-chip-info"),
-          text: mode2 === "creator" ? "Creator" : "Player",
-          onclick: () => {
-            setUiMode(mode2 === "creator" ? "player" : "creator");
-            refreshPanel();
-          },
-          onkeydown: (e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              e.target.click();
-            }
-          }
-        })
-      ], "margin-bottom:8px"));
+      body.appendChild(row2([el2("span", { class: "rpm-heading rpm-grow", text: "Worlds" })], "margin-bottom:8px"));
       const worlds = A.listWorlds();
       const sel2 = uiSelect({ "aria-label": "Active world" });
       sel2.appendChild(el2("option", { value: "", text: worlds.length ? "— select world —" : "(no worlds yet)" }));
@@ -31308,18 +32018,26 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
         }
       });
       body.appendChild(sel2);
+      const renameBtn = uiBtn("Rename", () => {
+        const w = A.activeWorld();
+        if (!w) return;
+        const n = prompt("Rename the world:", w.name || "");
+        if (n != null && n.trim()) {
+          A.renameWorld(n.trim());
+          refreshPanel();
+        }
+      }, { icon: "pencil", grow: true, id: "rename-world", title: "Give the active world a new name" });
+      if (!A.activeWorld()) renameBtn.disabled = true;
       body.appendChild(row2([
         uiBtn("New", () => {
           const n = prompt("New world name:", "New World");
           if (n != null) A.newWorld(n).then(refreshPanel);
         }, { icon: "plus", grow: true }),
-        uiBtn("Example", () => loadExampleFlow(), { icon: "sparkles", grow: true, title: "Load the ready-to-play example world" }),
+        renameBtn,
         uiBtn("Import", () => importFlow(), { icon: "upload", grow: true }),
         uiBtn("Export", () => exportFlow(), { icon: "download", grow: true })
-      ], "margin:6px 0 8px"));
+      ], "margin:6px 0 8px;flex-wrap:wrap"));
       if (exportOpen && A.activeWorld()) body.appendChild(exportCard(A));
-      const ADV = window.KLITE_RPMod_Adventures;
-      if (ADV && ADV.list().length) body.appendChild(uiBtn("Play an adventure", () => ADV.open(), { icon: "play", block: true, id: "play-adventure", style: "margin:0 0 8px", title: "Start a ready-made adventure with a pregenerated character" }));
       if (unsaved() && !autosave()) {
         body.appendChild(el2("div", { class: "rpm-card rpm-unsaved-card", "data-unsaved": "world", style: "margin:0 0 8px" }, [
           el2("div", { style: "font-weight:bold;margin-bottom:4px", text: "Unsaved world changes" }),
@@ -31329,22 +32047,106 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
           ])
         ]));
       }
+      if (A.activeWorld()) {
+        const enabled = A.isEnabled();
+        body.appendChild(uiBtn(enabled ? "● Enabled for this story" : "○ Enable for this story", () => {
+          enabled ? A.disable() : A.enable();
+          refreshPanel();
+        }, { block: true, variant: enabled ? "on" : null, style: "margin-bottom:8px" }));
+        renderGameState(body);
+      } else body.appendChild(muted2("New here? Play the built-in adventure, or load the small example world and just start chatting.", { style: "margin:0 0 8px" }));
+      const ADV = window.KLITE_RPMod_Adventures;
+      const pre = el2("div", { class: "rpm-card", "data-ui": "premade", style: "margin-top:8px" }, [el2("div", { class: "rpm-muted", style: "margin-bottom:6px", text: "Premade worlds" })]);
+      if (ADV && ADV.list().length) pre.appendChild(uiBtn("Play the built-in adventure", () => ADV.open(), { icon: "play", block: true, id: "play-adventure", title: "Start a ready-made adventure with a pregenerated character" }));
+      pre.appendChild(uiBtn("Load minimal example world", () => loadExampleFlow(), { icon: "sparkles", block: true, id: "load-example", style: "margin-top:4px", title: 'The small example world "Eldoria", enabled and ready' }));
+      body.appendChild(pre);
+    }
+    function renderGameState(box) {
+      const A = API3();
+      const slot = A.activeSlot || "working";
+      const slotBox = el2("div", { class: "rpm-card", style: "margin-bottom:6px", "data-ui": "game-state" });
+      slotBox.appendChild(row2([
+        el2("span", { class: "rpm-muted rpm-grow", text: "Game state" }),
+        el2("span", { class: "rpm-chip " + (slot === "working" ? "rpm-chip-info" : "rpm-chip-quest"), text: slot === "working" ? "Live game" : "Editing start state" })
+      ], "margin-bottom:6px"));
+      if (slot === "working") {
+        slotBox.appendChild(row2([
+          uiBtn("Back to start", () => {
+            if (confirm("Go back to the start state? The world (place, time, quests, flags, explored rooms) returns to the start. The chat is not rewound, and your character sheet keeps its HP, XP and items.")) {
+              A.resetToBase();
+              refreshPanel();
+            }
+          }, { icon: "rotate-ccw", grow: true, id: "slot-reset", title: "Return the world to the start state" }),
+          uiBtn("Save as start", () => {
+            if (confirm("Make the current state the new start state?")) {
+              A.commitToBase();
+              refreshPanel();
+            }
+          }, { icon: "check", grow: true, id: "slot-commit", title: "The world as it is now becomes the start state" })
+        ]));
+        if (uiMode() === "creator") slotBox.appendChild(uiBtn("Edit start state", () => {
+          A.swapActive();
+          refreshPanel();
+        }, { icon: "pencil", block: true, id: "slot-edit-start", style: "margin-top:6px", title: "Changes you make now go to the start state, not the live game" }));
+      } else {
+        slotBox.appendChild(muted2("Changes now go to the start state. The live game waits until you switch back.", { style: "margin-bottom:6px" }));
+        slotBox.appendChild(uiBtn("Back to the live game", () => {
+          A.swapActive();
+          refreshPanel();
+        }, { icon: "play", block: true, id: "slot-live", title: "Continue the live game" }));
+      }
+      box.appendChild(slotBox);
+    }
+    let createEl = null;
+    function mountCreate(container) {
+      createEl = el2("div", { id: "wm-create", class: "rpm-view-pad" });
+      container.appendChild(createEl);
+      renderCreate();
+    }
+    function renderCreate() {
+      if (!createEl) return;
+      const A = API3();
+      const body = createEl;
+      clear2(body);
+      const mode2 = uiMode();
+      const lens = (m, text, help) => el2("button", {
+        type: "button",
+        class: "btn btn-primary rpm-btn rpm-grow" + (mode2 === m ? " rpm-on" : ""),
+        "aria-pressed": String(mode2 === m),
+        "data-lens": m,
+        title: help,
+        text,
+        onclick: () => {
+          if (uiMode() !== m) {
+            setUiMode(m);
+            refreshPanel();
+          }
+        }
+      });
+      body.appendChild(el2("div", { class: "rpm-row", role: "group", "aria-label": "View", "data-ui": "lens" }, [
+        lens("creator", "Creator view", "Build the world: everything, hidden content included"),
+        lens("player", "Player view", "See it as the player does, without leaving this panel")
+      ]));
+      body.appendChild(muted2(mode2 === "creator" ? "Creator view: every quest and faction, hidden content included, and the State editor." : "Player view: what the player sees (the Adventure panel shows the same).", { style: "margin:4px 0 8px" }));
       if (!A.activeWorld()) {
-        body.appendChild(muted2("New here? Load the ready-to-play example and just start chatting.", { style: "margin:6px 0 8px" }));
-        body.appendChild(uiBtn("Load example world", () => loadExampleFlow(), { icon: "sparkles", block: true, lg: true }));
+        body.appendChild(muted2("No world loaded."));
+        body.appendChild(uiBtn("World Management", () => openView("world"), { icon: "globe", block: true, style: "margin-top:8px", title: "Choose, create or import a world" }));
         return;
       }
+      const creator = mode2 === "creator";
       body.appendChild(row2([
-        uiBtn("Quest log", () => openView("questlog"), { icon: "scroll-text", grow: true, id: "open-questlog", title: "Your accepted quests" }),
-        uiBtn("Reputation", () => openView("reputation"), { icon: "shield", grow: true, id: "open-reputation", title: "Your standing with the factions you have met" })
+        uiBtn("Quest log", () => openView(creator ? "questlog-all" : "questlog"), { icon: "scroll-text", grow: true, id: "open-questlog", title: creator ? "Every quest of the world" : "The player's quest log" }),
+        uiBtn("Reputation", () => openView(creator ? "repeditor" : "reputation"), { icon: "shield", grow: true, id: "open-reputation", title: creator ? "Every faction; change the standing" : "The factions the player has met" })
       ]));
       body.appendChild(row2([
         uiBtn("Combat", () => openView("combat"), { icon: "swords", grow: true }),
         uiBtn("Editor", () => openEditor(), { icon: "workflow", grow: true, title: "Build your world as a node graph" })
       ], "margin-top:4px"));
-      if (uiMode() === "creator") body.appendChild(uiBtn("Quest editor", () => openView("questeditor"), { icon: "pencil", block: true, id: "open-questeditor", style: "margin-top:4px", title: "Every quest of the world: states, details, edit (Creator view)" }));
+      if (creator) body.appendChild(uiBtn("Quest editor", () => openView("questeditor"), { icon: "pencil", block: true, id: "open-questeditor", style: "margin-top:4px", title: "Every quest of the world: states, details, edit (Creator view)" }));
+      body.appendChild(uiBtn("Preview what the AI sees", () => showPreview(), { icon: "eye", block: true, style: "margin-top:4px" }));
       body.appendChild(el2("hr", { class: "rpm-divider" }));
-      renderPlayTab(body);
+      if (creator) renderStateEditor(body);
+      else body.appendChild(muted2("The State editor (place, time, flags) is part of the Creator view."));
     }
     function hpBar2(cur, max) {
       const pct = max > 0 ? Math.max(0, Math.min(100, Math.round(cur / max * 100))) : 0;
@@ -31453,6 +32255,25 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
         box.appendChild(uiBtn(`⚔ Round ${cb.round} · ${cur ? cur.name : ""}${hp != null ? ` · HP ${hp}/${max}` : ""}`, () => openView("combat"), { block: true, variant: "danger", style: "margin-top:8px" }));
       }
     }
+    function renderRepTracker(box) {
+      const A = API3();
+      if (!A.activeWorld()) {
+        box.appendChild(muted2("No factions yet."));
+        return;
+      }
+      const list3 = A.reputation({ encountered: true });
+      if (!list3.length) box.appendChild(muted2("No faction met yet."));
+      for (const r of list3) {
+        const pct = r.span ? Math.max(0, Math.min(100, Math.round(r.into / r.span * 100))) : 100;
+        const bar = el2("div", { class: "rpm-bar", title: r.next ? `${r.into}/${r.span} to ${r.next}` : "highest tier" });
+        bar.appendChild(el2("span", { style: `width:${pct}%;background:${r.hostile ? "var(--rpm-danger)" : "var(--rpm-info)"}` }));
+        box.appendChild(el2("div", { class: "rpm-card", "data-rep-track": r.id }, [
+          row2([el2("span", { class: "rpm-grow", style: "font-weight:bold", text: r.name }), el2("span", { class: "rpm-chip " + (r.hostile ? "rpm-chip-danger" : "rpm-chip-info"), "data-tier": r.tier, text: r.tier })]),
+          bar
+        ]));
+      }
+      box.appendChild(uiBtn("Open reputation", () => openView("reputation"), { icon: "shield", block: true, style: "margin-top:8px", id: "open-rep" }));
+    }
     function renderQuestTracker(box) {
       const A = API3();
       if (!A.activeWorld()) {
@@ -31475,7 +32296,7 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
     function renderQuestsTab(box, opts = {}) {
       const A = API3();
       const editor = !!opts.editor;
-      const mode2 = editor ? "creator" : uiMode() === "player" ? "player" : "creator";
+      const mode2 = editor || opts.all ? "creator" : "player";
       if (editor) {
         const aiSel = uiSelect({ "aria-label": "What the AI sees", style: "width:auto" });
         for (const [v, t] of [["gm", "GM (all)"], ["player", "Player (visible only)"]]) {
@@ -31493,13 +32314,13 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
         }, { icon: "plus", block: true, id: "new-quest", style: "margin-bottom:8px", title: "Adds a quest and opens it in the editor" }));
       }
       const all = A.listQuests(mode2);
-      const offered = new Set(editor ? [] : ((A.here() || {}).quests || []).filter((q) => q.action === "accept").map((q) => q.id));
-      const quests = editor ? all : all.filter((q) => q.state !== "available" || offered.has(q.id));
+      const offered = new Set(mode2 === "creator" ? [] : ((A.here() || {}).quests || []).filter((q) => q.action === "accept").map((q) => q.id));
+      const quests = mode2 === "creator" ? all : all.filter((q) => q.state !== "available" || offered.has(q.id));
       if (!quests.length) {
         box.appendChild(muted2(editor ? 'No quests yet. Add one with "New quest" or a Quest node in the editor.' : "No quests yet. People with a yellow ! offer you one — talk to them."));
         return;
       }
-      const groups = editor ? [["available", "Available"], ["active", "Active"], ["complete", "Ready to turn in"], ["turnedin", "Completed"], ["failed", "Failed"]] : [["available", "Offered here"], ["active", "Active"], ["complete", "Ready to turn in"], ["turnedin", "Completed"], ["failed", "Failed"]];
+      const groups = mode2 === "creator" ? [["available", "Available"], ["active", "Active"], ["complete", "Ready to turn in"], ["turnedin", "Completed"], ["failed", "Failed"]] : [["available", "Offered here"], ["active", "Active"], ["complete", "Ready to turn in"], ["turnedin", "Completed"], ["failed", "Failed"]];
       for (const [st, label2] of groups) {
         const inGroup = quests.filter((q) => q.state === st);
         if (!inGroup.length) continue;
@@ -31533,6 +32354,11 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
                 line.appendChild(cbx);
               } else line.appendChild(el2("span", { class: "rpm-quest-tick", text: o.done ? "☑" : "☐" }));
               line.appendChild(el2("span", { text: " " + o.label }));
+              if (o.kind === "check" && !o.done && st === "active" && ((A.here() || {}).checks || []).some((c) => c.questId === q.id && c.objId === o.id))
+                line.appendChild(uiBtn("Try", () => {
+                  A.tryObjective(`${q.id}.${o.id}`, { source: "ui" });
+                  refreshPanel();
+                }, { icon: "dice-5", id: "try-" + o.id, title: `Roll ${o.label}` }));
               ol.appendChild(line);
             }
             card.appendChild(ol);
@@ -31612,9 +32438,9 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
         }
       }
     }
-    function renderReputation(box) {
+    function renderReputation(box, opts = {}) {
       const A = API3();
-      const creator = uiMode() !== "player";
+      const creator = !!opts.all;
       const list3 = A.reputation(creator ? void 0 : { encountered: true });
       if (!list3.length) {
         box.appendChild(muted2(creator ? "This world has no factions yet." : "You have not met any faction yet."));
@@ -31630,7 +32456,7 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
         bar.appendChild(el2("span", { style: `width:${pct}%;background:${r.hostile ? "var(--rpm-danger)" : "var(--rpm-info)"}` }));
         card.appendChild(bar);
         if (r.effect) card.appendChild(muted2(r.effect));
-        if (uiMode() !== "player") card.appendChild(row2([
+        if (creator) card.appendChild(row2([
           uiBtn("−50", () => {
             A.changeReputation(r.id, -50);
             refreshPanel();
@@ -31646,47 +32472,10 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
     function renderCombatTab(box) {
       renderCombat(box, () => refreshPanel());
     }
-    function renderPlayTab(box) {
+    function renderStateEditor(box) {
       const A = API3();
-      const enabled = A.isEnabled();
-      box.appendChild(uiBtn(enabled ? "● Enabled for this story" : "○ Enable for this story", () => {
-        enabled ? A.disable() : A.enable();
-        refreshPanel();
-      }, { block: true, variant: enabled ? "on" : null, style: "margin-bottom:10px" }));
-      const slot = A.activeSlot || "working";
-      const slotBox = el2("div", { class: "rpm-card", style: "margin-bottom:6px", "data-ui": "game-state" });
-      slotBox.appendChild(row2([
-        el2("span", { class: "rpm-muted rpm-grow", text: "Game state" }),
-        el2("span", { class: "rpm-chip " + (slot === "working" ? "rpm-chip-info" : "rpm-chip-quest"), text: slot === "working" ? "Live game" : "Editing start state" })
-      ], "margin-bottom:6px"));
-      if (slot === "working") {
-        const btns = [
-          uiBtn("Back to start", () => {
-            if (confirm("Go back to the start state? The world (place, time, quests, flags, explored rooms) returns to the start. The chat is not rewound, and your character sheet keeps its HP, XP and items.")) {
-              A.resetToBase();
-              refreshPanel();
-            }
-          }, { icon: "rotate-ccw", grow: true, id: "slot-reset", title: "Return the world to the start state" }),
-          uiBtn("Save as start", () => {
-            if (confirm("Make the current state the new start state?")) {
-              A.commitToBase();
-              refreshPanel();
-            }
-          }, { icon: "check", grow: true, id: "slot-commit", title: "The world as it is now becomes the start state" })
-        ];
-        slotBox.appendChild(row2(btns));
-        if (uiMode() === "creator") slotBox.appendChild(uiBtn("Edit start state", () => {
-          A.swapActive();
-          refreshPanel();
-        }, { icon: "pencil", block: true, id: "slot-edit-start", style: "margin-top:6px", title: "Changes you make now go to the start state, not the live game" }));
-      } else {
-        slotBox.appendChild(muted2("Changes now go to the start state. The live game waits until you switch back.", { style: "margin-bottom:6px" }));
-        slotBox.appendChild(uiBtn("Back to the live game", () => {
-          A.swapActive();
-          refreshPanel();
-        }, { icon: "play", block: true, id: "slot-live", title: "Continue the live game" }));
-      }
-      box.appendChild(slotBox);
+      box.appendChild(el2("div", { class: "rpm-heading", "data-ui": "state-editor", text: "State editor" }));
+      box.appendChild(muted2("The game as it is now. Items and coins: the Inventory in the Adventure panel.", { style: "margin:2px 0 4px" }));
       const g = A.getGraph();
       const locs = g.nodes.filter((n) => n.type === "location");
       box.appendChild(lbl2("Current location"));
@@ -31755,8 +32544,15 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
         A.setFlag(k2, parseVal(fv.value));
         refreshPanel();
       }, { icon: "plus", title: "Set flag" })], "margin-top:5px"));
+    }
+    function renderInventory(box) {
+      const A = API3();
+      if (!A.activeWorld()) {
+        box.appendChild(muted2("No world loaded."));
+        return;
+      }
       const iv = A.inventory();
-      box.appendChild(lbl2(iv.source === "sheet" ? `Inventory — ${iv.owner}` : "Inventory (story)"));
+      box.appendChild(el2("div", { style: "font-weight:bold", "data-inv": "owner", text: iv.source === "sheet" ? iv.owner : "Story inventory" }));
       box.appendChild(muted2(`${iv.purseText} · ${iv.xp} XP${iv.source === "sheet" ? " · saved on the character sheet" : " · choose a persona to keep them on its sheet"}`, { "data-inv": "summary" }));
       const inv = iv.items;
       if (!inv.length) box.appendChild(muted2("empty"));
@@ -31780,7 +32576,6 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
         A.giveItem(n, 1);
         refreshPanel();
       }, { icon: "plus", title: "Give item" })], "margin-top:5px"));
-      box.appendChild(uiBtn("Preview what the AI sees", () => showPreview(), { icon: "eye", block: true, style: "margin-top:12px" }));
     }
     function parseVal(raw) {
       const v = String(raw || "").trim();
@@ -31812,11 +32607,23 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
           adv.open();
         } else if (adv) await adv.restart(Object.assign({ resetPregens: GO.reset }, heroName ? { hero: heroName } : {}));
         else {
+          const wid = A.activeWorld() && A.activeWorld().id;
+          try {
+            A.reviveParty();
+          } catch (_) {
+          }
           try {
             if (typeof window.restart_new_game === "function") window.restart_new_game(false);
           } catch (_) {
           }
-          A.restartAtStart();
+          if (wid) {
+            A.useWorld(wid, { fresh: true });
+            A.enable();
+            try {
+              window.autosave?.();
+            } catch (_) {
+            }
+          }
           if (heroName) {
             const T = window.KLITE_RPMod && window.KLITE_RPMod.panels && window.KLITE_RPMod.panels.TOOLS;
             if (T && T.usePersona) T.usePersona({ name: heroName });
@@ -31879,16 +32686,28 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
         clear2(c);
         render(c);
       } });
-      sh.registerView({ id: "world", title: "World", place: "right", order: 10, mount: mountPanel, update: () => renderPanel() });
+      sh.registerView({ id: "world", title: "World Management", place: "right", group: "adventure", order: 10, mount: mountPanel, update: () => renderPanel() });
+      sh.registerView({ id: "worldcreate", title: "World Creation", place: "right", group: "adventure", order: 20, mount: mountCreate, update: () => renderCreate() });
       sh.registerView(Object.assign({ id: "party", title: "Party", place: "left", order: 10 }, view(renderParty)));
+      sh.registerView(Object.assign({ id: "inventory", title: "Inventory", place: "left", order: 12 }, view(renderInventory)));
       sh.registerView(Object.assign({ id: "quest-tracker", title: "Quests", place: "left", order: 20 }, view(renderQuestTracker)));
+      sh.registerView(Object.assign({ id: "rep-tracker", title: "Reputation", place: "left", order: 25 }, view(renderRepTracker)));
+      const noWorld = (c) => c.appendChild(el2("div", { class: "rpm-muted", text: "No world loaded." }));
       sh.registerView(Object.assign({ id: "questlog", title: "Quest log", place: "window", window: { width: 380, height: 520 } }, view((c) => {
         if (API3().activeWorld()) renderQuestsTab(c);
-        else c.appendChild(el2("div", { class: "rpm-muted", text: "No world loaded." }));
+        else noWorld(c);
+      })));
+      sh.registerView(Object.assign({ id: "questlog-all", title: "Quest log (all quests)", place: "window", window: { width: 380, height: 520 } }, view((c) => {
+        if (API3().activeWorld()) renderQuestsTab(c, { all: true });
+        else noWorld(c);
       })));
       sh.registerView(Object.assign({ id: "reputation", title: "Reputation", place: "window", window: { width: 360, height: 460 } }, view((c) => {
         if (API3().activeWorld()) renderReputation(c);
-        else c.appendChild(el2("div", { class: "rpm-muted", text: "No world loaded." }));
+        else noWorld(c);
+      })));
+      sh.registerView(Object.assign({ id: "repeditor", title: "Reputation (all factions)", place: "window", window: { width: 360, height: 460 } }, view((c) => {
+        if (API3().activeWorld()) renderReputation(c, { all: true });
+        else noWorld(c);
       })));
       sh.registerView(Object.assign({ id: "questeditor", title: "Quest editor", place: "window", window: { width: 420, height: 600 } }, view((c) => {
         if (API3().activeWorld()) renderQuestsTab(c, { editor: true });
@@ -31902,8 +32721,8 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
       sh.registerView(Object.assign({ id: "combat", title: "Combat", place: "window", window: { width: 460, height: 680, minWidth: 320 } }, view((c) => {
         if (API3().activeWorld()) renderCombatTab(c);
         else {
-          c.appendChild(el2("div", { class: "rpm-muted", text: "Fights happen in a world. Load one (or the example) in the World tab." }));
-          c.appendChild(uiBtn("Open the World tab", () => openView("world"), { block: true, style: "margin-top:8px" }));
+          c.appendChild(el2("div", { class: "rpm-muted", text: "Fights happen in a world. Choose one (or the example) in World Management." }));
+          c.appendChild(uiBtn("World Management", () => openView("world"), { block: true, style: "margin-top:8px" }));
         }
       })));
       try {
@@ -31926,6 +32745,10 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
         unmount: unmountEditor,
         beforeClose: editorBeforeClose
       });
+      if (sh.addQuickLink) {
+        sh.addQuickLink({ id: "editor", title: "Editor", help: "World editor (node graph)", icon: "workflow", order: 40, onClick: () => openEditor() });
+        sh.addQuickLink({ id: "questeditor", title: "Quest editor", help: "Every quest of the world (Creator view)", icon: "pencil", order: 50, onClick: () => openView("questeditor"), visible: () => uiMode() === "creator" });
+      }
       registerMinimap(sh);
       registerMapEditor(sh, { toast, onClose: () => {
         if (S2.root) {
@@ -32037,8 +32860,8 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
       title: "The RPmod panels",
       blocks: [
         { list: [
-          'Left, "Adventure": your party (your persona with HP and AC, place, time, combat status) and the quests you are on.',
-          "Right: tabs World, Chars, Roles, Scenario and Tools.",
+          'Left, "Adventure": everything you need to play — your party (persona with HP and AC, place, time, combat status), inventory, map, quests, reputation and dice. The book button next to the ? opens the Compendium.',
+          "Right, for creators and the RP tools, in three rows: RP (Chars, Roles, Tools) · Adventure (World Management, World Creation, D&D Compendium) · Quick Links (Guide, Gallery, Compendium, Editor, Quest editor), which open their window directly. You can build a world with only the right panel open, for example on an iPad.",
           "Bigger views such as the Quest log and Combat open as windows: drag them by the title bar, resize them at the bottom-right corner."
         ] },
         { p: "On small screens the panels slide over the chat, one at a time; use the tabs at the screen edges to bring them back." }
@@ -32048,9 +32871,9 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
           c.open("party");
           c.highlight("#rpm-dock-left", "Party and quests");
         } },
-        { label: "Tools panel", run: (c) => {
+        { label: "Right panel", run: (c) => {
           c.open("world");
-          c.highlight("#rpm-dock-right .rpm-tabs", "World, Chars, Roles, Scenario, Tools");
+          c.highlight("#rpm-dock-right .rpm-tabrows", "RP tabs, Adventure tabs, Quick Links");
         } }
       ]
     },
@@ -32060,16 +32883,20 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
       blocks: [
         { p: "A world is a map of places, people, factions, objects, events and lore. Each turn RPmod tells the AI only what matters right now: where you are, who is there, what is happening. Distant places stay out of the prompt." },
         { list: [
-          'Pick or load a world in the World tab, then "Enable for this story".',
-          "Set your current location and the time of day; RPmod tracks both as you play.",
-          `The Map section on the left shows where you are: the places you know as points, or the rooms of a dungeon or town. Walk, search and open doors with the quick replies' "Here" row, so the AI narrates it. Tick Quick travel to move by clicking the map instead.`,
+          'Pick, create or import a world in World Management (right panel), then "Enable for this story". Premade worlds: the built-in adventure and a small example world.',
+          "World Creation holds the creator's tools: the Creator / Player view, the editor, the quest editor, and the State editor for place, time and flags. RPmod tracks place and time as you play.",
+          `The Map section on the left shows where you are: the places you know as points, or the rooms of a dungeon or town. Walk, search and open doors with the quick replies' "Here" row, so the AI narrates it. Tick Quick travel to move by clicking the map instead — if something happens on the way, the journey stops there.`,
           "Game state: RPmod keeps the live game and a start state you can go back to (next chapter)."
         ] }
       ],
       show: [
-        { label: "World tab", run: (c) => {
+        { label: "World Management", run: (c) => {
           c.open("world");
-          c.highlight("#wm-panel", "Your world and its live state");
+          c.highlight("#wm-panel", "Your worlds and the game state");
+        } },
+        { label: "World Creation", run: (c) => {
+          c.open("worldcreate");
+          c.highlight("#wm-create", "Creator tools and the State editor");
         } }
       ]
     },
@@ -32078,7 +32905,7 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
       title: "Game state: start and live game",
       blocks: [
         { p: `For every story, RPmod keeps two copies of the world's state: the live game you are playing, and a start state you can return to. The example world brings its opening as the start state; in a world of your own, set up the opening (place, time) and press "Save as start".` },
-        { p: "The state is where you are, the time and weather, quests and their objectives, flags, reputation, rooms you explored, doors, companions and the story inventory. Both copies are saved with your story and its export." },
+        { p: "The state is where you are, the time and weather, quests and their objectives, flags, reputation, rooms you explored, doors, companions and the story inventory. Both copies are saved with your story and its export. The buttons are in World Management." },
         { table: [
           ["Button", "What it does"],
           ["Back to start", "The world returns to the start state, for example to replay an adventure or undo a wrong turn."],
@@ -32106,9 +32933,10 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
       blocks: [
         { p: 'People in the world give quests, like in an MMO: a yellow ! marks someone with a quest for you, a yellow ? someone you can hand a finished quest to. Grey marks mean "later" (level too low) or "in progress".' },
         { list: [
-          'The Quest log (World tab) lists the quests you accepted — track, turn in, abandon — with objectives like "Defeat 3 Wolf (1/3)" that count by themselves. Quests offered by the people where you are show there too, to accept.',
+          'The Quest log (the Quests section on the left) lists the quests you accepted — track, turn in, abandon — with objectives like "Defeat 3 Wolf (1/3)" that count by themselves. Quests offered by the people where you are show there too, to accept.',
           "Rewards (XP, gold, items, reputation) go to your persona's character sheet when you turn a quest in; some let you choose one item.",
-          "Your standing with each faction you have met (Hated … Exalted) is in the Reputation window (World tab). Creators find every quest in the Quest editor.",
+          'Some objectives are contests — a skill against a DC at a place, like the archery at a fair. Where you can try one, the Here row shows "Try:" (or type /try): RPmod rolls your bonus; a miss can be tried again the next day.',
+          "Your standing with each faction you have met (Hated … Exalted) is in the Reputation section on the left. Creators find every quest and faction in World Creation (Creator view) and the Quest editor.",
           "The Quests section on the left shows what you are working on.",
           'Hidden quests read "???" until you discover them.'
         ] }
@@ -32154,7 +32982,7 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
         { p: "The world editor is a node graph. Add places, people, factions, objects, events, quests and lore from the palette, then connect them with the Link tool; the connection type follows from what you link (a person linked to a place lives there)." },
         { list: [
           "Select a node to edit it in the inspector on the right.",
-          "Events have triggers (entering a place, a time, a quest state…) and effects (flags, items, quests, moving people), and can chain.",
+          "Events have triggers (entering a place, a time, a quest state…) and effects (flags, items, quests, moving people, a fight, revealing a secret way or a hidden object), and can chain.",
           "A person can reuse a character card from your library.",
           'A dungeon or town is one node; double-click it (or "Open dungeon editor") to build its rooms and places on a grid, connect them with doors, and add features, inhabitants and encounters. Secret doors stay hidden from the AI until found.',
           "Or press Generate: a seeded dungeon (size, theme, encounters) or a town from the places you tick. Connect the dungeon to a place in the world first, so it gets a way out."
@@ -32162,8 +32990,8 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
       ],
       show: [
         { label: "Editor button", run: (c) => {
-          c.open("world");
-          c.highlight('#wm-panel button[title="Build your world as a node graph"]', "Opens the world editor");
+          c.open("worldcreate");
+          c.highlight('#wm-create button[title="Build your world as a node graph"]', "Opens the world editor (also a Quick Link)");
         } },
         { label: "Editor window", run: (c) => {
           c.open("editor");
@@ -32225,12 +33053,12 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
       id: "ai-view",
       title: "What the AI sees",
       blocks: [
-        { p: `Curious what the game master knows right now? "Preview what the AI sees" in the World tab shows the exact text RPmod adds to this turn: your persona and the AI's character (when enabled in Tools), location, people present, active events, quests and combat.` },
+        { p: `Curious what the game master knows right now? "Preview what the AI sees" in World Creation shows the exact text RPmod adds to this turn: your persona and the AI's character (when enabled in Tools), location, people present, active events, quests and combat.` },
         { p: "If the AI forgets something, check here first: whatever is not in the preview, the AI cannot know." }
       ],
       show: [{ label: "Preview button", run: (c) => {
-        c.open("world");
-        c.highlight(() => [...document.querySelectorAll("#wm-panel button")].find((b) => /Preview what the AI sees/.test(b.textContent)), "Shows the AI's view of this turn");
+        c.open("worldcreate");
+        c.highlight(() => [...document.querySelectorAll("#wm-create button")].find((b) => /Preview what the AI sees/.test(b.textContent)), "Shows the AI's view of this turn");
       } }]
     },
     {
@@ -32240,21 +33068,22 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
         { list: [
           "Chars — import cards and jump into your character gallery (full screen: browse, search, play, edit).",
           "Roles — who plays whom: your persona and the AI's character(s), including group chats.",
-          "Scenario — set up the scene for a story.",
+          `Setting up a scene (scenario, example dialogue, first message) is the "RPmod role play" section of Esolite's Quick Start.`,
           "Tools — context analysis, image generation, memory and more."
         ] }
       ],
       show: [{ label: "Chars tab", run: (c) => {
         c.open("chars");
-        c.highlight("#rpm-dock-right", "Characters, roles, scenario and tools");
+        c.highlight("#rpm-dock-right", "Characters, roles and tools");
       } }]
     },
     {
       id: "sheet",
       title: "Characters, sheets & dice",
       blocks: [
-        { p: "The Character gallery shows your whole Library full screen, with big portraits: open it with the grid button in the right panel's header. Filter by tag, search, sort, and switch between large, medium, small and list views. Click a character for the full card and to play as them, let the AI play them, open their sheet, edit, download or favorite them." },
+        { p: `The Character gallery shows your whole Library full screen, with big portraits: open it with "Gallery" in the right panel's Quick Links. Filter by tag, search, sort, and switch between large, medium, small and list views. Click a character for the full card and to play as them, let the AI play them, open their sheet, edit, download or favorite them.` },
         { p: "Every character in your Library can have a character sheet: abilities, saving throws, skills, armor class, hit points, attacks, inventory and coins. The sheet is stored inside the character card, so it travels with the card when you export it." },
+        { p: 'The sheet has tabs: Overview, Combat, Spells, Inventory, Features and Notes. Typing an attack or an item suggests the SRD names; a weapon fills in its damage. Items are in hand or in the backpack — "(<-BP)" takes one out, "(->BP)" puts it away; weapons in hand are green, attacks with a stowed weapon dimmed (in a fight you draw a weapon as part of the attack). Features lists your SRD features automatically. Notes: Character notes stay with the character, Adventure notes only with this play of the world.' },
         { list: [
           'Open it with "Character sheet" in the Party section (it starts with your persona) and pick any character at the top.',
           "Click any bonus to roll a d20 with it; choose Advantage or Disadvantage above. Attacks roll to hit and damage.",
@@ -32267,7 +33096,7 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
       ],
       show: [
         { label: "Character gallery", run: (c) => {
-          c.highlight('[data-action="gallery"]', "Opens your characters full screen");
+          c.highlight('[data-link="gallery"]', "Opens your characters full screen");
         } },
         { label: "Character sheet", run: (c) => {
           c.open("sheet");
@@ -32321,6 +33150,13 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
   function saveBook(id) {
     try {
       localStorage.setItem(BOOK_KEY, id);
+    } catch (_) {
+    }
+  }
+  function resetGuideStorage() {
+    try {
+      localStorage.removeItem(STORE_KEY2);
+      localStorage.removeItem(BOOK_KEY);
     } catch (_) {
     }
   }
@@ -32815,6 +33651,49 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
     return tile;
   }
 
+  // src/onboarding/roleplayQuickStart.js
+  function roleplayExtension() {
+    const blank = () => ({ on: false, scenario: "", example: "", first: "" });
+    let st = blank();
+    const field = (key, label2, placeholder, rows) => {
+      const ta = el("textarea", { class: "form-control", rows: String(rows), placeholder, "aria-label": label2, "data-rp-qs": key, style: "width:100%;margin-top:2px" });
+      ta.value = st[key];
+      ta.addEventListener("input", () => {
+        st[key] = ta.value;
+      });
+      return el("label", { style: "display:block;margin-top:6px" }, [el("span", { text: label2 }), ta]);
+    };
+    return {
+      id: "rpmod-roleplay",
+      label: "RPmod role play (optional)",
+      helpText: "Set up a role play with the characters chosen above: their cards, your player character and the scenario go into World Info, and the first message starts the chat (formerly the Scenario tab).",
+      hasSelection: () => st.on,
+      clear: () => {
+        st = blank();
+      },
+      render(body, rerender) {
+        const cb = el("input", { type: "checkbox", "data-rp-qs": "on" });
+        cb.checked = st.on;
+        cb.addEventListener("change", () => {
+          st.on = cb.checked;
+          rerender();
+        });
+        body.appendChild(el("label", { style: "display:flex;align-items:center;gap:6px" }, [cb, el("span", { text: "Set up role play" })]));
+        if (!st.on) return;
+        body.appendChild(field("scenario", "Scenario", "Describe the world, setting and background.", 3));
+        body.appendChild(field("example", "Example dialogue", "Example dialogue lines (kept disabled in World Info).", 2));
+        body.appendChild(field("first", "First message", "The first message of the chat.", 3));
+      },
+      async apply() {
+        const P = window.KLITE_RPMod && window.KLITE_RPMod.panels && window.KLITE_RPMod.panels.SCENARIO;
+        if (!P || typeof P.startRoleplay !== "function") throw new Error("RPmod role play is not available");
+        const r = await P.startRoleplay({ scenario: st.scenario, example: st.example, first: st.first }, { quiet: true });
+        st = blank();
+        if (r && r.ok === false) throw new Error("Role play: " + (r.reason || "could not be set up") + " — choose a main character above.");
+      }
+    };
+  }
+
   // src/onboarding/onboarding.js
   var GUIDE_TAB = "rpmod-guide";
   var ZONES_TAB = "rpmod-zones";
@@ -32857,6 +33736,7 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
     window.KLITE_RPMod_Onboarding = api;
     installLegacySavePassthrough();
     registerQuickStartExtension(rpmodWorldExtension());
+    registerQuickStartExtension(roleplayExtension());
     let qsTries = 0;
     const qsTimer = setInterval(() => {
       if (installQuickStartHooks() || ++qsTries > 240) clearInterval(qsTimer);
@@ -32875,8 +33755,33 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
       }
       sh.registerView(createZoneDemoView());
       sh.addDockAction("left", { id: "guide", title: "RPmod Guide", label: "?", icon: "circle-help", onClick: () => api.openGuide() });
+      if (sh.addQuickLink) sh.addQuickLink({ id: "guide", title: "Guide", help: "RPmod Guide", icon: "circle-help", order: 10, onClick: () => api.openGuide() });
       if (!welcomeDismissed()) sh.registerView(welcomeView(sh, api));
+      installResetAllHook(() => {
+        try {
+          localStorage.removeItem(WELCOME_KEY);
+        } catch (_) {
+        }
+        resetGuideStorage();
+        if (guide) guide.goTo(CHAPTERS[0].id, "rpmod");
+        sh.registerView(welcomeView(sh, api));
+      });
     }, 100);
+    api.resetGuide = () => {
+      try {
+        localStorage.removeItem(WELCOME_KEY);
+      } catch (_) {
+      }
+      resetGuideStorage();
+    };
+  }
+  function installResetAllHook(onReset) {
+    window.addEventListener("klite:reset-all", () => {
+      try {
+        onReset();
+      } catch (_) {
+      }
+    });
   }
   function registerEsoGuide() {
     const GuideExtension = esoExtensionClass("GuideExtension", "GUIDE");
@@ -33029,6 +33934,10 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
         selection = null;
         try {
           window.KLITE_RPMod_Shell && window.KLITE_RPMod_Shell.open("world");
+        } catch (_) {
+        }
+        try {
+          if (typeof window.autosave === "function") window.autosave();
         } catch (_) {
         }
       }
@@ -33546,6 +34455,18 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
     });
     return void 0;
   }
+  function setItemInHand(name, itemName, on) {
+    let result = null;
+    const n = String(itemName || "").trim().toLowerCase();
+    updateSheet(name, (s) => {
+      const it = s.inventory.find((i) => i.name.toLowerCase() === n);
+      if (!it) return;
+      if (on) it.inHand = true;
+      else delete it.inHand;
+      result = !!on;
+    });
+    return result;
+  }
   function flushSheet(name) {
     return writes.get(k(name)) || Promise.resolve();
   }
@@ -33732,8 +34653,8 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
       }
     }
     if (upTo2 == null && levelOf(choices) >= 20) {
-      const cap3 = choices.class === "barbarian" ? ["str", "con"] : choices.class === "monk" ? ["dex", "wis"] : [];
-      for (const a of cap3) out[a] = Math.max(out[a], Math.min(25, out[a] + 4));
+      const cap4 = choices.class === "barbarian" ? ["str", "con"] : choices.class === "monk" ? ["dex", "wis"] : [];
+      for (const a of cap4) out[a] = Math.max(out[a], Math.min(25, out[a] + 4));
     }
     return out;
   }
@@ -34001,8 +34922,9 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
       speed,
       hp: { max: hp, current: previous && previous.hp ? Math.min(hp, (Number(previous.hp.current) || 0) + (hp - (Number(previous.hp.max) || hp))) : hp, temp: 0 },
       attacks: attacksFor(abilities, gear, cls, styles, { martial: MARTIAL_ORDER.includes((orderOf(choices) || {}).value) }).map(({ hitBonus, ...a }) => Object.assign(a, { bonus: hitBonus })),
-      // level up keeps what the character owns now; a new character gets the starting equipment
-      inventory: prevInv || items,
+      // level up keeps what the character owns now; a new character gets the starting equipment,
+      // with the armor and shield its AC counts worn (inHand, R8); weapons start in the backpack
+      inventory: prevInv || items.map((i) => (SRD.armor[i.name] || i.name === "Shield") && ac.how.includes(i.name) ? Object.assign({}, i, { inHand: true }) : i),
       coins: previous && previous.coins ? previous.coins : { cp: 0, sp: 0, gp, pp: 0 },
       features: (resources ? `${cls.name} ${level}: ${resources}
 ` : "") + feats.map((f) => `• ${f.name} (${f.source}): ${firstSentence(f.text)}`).join("\n"),
@@ -34136,12 +35058,19 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
 
   // src/characters/characters.js
   var LAST_KEY = "KLITE.sheet.last";
+  var TAB_KEY = "KLITE.sheet.tab";
+  var TABS = [["overview", "Overview"], ["combat", "Combat"], ["spells", "Spells"], ["inventory", "Inventory"], ["features", "Features"], ["notes", "Notes"]];
   var AUTOSAVE_SETTING = "sheets_autosave";
   var GAME_FIELDS = ["inventory", "coins", "xp", "hp", "spellcasting"];
   function initCharacters() {
     "use strict";
     if (window.KLITE_RPMod_Characters) return;
-    const V = { name: null, saved: null, draft: null, loading: false, error: "", mode: null, box: null, timer: null, manage: false, spellSearch: {} };
+    let savedTab = null;
+    try {
+      savedTab = localStorage.getItem(TAB_KEY);
+    } catch (_) {
+    }
+    const V = { name: null, saved: null, draft: null, loading: false, error: "", mode: null, box: null, timer: null, manage: false, spellSearch: {}, tab: savedTab || "overview", notesBuf: {} };
     const Shell2 = () => window.KLITE_RPMod_Shell;
     const Log = () => window.KLITE_RPMod_Log;
     const autosave = () => {
@@ -34179,6 +35108,7 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
       V.draft = null;
       V.error = "";
       V.manage = false;
+      V.notesBuf = {};
       try {
         localStorage.setItem(LAST_KEY, V.name || "");
       } catch (_) {
@@ -34497,6 +35427,28 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
         V.mode = m;
         render();
       } }))));
+      const tab = TABS.some(([id]) => id === V.tab) ? V.tab : "overview";
+      root.appendChild(el("ul", { class: "nav nav-tabs settingsnav rpm-sheet-tabs", role: "tablist", "aria-label": "Character sheet" }, TABS.map(([id, t]) => el("li", { class: id === tab ? "active" : "" }, [el("a", {
+        href: "#",
+        role: "tab",
+        "aria-selected": String(id === tab),
+        "data-sheet-tab": id,
+        text: t,
+        onclick: (e) => {
+          e.preventDefault();
+          V.tab = id;
+          try {
+            localStorage.setItem(TAB_KEY, id);
+          } catch (_) {
+          }
+          render();
+        }
+      })]))));
+      const body = el("div", { class: "rpm-sheet-tabbody rpm-sheet-tab-" + tab, role: "tabpanel", "data-sheet-panel": tab });
+      root.appendChild(body);
+      ({ overview: overviewTab, combat: combatTab, spells: spellsTab, inventory: inventoryTab, features: featuresTab, notes: notesTab })[tab](body, D, s, set);
+    }
+    function overviewTab(root, D, s, set) {
       root.appendChild(el("div", { class: "rpm-sheet-grid4" }, [
         field("Species", textIn(s.species, set((v) => {
           V.draft.species = v;
@@ -34526,40 +35478,6 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
           V.draft.abilities[a] = v;
         }), { min: 1, max: 30, "aria-label": ABILITY_NAMES[a] + " score" })
       ]))));
-      root.appendChild(heading2("Combat"));
-      root.appendChild(el("div", { class: "rpm-sheet-grid4" }, [
-        field("Armor Class", numIn(s.ac, set((v) => {
-          V.draft.ac = v;
-        }))),
-        field("Speed", numIn(s.speed, set((v) => {
-          V.draft.speed = v;
-        }))),
-        field("Initiative", btn3(fmt(D.initiative), () => rollD20("Initiative", D.initiative, "initiative"), { roll: "initiative", title: "Roll initiative" })),
-        field("Passive Perception", el("div", { class: "rpm-sheet-static", text: String(D.passivePerception) }))
-      ]));
-      if (s.acNote) root.appendChild(el("div", { class: "rpm-muted", text: "AC: " + s.acNote }));
-      if (s.extras) {
-        const ex = s.extras, bits = [];
-        if (ex.alert) bits.push(`Alert: +${D.pb} to Initiative`);
-        if (ex.jackOfAllTrades) bits.push(`Jack of All Trades: +${Math.floor(D.pb / 2)} to skill checks without proficiency`);
-        const sb = Object.entries(ex.skillBonus || {});
-        if (sb.length) bits.push(`${sb.map(([k2]) => (SKILLS.find((x) => x.id === k2) || {}).name).join(" and ")}: +${ABILITY_NAMES[sb[0][1]]} modifier (min +1)`);
-        if (bits.length) root.appendChild(el("div", { class: "rpm-muted", "data-extras": "1", text: bits.join(" · ") }));
-      }
-      root.appendChild(el("div", { class: "rpm-sheet-grid4" }, [
-        field("HP", numIn(s.hp.current, set((v) => {
-          V.draft.hp.current = v;
-        }), { "aria-label": "Current hit points" })),
-        field("HP max", numIn(s.hp.max, set((v) => {
-          V.draft.hp.max = v;
-        }))),
-        field("Temp HP", numIn(s.hp.temp, set((v) => {
-          V.draft.hp.temp = v;
-        }))),
-        field("XP", numIn(s.xp, set((v) => {
-          V.draft.xp = v;
-        })))
-      ]));
       const profBox = (checked, onToggle, label2) => {
         const c = el("input", { type: "checkbox", "aria-label": label2 });
         c.checked = checked;
@@ -34597,7 +35515,90 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
           btn3(fmt(D.skills[k2.id]), () => rollD20(k2.name + " check", D.skills[k2.id], "skill"), { roll: "skill-" + k2.id, title: "Roll " + k2.name, cls: "rpm-sheet-mod" })
         ]);
       })));
+      if (s.proficiencies) {
+        root.appendChild(heading2("Proficiencies"));
+        root.appendChild(el("div", { class: "rpm-gal-text", text: s.proficiencies }));
+      }
+    }
+    function handToggle(i) {
+      const it = V.draft.inventory[i];
+      const on = !!it.inHand;
+      return el("button", {
+        type: "button",
+        class: "rpm-iconbtn rpm-sheet-bp",
+        "data-bp": on ? "hand" : "pack",
+        "aria-pressed": String(on),
+        title: on ? `${it.name} is in hand (or worn). Put it into the backpack.` : `${it.name} is in the backpack. Take it in hand (or put it on).`,
+        "aria-label": (on ? "Put into the backpack: " : "Take in hand: ") + it.name,
+        text: on ? "(->BP)" : "(<-BP)",
+        onclick: () => {
+          if (on) delete V.draft.inventory[i].inHand;
+          else V.draft.inventory[i].inHand = true;
+          edited();
+        }
+      });
+    }
+    function handsLine(root, s) {
+      const n = handsUsed(s.inventory);
+      root.appendChild(el("div", { class: "rpm-muted rpm-sheet-hands", "data-hands": String(n) }, [
+        `Hands in use: ${n}/2`,
+        n > 2 ? el("strong", { class: "rpm-sheet-warn", role: "alert", text: " — more than two hands! Put something into the backpack." }) : null
+      ]));
+    }
+    function weaponList() {
+      return el("datalist", { id: "rpm-sheet-weapons" }, weaponNames().map((n) => el("option", { value: n })));
+    }
+    function itemList() {
+      return el("datalist", { id: "rpm-sheet-items" }, itemNames().map((n) => el("option", { value: n })));
+    }
+    function attackFor(name, s) {
+      const base = attackFromWeapon(name, s.abilities);
+      if (!base) return null;
+      const b = s.build;
+      const cls = b && SRD.classes[b.class];
+      if (b && cls) {
+        const martial = ["protector", "warden"].includes((orderOf(b) || {}).value);
+        const built = attacksFor(s.abilities, [{ name: baseWeapon(name) }], cls, fightingStyles(b), { martial })[0];
+        if (built) return Object.assign(base, { proficient: built.proficient, bonus: built.hitBonus || 0, ability: built.ability, damage: built.damage });
+      }
+      return base;
+    }
+    function combatTab(root, D, s, set) {
+      root.appendChild(el("div", { class: "rpm-sheet-grid4" }, [
+        field("Armor Class", numIn(s.ac, set((v) => {
+          V.draft.ac = v;
+        }))),
+        field("Speed", numIn(s.speed, set((v) => {
+          V.draft.speed = v;
+        }))),
+        field("Initiative", btn3(fmt(D.initiative), () => rollD20("Initiative", D.initiative, "initiative"), { roll: "initiative", title: "Roll initiative" })),
+        field("Passive Perception", el("div", { class: "rpm-sheet-static", text: String(D.passivePerception) }))
+      ]));
+      if (s.acNote) root.appendChild(el("div", { class: "rpm-muted", text: "AC: " + s.acNote }));
+      if (s.extras) {
+        const ex = s.extras, bits = [];
+        if (ex.alert) bits.push(`Alert: +${D.pb} to Initiative`);
+        if (ex.jackOfAllTrades) bits.push(`Jack of All Trades: +${Math.floor(D.pb / 2)} to skill checks without proficiency`);
+        const sb = Object.entries(ex.skillBonus || {});
+        if (sb.length) bits.push(`${sb.map(([k2]) => (SKILLS.find((x) => x.id === k2) || {}).name).join(" and ")}: +${ABILITY_NAMES[sb[0][1]]} modifier (min +1)`);
+        if (bits.length) root.appendChild(el("div", { class: "rpm-muted", "data-extras": "1", text: bits.join(" · ") }));
+      }
+      root.appendChild(el("div", { class: "rpm-sheet-grid4" }, [
+        field("HP", numIn(s.hp.current, set((v) => {
+          V.draft.hp.current = v;
+        }), { "aria-label": "Current hit points" })),
+        field("HP max", numIn(s.hp.max, set((v) => {
+          V.draft.hp.max = v;
+        }))),
+        field("Temp HP", numIn(s.hp.temp, set((v) => {
+          V.draft.hp.temp = v;
+        }))),
+        field("XP", numIn(s.xp, set((v) => {
+          V.draft.xp = v;
+        })))
+      ]));
       root.appendChild(heading2("Attacks"));
+      root.appendChild(weaponList());
       D.attacks.forEach((a, i) => {
         const abSel = el("select", { class: "form-control rpm-input", "aria-label": "Attack ability" });
         for (const ab of ABILITIES) {
@@ -34609,105 +35610,225 @@ Cancel = add its entries to the active world.`) : false : A.activeWorld() ? conf
           V.draft.attacks[i].ability = abSel.value;
           edited();
         });
-        root.appendChild(el("div", { class: "rpm-sheet-line rpm-sheet-attack" }, [
-          textIn(a.name, set((v) => {
-            V.draft.attacks[i].name = v;
-          }), { "aria-label": "Attack name" }),
+        const held = attackInHand(s.inventory, a.name);
+        const invIdx = held === null ? -1 : s.inventory.indexOf(itemForAttack(s.inventory, a.name));
+        const nameIn = textIn(a.name, (v) => {
+          const w = attackFor(v, V.draft);
+          if (w && v.trim().toLowerCase() !== String(V.draft.attacks[i].name).toLowerCase()) Object.assign(V.draft.attacks[i], w, { name: v.trim() });
+          else V.draft.attacks[i].name = v;
+          edited();
+        }, { "aria-label": "Attack name", list: "rpm-sheet-weapons", autocomplete: "off" });
+        root.appendChild(el("div", {
+          class: "rpm-sheet-line rpm-sheet-attack" + (held === true ? " rpm-inhand" : held === false ? " rpm-stowed" : ""),
+          "data-attack": a.name,
+          title: held === true ? "In hand" : held === false ? "In the backpack — drawn as part of the attack (SRD)" : null
+        }, [
+          nameIn,
           abSel,
           textIn(a.damage, set((v) => {
             V.draft.attacks[i].damage = v;
           }), { placeholder: "1d8+3", "aria-label": "Damage dice" }),
           btn3("Hit " + fmt(a.toHit), () => rollD20(a.name + " attack", a.toHit, "attack"), { roll: "attack-" + i, title: "Roll to hit" }),
           btn3("Dmg", () => rollExpr(a.name + " damage", a.damage || "1d4", "damage"), { roll: "damage-" + i, title: "Roll damage (" + (a.damage || "1d4") + ")" }),
+          invIdx >= 0 ? handToggle(invIdx) : null,
           el("button", { type: "button", class: "rpm-iconbtn", title: "Remove attack", "aria-label": "Remove " + a.name, onclick: () => {
             V.draft.attacks.splice(i, 1);
             edited();
           } }, [icon("trash-2", 14)])
         ]));
       });
-      const atkName = el("input", { type: "text", class: "form-control rpm-input rpm-grow", placeholder: "e.g. Longsword", "aria-label": "New attack" });
+      const atkName = el("input", { type: "text", class: "form-control rpm-input rpm-grow", placeholder: "e.g. Longsword", "aria-label": "New attack", list: "rpm-sheet-weapons", autocomplete: "off" });
+      atkName.classList.add("fullScreenTextEditExclude");
       root.appendChild(el("div", { class: "rpm-row", style: "margin-top:4px" }, [atkName, btn3("", () => {
         const n = atkName.value.trim();
         if (!n) return;
-        V.draft.attacks.push({ name: n, ability: "str", proficient: true, damage: "1d8", notes: "" });
+        V.draft.attacks.push(attackFor(n, V.draft) || { name: n, ability: "str", proficient: true, damage: "1d8", notes: "" });
         edited();
       }, { icon: "plus", title: "Add attack" })]));
-      if (D.spell) {
-        const sp = D.spell;
-        root.appendChild(heading2("Spellcasting"));
-        root.appendChild(el("div", { class: "rpm-sheet-grid4" }, [
-          field("Ability", el("div", { class: "rpm-sheet-static", text: ABILITY_NAMES[sp.ability] })),
-          field("Save DC", el("div", { class: "rpm-sheet-static", text: String(sp.saveDC) })),
-          field("Spell attack", btn3(fmt(sp.attack), () => rollD20("Spell attack", sp.attack, "attack"), { roll: "spell-attack", title: "Roll a spell attack" })),
-          field("Cantrips / prepared", el("div", { class: "rpm-sheet-static", text: `${sp.cantripsKnown.length}/${sp.cantrips} · ${sp.preparedSpells.length}/${sp.prepared}` }))
-        ]));
-        const slotRow = el("div", { class: "rpm-row", style: "flex-wrap:wrap;margin-top:4px" });
-        sp.slots.forEach((n, i) => {
-          if (!n) return;
-          const used = sp.used && sp.used[i] || 0;
-          slotRow.appendChild(el("span", { class: "rpm-label", text: `${sp.pact ? `Pact slots (level ${i + 1})` : "Level " + (i + 1)}:` }));
-          for (let k2 = 0; k2 < n; k2++) {
-            const c = el("input", { type: "checkbox", "aria-label": `${sp.pact ? "Pact" : "Level " + (i + 1)} slot ${k2 + 1} used` });
-            c.checked = k2 < used;
-            c.addEventListener("change", () => {
-              const u = V.draft.spellcasting.used = V.draft.spellcasting.used || [];
-              u[i] = [...slotRow.querySelectorAll(`input[data-slot="${i}"]`)].filter((x) => x.checked).length;
-              edited();
-            });
-            c.setAttribute("data-slot", String(i));
-            slotRow.appendChild(c);
-          }
-        });
-        if (slotRow.children.length) root.appendChild(slotRow);
-        root.appendChild(spellsSection(D, s));
-        const spells = el("textarea", { class: "form-control rpm-input", rows: 2, "aria-label": "Other spells and notes", placeholder: "Other spells and notes (e.g. from items or a scroll)" });
-        spells.value = sp.spells || "";
-        spells.addEventListener("change", () => {
-          V.draft.spellcasting.spells = spells.value;
-          edited();
-        });
-        root.appendChild(spells);
+      handsLine(root, s);
+      root.appendChild(el("div", { class: "rpm-muted rpm-sheet-rule", "data-rule": "hands", text: HAND_RULE }));
+    }
+    function spellsTab(root, D, s) {
+      if (!D.spell) {
+        root.appendChild(el("p", { class: "rpm-muted", text: "No spellcasting. Characters get spells from their class, species or a feat (Magic Initiate) — the builder sets them up." }));
+        return;
       }
-      if (s.proficiencies) {
-        root.appendChild(heading2("Proficiencies"));
-        root.appendChild(el("div", { class: "rpm-gal-text", text: s.proficiencies }));
+      const sp = D.spell;
+      root.appendChild(el("div", { class: "rpm-sheet-grid4" }, [
+        field("Ability", el("div", { class: "rpm-sheet-static", text: ABILITY_NAMES[sp.ability] })),
+        field("Save DC", el("div", { class: "rpm-sheet-static", text: String(sp.saveDC) })),
+        field("Spell attack", btn3(fmt(sp.attack), () => rollD20("Spell attack", sp.attack, "attack"), { roll: "spell-attack", title: "Roll a spell attack" })),
+        field("Cantrips / prepared", el("div", { class: "rpm-sheet-static", text: `${sp.cantripsKnown.length}/${sp.cantrips} · ${sp.preparedSpells.length}/${sp.prepared}` }))
+      ]));
+      const slotRow = el("div", { class: "rpm-row", style: "flex-wrap:wrap;margin-top:4px" });
+      sp.slots.forEach((n, i) => {
+        if (!n) return;
+        const used = sp.used && sp.used[i] || 0;
+        slotRow.appendChild(el("span", { class: "rpm-label", text: `${sp.pact ? `Pact slots (level ${i + 1})` : "Level " + (i + 1)}:` }));
+        for (let k2 = 0; k2 < n; k2++) {
+          const c = el("input", { type: "checkbox", "aria-label": `${sp.pact ? "Pact" : "Level " + (i + 1)} slot ${k2 + 1} used` });
+          c.checked = k2 < used;
+          c.addEventListener("change", () => {
+            const u = V.draft.spellcasting.used = V.draft.spellcasting.used || [];
+            u[i] = [...slotRow.querySelectorAll(`input[data-slot="${i}"]`)].filter((x) => x.checked).length;
+            edited();
+          });
+          c.setAttribute("data-slot", String(i));
+          slotRow.appendChild(c);
+        }
+      });
+      if (slotRow.children.length) root.appendChild(slotRow);
+      root.appendChild(spellsSection(D, s));
+      const spells = el("textarea", { class: "form-control rpm-input", rows: 2, "aria-label": "Other spells and notes", placeholder: "Other spells and notes (e.g. from items or a scroll)" });
+      spells.value = sp.spells || "";
+      spells.addEventListener("change", () => {
+        V.draft.spellcasting.spells = spells.value;
+        edited();
+      });
+      root.appendChild(spells);
+    }
+    function itemRow(it, i, set) {
+      const info = itemInfo(it.name);
+      const weaponHeld = it.inHand && info && info.kind === "weapon";
+      const nameIn = textIn(it.name, set((v) => {
+        V.draft.inventory[i].name = v;
+      }), { class: "form-control rpm-input rpm-grow", "aria-label": "Item name", list: "rpm-sheet-items", autocomplete: "off" });
+      const row2 = el("div", { class: "rpm-sheet-item" + (weaponHeld ? " rpm-inhand" : ""), "data-item": it.name }, [
+        el("div", { class: "rpm-sheet-line" }, [
+          handToggle(i),
+          nameIn,
+          numIn(it.qty, set((v) => {
+            V.draft.inventory[i].qty = v;
+          }), { class: "form-control rpm-input rpm-sheet-qty", min: 1, "aria-label": "Quantity" }),
+          el("button", { type: "button", class: "rpm-iconbtn", title: "Remove item", "aria-label": "Remove " + it.name, onclick: () => {
+            V.draft.inventory.splice(i, 1);
+            edited();
+          } }, [icon("trash-2", 14)])
+        ])
+      ]);
+      if (info) row2.appendChild(el("details", { class: "rpm-sheet-def", "data-def": it.name }, [
+        el("summary", { class: "rpm-muted", text: info.summary }),
+        ...info.text.slice(0, 4).map((t) => el("p", { class: "rpm-cmp-p", text: t })),
+        info.ref && window.KLITE_RPMod_Compendium ? btn3("In the compendium", () => window.KLITE_RPMod_Compendium.open(info.ref), { icon: "book-marked", title: "Open the SRD entry" }) : null
+      ]));
+      return row2;
+    }
+    function inventoryTab(root, D, s, set) {
+      root.appendChild(itemList());
+      handsLine(root, s);
+      const groups = [["In hand / worn", s.inventory.map((it, i) => [it, i]).filter(([it]) => it.inHand)], ["Backpack", s.inventory.map((it, i) => [it, i]).filter(([it]) => !it.inHand)]];
+      for (const [title, list3] of groups) {
+        root.appendChild(heading2(title));
+        if (!list3.length) root.appendChild(el("div", { class: "rpm-muted", text: title === "Backpack" ? "Empty." : 'Nothing in hand. "(<-BP)" takes an item out of the backpack.' }));
+        for (const [it, i] of list3) root.appendChild(itemRow(it, i, set));
       }
-      root.appendChild(heading2("Inventory"));
-      s.inventory.forEach((it, i) => root.appendChild(el("div", { class: "rpm-sheet-line" }, [
-        textIn(it.name, set((v) => {
-          V.draft.inventory[i].name = v;
-        }), { class: "form-control rpm-input rpm-grow", "aria-label": "Item name" }),
-        numIn(it.qty, set((v) => {
-          V.draft.inventory[i].qty = v;
-        }), { class: "form-control rpm-input rpm-sheet-qty", min: 1, "aria-label": "Quantity" }),
-        el("button", { type: "button", class: "rpm-iconbtn", title: "Remove item", "aria-label": "Remove " + it.name, onclick: () => {
-          V.draft.inventory.splice(i, 1);
-          edited();
-        } }, [icon("trash-2", 14)])
-      ])));
-      const itemName = el("input", { type: "text", class: "form-control rpm-input rpm-grow", placeholder: "Add an item", "aria-label": "New item" });
-      root.appendChild(el("div", { class: "rpm-row", style: "margin-top:4px" }, [itemName, btn3("", () => {
+      const itemName = el("input", { type: "text", class: "form-control rpm-input rpm-grow", placeholder: "Add an item (SRD names are suggested)", "aria-label": "New item", list: "rpm-sheet-items", autocomplete: "off" });
+      itemName.classList.add("fullScreenTextEditExclude");
+      root.appendChild(el("div", { class: "rpm-row", style: "margin-top:6px" }, [itemName, btn3("", () => {
         const n = itemName.value.trim();
         if (!n) return;
         V.draft.inventory.push({ name: n, qty: 1, notes: "" });
         edited();
       }, { icon: "plus", title: "Add item" })]));
-      root.appendChild(el("div", { class: "rpm-sheet-grid4", style: "margin-top:6px" }, ["cp", "sp", "gp", "pp"].map((c) => field(c.toUpperCase(), numIn(s.coins[c], set((v) => {
+      root.appendChild(el("div", { class: "rpm-muted rpm-sheet-rule", text: HAND_RULE }));
+      root.appendChild(heading2("Coins"));
+      root.appendChild(el("div", { class: "rpm-sheet-grid4" }, ["cp", "sp", "gp", "pp"].map((c) => field(c.toUpperCase(), numIn(s.coins[c], set((v) => {
         V.draft.coins[c] = v;
       }), { min: 0 })))));
-      root.appendChild(heading2("Features & notes"));
-      const area = (value, onChange, label2) => {
-        const t = el("textarea", { class: "form-control rpm-input", rows: 3, "aria-label": label2 });
-        t.value = value;
-        t.addEventListener("change", () => onChange(t.value));
-        return t;
-      };
-      root.appendChild(area(s.features, set((v) => {
-        V.draft.features = v;
-      }), "Features and traits"));
-      root.appendChild(area(s.notes, set((v) => {
+    }
+    function featuresTab(root, D, s, set) {
+      const list3 = srdFeatures(s);
+      const res = s.build ? classResources(s.build) : "";
+      if (res) root.appendChild(el("div", { class: "rpm-chip rpm-chip-info", "data-features": "resources", text: res }));
+      if (!list3.length) root.appendChild(el("p", { class: "rpm-muted", text: "No SRD features found: build the character with the builder, or write the class, species and background with their SRD names." }));
+      const box = el("div", { class: "rpm-sheet-features", "data-features": "srd" });
+      for (const f of list3) box.appendChild(el("details", { class: "rpm-sheet-feature", open: "" }, [
+        el("summary", {}, [el("strong", { text: f.name }), el("span", { class: "rpm-muted", text: " · " + f.source })]),
+        ...(f.text || []).map((t2) => el("p", { class: "rpm-cmp-p", text: t2 }))
+      ]));
+      root.appendChild(box);
+      if (list3.length) root.appendChild(el("div", { class: "rpm-muted rpm-cmp-attr", text: SRD.attribution }));
+      root.appendChild(heading2("Your own features & traits"));
+      const t = el("textarea", { class: "form-control rpm-input", rows: 4, "aria-label": "Features and traits" });
+      t.value = s.features;
+      t.addEventListener("change", () => {
+        V.draft.features = t.value;
+        edited();
+      });
+      root.appendChild(t);
+    }
+    function noteBox(root, key, title, stored, save2, hint) {
+      V.notesBuf = V.notesBuf || {};
+      const t = el("textarea", { class: "form-control rpm-input rpm-sheet-note", rows: 6, "aria-label": title, "data-note": key });
+      t.value = V.notesBuf[key] != null ? V.notesBuf[key] : stored;
+      t.addEventListener("input", () => {
+        V.notesBuf[key] = t.value;
+      });
+      root.appendChild(heading2(title));
+      root.appendChild(t);
+      if (hint) root.appendChild(el("div", { class: "rpm-muted rpm-sheet-notehint", text: hint }));
+      const editing = V.notesBuf[key] != null && V.notesBuf[key] !== stored;
+      root.appendChild(el("div", { class: "rpm-row rpm-sheet-notebtns" }, [
+        btn3("Delete", () => {
+          if (!stored && !t.value) return;
+          if (!confirm(`Delete the ${title.toLowerCase()}?`)) return;
+          delete V.notesBuf[key];
+          save2("");
+        }, { icon: "trash-2", variant: "danger", title: "Empty them", roll: "note-delete-" + key }),
+        btn3("Cancel", () => {
+          delete V.notesBuf[key];
+          render();
+        }, { title: "Drop the changes", roll: "note-cancel-" + key }),
+        btn3("Save", () => {
+          const v = t.value;
+          delete V.notesBuf[key];
+          save2(v);
+        }, { icon: "check", variant: "success", title: "Save them", roll: "note-save-" + key, cls: editing ? "rpm-unsaved" : "" })
+      ]));
+    }
+    function notesTab(root) {
+      const name = V.name;
+      noteBox(root, "character", "Character notes", V.draft.notes || "", (v) => {
         V.draft.notes = v;
-      }), "Notes"));
+        if (V.saved) V.saved.notes = v;
+        updateSheet(name, (sh) => {
+          sh.notes = v;
+        });
+        toast(v ? "Character notes saved" : "Character notes deleted");
+        render();
+      }, "Saved in the character card: they stay with the character in every story.");
+      const W = window.KLITE_RPMod_Worlds;
+      const w = W && W.activeWorld && W.activeWorld();
+      if (!w) {
+        root.appendChild(heading2("Adventure notes"));
+        root.appendChild(el("p", { class: "rpm-muted", "data-note": "adventure-none", text: "Load a world to keep adventure notes for this play." }));
+        return;
+      }
+      noteBox(root, "adventure", "Adventure notes", W.adventureNote(name), (v) => {
+        W.setAdventureNote(name, v);
+        toast(v ? "Adventure notes saved" : "Adventure notes deleted");
+        render();
+      }, `Saved with this play of ${w.name} — wiped when a new game starts or on Back to start. For things that matter only in this adventure.`);
+    }
+    function srdFeatures(s) {
+      if (s.build) {
+        try {
+          return featureList(s.build);
+        } catch (_) {
+          return [];
+        }
+      }
+      const key = (obj, text) => {
+        const t = String(text || "").toLowerCase();
+        return Object.keys(obj).find((k2) => t.split(/[^a-z]+/).includes(k2) || t.startsWith(String(obj[k2].name || k2).toLowerCase())) || "";
+      };
+      const choices = { class: key(SRD.classes, s.className), species: key(SRD.species, s.species), background: key(SRD.backgrounds, s.background), level: s.level };
+      if (!choices.class && !choices.species && !choices.background) return [];
+      try {
+        return featureList(choices);
+      } catch (_) {
+        return [];
+      }
     }
     function worldStatsFor(name) {
       try {
@@ -34806,6 +35927,7 @@ OK = save and close · Cancel = close and discard them`);
       combatSpellsFor,
       spendSpell,
       longRestSheet,
+      setItemInHand,
       // the player's persona (Tools panel): name when chosen and enabled, else ''
       personaName: () => {
         try {
@@ -35307,7 +36429,7 @@ OK = save and close · Cancel = close and discard them`);
           V.queue = [];
         }
       });
-      sh.addDockAction("right", { id: "gallery", title: "Character gallery (full screen)", icon: "layout-grid", onClick: () => api.open() });
+      if (sh.addQuickLink) sh.addQuickLink({ id: "gallery", title: "Gallery", help: "Character gallery (full screen)", icon: "layout-grid", order: 20, onClick: () => api.open() });
       window.addEventListener("keydown", (e) => {
         if (e.key === "Escape" && V.detail && V.box && !document.querySelector(".popupcontainer:not(.hidden)")) closeDetail();
       });
@@ -35922,91 +37044,10 @@ OK = save and close · Cancel = close and discard them`);
     else window.addEventListener("load", attempt, { once: true });
   }
 
-  // src/compendium/rules.js
-  var KINDS3 = { monster: "Monsters", spell: "Spells", item: "Magic items", equipment: "Equipment", rule: "Rules" };
-  var ATTRIBUTION = SRD.attribution;
-  var norm4 = (s) => String(s == null ? "" : s).toLowerCase().replace(/[’']/g, "'").replace(/\s+/g, " ").trim();
-  var cap2 = (s) => String(s || "").replace(/\b[a-z]/g, (c) => c.toUpperCase());
-  var levelSchool2 = (s) => s.level ? `Level ${s.level} ${s.school}` : `${s.school} cantrip`;
-  var INDEX = null;
-  function index() {
-    if (INDEX) return INDEX;
-    const out = [];
-    for (const [key, m] of Object.entries(MONSTERS)) out.push({ kind: "monster", key, name: m.name, sub: `CR ${m.cr} · ${m.type}` });
-    for (const [key, s] of Object.entries(SPELLS)) out.push({ kind: "spell", key, name: s.name, sub: `${levelSchool2(s)} · ${s.classes.map(cap2).join(", ")}` });
-    for (const [key, it] of Object.entries(COMPENDIUM.magicItems)) out.push({ kind: "item", key, name: it.name, sub: it.type });
-    for (const [name, w] of Object.entries(SRD.weapons)) out.push({ kind: "equipment", key: "weapon:" + name, name, sub: `Weapon · ${cap2(w.category)} · ${w.damage} ${w.type}` });
-    for (const [name, a] of Object.entries(SRD.armor)) out.push({ kind: "equipment", key: "armor:" + name, name, sub: `Armor · ${cap2(a.category)}` });
-    for (const [key, g] of Object.entries(COMPENDIUM.gear)) out.push({ kind: "equipment", key: "gear:" + key, name: g.name, sub: `${g.kind === "tool" ? "Tool" : "Adventuring gear"} · ${g.cost}` });
-    for (const [key, r] of Object.entries(COMPENDIUM.glossary)) out.push({ kind: "rule", key, name: r.name, sub: r.tag || "Rule" });
-    INDEX = out;
-    return out;
-  }
-  function entry(kind, key) {
-    if (kind === "monster") return MONSTERS[key] ? { kind, key, name: MONSTERS[key].name, data: MONSTERS[key] } : null;
-    if (kind === "spell") return SPELLS[key] ? { kind, key, name: SPELLS[key].name, data: SPELLS[key] } : null;
-    if (kind === "item") {
-      const d = COMPENDIUM.magicItems[key];
-      return d ? { kind, key, name: d.name, data: d } : null;
-    }
-    if (kind === "rule") {
-      const d = COMPENDIUM.glossary[key];
-      return d ? { kind, key, name: d.name, data: d } : null;
-    }
-    if (kind === "equipment") {
-      const [t, k2] = String(key).split(/:(.*)/s);
-      if (t === "weapon" && SRD.weapons[k2]) return { kind, key, name: k2, data: Object.assign({ equipment: "weapon" }, SRD.weapons[k2]) };
-      if (t === "armor" && SRD.armor[k2]) return { kind, key, name: k2, data: Object.assign({ equipment: "armor" }, SRD.armor[k2]) };
-      if (t === "gear" && COMPENDIUM.gear[k2]) return { kind, key, name: COMPENDIUM.gear[k2].name, data: Object.assign({ equipment: COMPENDIUM.gear[k2].kind }, COMPENDIUM.gear[k2]) };
-    }
-    return null;
-  }
-  var TEXT = /* @__PURE__ */ new Map();
-  function textOf(e) {
-    const id = e.kind + "|" + e.key;
-    if (!TEXT.has(id)) {
-      const r = entry(e.kind, e.key);
-      const d = r && r.data || {};
-      const parts = [];
-      const walk = (v) => {
-        if (typeof v === "string") parts.push(v);
-        else if (Array.isArray(v)) v.forEach(walk);
-        else if (v && typeof v === "object") Object.values(v).forEach(walk);
-      };
-      walk([d.text, d.higher, d.upgrade, d.traits, d.actions, d.bonusActions, d.reactions, d.legendary]);
-      TEXT.set(id, norm4(parts.join(" ")));
-    }
-    return TEXT.get(id);
-  }
-  function search(q, kind, limit = 150) {
-    const list3 = index().filter((e) => !kind || e.kind === kind);
-    const t = norm4(q);
-    if (!t) return list3.slice().sort((a, b) => a.name.localeCompare(b.name)).slice(0, limit).map((e) => Object.assign({ score: 5 }, e));
-    const words = t.split(" ");
-    const hits = [];
-    for (const e of list3) {
-      const n = norm4(e.name), s = norm4(e.sub);
-      let score = -1;
-      if (n === t) score = 0;
-      else if (n.startsWith(t)) score = 1;
-      else if (words.every((w) => n.includes(w))) score = 2;
-      else if (words.every((w) => (n + " " + s).includes(w))) score = 3;
-      else if (t.length >= 4 && textOf(e).includes(t)) score = 4;
-      if (score >= 0) hits.push(Object.assign({ score }, e));
-    }
-    return hits.sort((a, b) => a.score - b.score || a.name.localeCompare(b.name)).slice(0, limit);
-  }
-  function find(q, kind) {
-    const r = search(q, kind, 1)[0];
-    return r && r.score <= 2 ? r : null;
-  }
-  var abilityMod2 = (score) => Math.floor(((Number(score) || 10) - 10) / 2);
-  var signed = (n) => (n >= 0 ? "+" : "") + n;
-
   // src/compendium/compendium.js
   function initCompendium() {
     if (window.KLITE_RPMod_Compendium) return;
-    const V = { box: null, q: "", kind: "", sel: null, msg: "" };
+    const V = { boxes: /* @__PURE__ */ new Set(), q: "", kind: "", sel: null, msg: "" };
     const Shell2 = () => window.KLITE_RPMod_Shell;
     const Worlds = () => window.KLITE_RPMod_Worlds;
     const btn3 = (text, onclick, opts = {}) => el("button", { type: "button", class: "btn btn-primary rpm-btn" + (opts.icon ? " rpm-btn-icon" : "") + (opts.cls ? " " + opts.cls : ""), "data-cmp": opts.id, title: opts.title, onclick }, opts.icon ? [iconText(opts.icon, text)] : [text]);
@@ -36044,7 +37085,7 @@ OK = save and close · Cancel = close and discard them`);
       const A = Worlds();
       const box = el("div", { class: "rpm-card rpm-cmp-enc", "data-cmp": "encounter-box" });
       if (!A || !A.activeWorld || !A.activeWorld()) {
-        box.appendChild(el("div", { class: "rpm-muted", text: "Load a world (World tab) to add this monster to its encounters." }));
+        box.appendChild(el("div", { class: "rpm-muted", text: "Load a world (World Management) to add this monster to its encounters." }));
         return box;
       }
       const encs = A.listEncounters();
@@ -36101,10 +37142,12 @@ OK = save and close · Cancel = close and discard them`);
     }
     const DETAIL = { monster: monsterDetail, spell: spellDetail, item: itemDetail, equipment: equipmentDetail, rule: ruleDetail };
     function render() {
-      if (!V.box) return;
-      clear(V.box);
+      for (const box of V.boxes) renderInto(box);
+    }
+    function renderInto(box) {
+      clear(box);
       const root = el("div", { class: "rpm-cmp" + (V.sel ? " rpm-cmp-has-sel" : "") });
-      V.box.appendChild(root);
+      box.appendChild(root);
       const side = el("div", { class: "rpm-cmp-side" });
       const q = el("input", { type: "search", class: "form-control rpm-input", placeholder: "Search monsters, spells, items, rules…", "aria-label": "Search the compendium", "data-cmp": "search" });
       q.value = V.q;
@@ -36160,7 +37203,7 @@ OK = save and close · Cancel = close and discard them`);
       }
       main.appendChild(el("p", { class: "rpm-muted rpm-cmp-attr", "data-cmp": "attribution", text: ATTRIBUTION }));
       root.appendChild(main);
-      if (document.activeElement === document.body && !V.sel) try {
+      if (document.activeElement === document.body && !V.sel && box.dataset.cmpWhere === "window") try {
         q.focus({ preventScroll: true });
       } catch (_) {
       }
@@ -36197,15 +37240,33 @@ OK = save and close · Cancel = close and discard them`);
         place: "window",
         window: { large: true, flush: true, minWidth: 320, minHeight: 320, restore: false },
         mount: (c) => {
-          V.box = el("div", { class: "rpm-cmp-scroll" });
-          c.appendChild(V.box);
-          render();
+          const box = el("div", { class: "rpm-cmp-scroll", "data-cmp-where": "window" });
+          V.boxes.add(box);
+          c.appendChild(box);
+          renderInto(box);
         },
-        unmount: () => {
-          V.box = null;
+        unmount: (c) => {
+          for (const b of [...V.boxes]) if (c.contains(b)) V.boxes.delete(b);
         }
       });
-      sh.addDockAction("right", { id: "compendium", title: "Compendium (SRD monsters, spells, items, rules)", icon: "book-marked", onClick: () => open() });
+      sh.registerView({
+        id: "dnd-compendium",
+        title: "D&D Compendium",
+        place: "right",
+        group: "adventure",
+        order: 30,
+        mount: (c) => {
+          const box = el("div", { class: "rpm-cmp-scroll rpm-cmp-docked", "data-cmp-where": "dock" });
+          V.boxes.add(box);
+          c.appendChild(box);
+          renderInto(box);
+        },
+        update: () => {
+        }
+      });
+      const help = "Compendium (SRD monsters, spells, items, rules)";
+      if (sh.addQuickLink) sh.addQuickLink({ id: "compendium", title: "Compendium", help, icon: "book-marked", order: 30, onClick: () => open() });
+      sh.addDockAction("left", { id: "compendium", title: help, icon: "book-marked", onClick: () => open() });
       return true;
     }
     let tries = 0;
@@ -36323,6 +37384,11 @@ OK = save and close · Cancel = close and discard them`);
       if (!n) continue;
       out.push({ label: (p.marker ? p.marker + " " : "") + "Talk: " + n, text: `/talk ${n} | I talk to ${n}.`, send: true, kind: "talk" });
       if (p.canJoin) out.push({ label: "Ask to join: " + n, text: `/join ${n} | I ask ${n} to travel with me.`, send: true, kind: "join" });
+    }
+    for (const c of info.checks || []) {
+      const t = safeName(c.text);
+      if (!t) continue;
+      out.push({ label: `Try: ${t} (${c.what})`, text: `/try ${t} | I try: ${t}.`, send: true, kind: "check" });
     }
     if (info.trade) out.push({ label: "Shop", text: "/shop", send: false, kind: "shop" });
     if (info.inMap) out.push({ label: "Search", text: "/search | I search the room.", send: true, kind: "search" });
@@ -36875,6 +37941,18 @@ Purse: ${iv.purseText}`);
           return r;
         }
       },
+      {
+        name: "try",
+        group: "Quests",
+        world: true,
+        usage: "/try <contest or task> [adv|dis]",
+        help: "Try a contest or another check of an accepted quest here (RPmod rolls your bonus against its DC; once a day).",
+        run: (a) => {
+          const { rest, mode: mode2 } = splitMode(cleanArg(a));
+          const r = W().tryObjective(rest, { source: "ui", mode: mode2 });
+          return r.ok ? { ok: true } : { ok: false, error: r.reason };
+        }
+      },
       { name: "rep", aliases: ["reputation"], group: "Quests", world: true, usage: "/rep [<faction>=±n]", help: 'Your standing with the factions; with "=" change one.', run: (a) => reputation(cleanArg(a)) },
       {
         name: "roll",
@@ -37010,7 +38088,7 @@ Purse: ${iv.purseText}`);
       { name: "summary", group: "Windows & tools", usage: "/summary", help: "Esolite's AutoGenerate Memory: summarises the story into Memory (confirm with OK).", run: () => summary() },
       { name: "help", aliases: ["commands"], group: "Windows & tools", usage: "/help [command]", help: "This list, or one command.", run: (a) => help(cleanArg(a)) }
     ];
-    const NO_WORLD = "No world is active. Load one in the World tab (or the example world) and enable it.";
+    const NO_WORLD = "No world is active. Choose one in World Management (right panel) — or a premade world — and enable it.";
     const byName = /* @__PURE__ */ new Map();
     for (const c of COMMANDS) {
       byName.set(c.name, c);
@@ -37480,6 +38558,19 @@ ${g.lines.join("\n")}`).join("\n\n") + "\n\nSeveral commands and a message in on
       need(q.giverPersonId, "person", `quest ${q.id} giver`);
       need(q.turninPersonId, "person", `quest ${q.id} turn-in`);
       for (const id of asArray4(q.prerequisites && q.prerequisites.quests)) need(id, "quest", `quest ${q.id} prerequisite`);
+      for (const o of asArray4(q.objectives)) {
+        if (!o || !o.id) {
+          E(`quest ${q.id}: an objective without an id`);
+          continue;
+        }
+        if (o.kind === "talk") need(o.target, "person", `quest ${q.id} objective ${o.id}`);
+        if (o.kind === "visit") need(o.target, "location", `quest ${q.id} objective ${o.id}`);
+        if (o.kind === "check") {
+          need(o.at, "location", `quest ${q.id} objective ${o.id} place`);
+          if (!CHECK_SKILLS.includes(o.skill) && !["str", "dex", "con", "int", "wis", "cha"].includes(o.ability)) E(`quest ${q.id} objective ${o.id}: a check needs a skill or an ability`);
+          if (!(Number(o.dc) > 0)) E(`quest ${q.id} objective ${o.id}: a check needs a DC`);
+        }
+      }
     }
     for (const e of asArray4(w.encounters)) {
       need(e.locationId, "location", `encounter ${e.id} place`);
@@ -37524,11 +38615,12 @@ ${g.lines.join("\n")}`).join("\n\n") + "\n\nSeveral commands and a message in on
     const stats = { locations: asArray4(w.locations).length, persons: asArray4(w.npcs).length, quests: qs.size, encounters: asArray4(w.encounters).length, pregens: seen.size, xp };
     return { ok: errors.length === 0, errors, warnings, stats };
   }
+  var CHECK_SKILLS = ["acrobatics", "animal_handling", "arcana", "athletics", "deception", "history", "insight", "intimidation", "investigation", "medicine", "nature", "perception", "performance", "persuasion", "religion", "sleight_of_hand", "stealth", "survival"];
   var SRD_MONSTER_COUNT = Object.keys(MONSTERS || {}).length;
 
   // src/adventures/content/drowned-lantern.js
   var ID = "drowned-lantern";
-  var VERSION = 2;
+  var VERSION = 6;
   var place = (id, name, description, extra = {}) => Object.assign({ id, name, description }, extra);
   var room = (id, name, parentId, [x, y], description, extra = {}) => Object.assign({ id, name, parentId, map: { x, y, w: 4, h: 3 }, description }, extra);
   var exit = (id, to, dir, type = "open", extra = {}) => Object.assign({ id, to, dir, type }, extra);
@@ -37690,7 +38782,6 @@ ${g.lines.join("\n")}`).join("\n\n") + "\n\nSeveral commands and a message in on
             mapStyle: "plots",
             atmosphere: "worried",
             hub: true,
-            connectedLocationIds: ["loc_forest_road"],
             ui: { x: 300, y: 300 },
             phases: [{ id: "ph_relieved", label: "Goblins driven off", conditions: [questIs("q_hollow_oak", "turnedin")], atmosphere: "relieved", description: "A mill village of thatched roofs and stone walls. The mill wheel turns again, and people talk about the heroes of the Hollow Oak — and, more quietly, about the strange coin they found there." }]
           }
@@ -37701,7 +38792,7 @@ ${g.lines.join("\n")}`).join("\n\n") + "\n\nSeveral commands and a message in on
           "The old trade road east of Brindlewick, under oak and beech. Ferns crowd the verges; the ruts are deep from carts that no longer come. A side track runs north to a huge dead oak, and the sound of the river comes from the south.",
           {
             atmosphere: "tense",
-            connectedLocationIds: ["loc_brindlewick", "loc_hollow_oak", "loc_river_ford", "loc_gravel_road"],
+            connectedLocationIds: ["loc_river_ford", "loc_gravel_road"],
             ui: { x: 600, y: 300 },
             localLore: [{ id: "ll_cart", content: "Liu Wen's cart lies overturned in the ferns a mile out of the village: the grain sacks are gone, the mule cut loose, and small bare footprints lead north towards the Hollow Oak.", keys: ["cart", "tracks", "footprints"] }]
           }
@@ -37710,7 +38801,7 @@ ${g.lines.join("\n")}`).join("\n\n") + "\n\nSeveral commands and a message in on
           "loc_hollow_oak",
           "The Hollow Oak",
           "A dead oak so old and vast that a whole goblin band lives in its trunk and in the burrows between its roots. It smells of smoke, wet earth and stolen bread.",
-          { kind: "dungeon", mapStyle: "stone", atmosphere: "menacing", connectedLocationIds: ["loc_forest_road"], ui: { x: 600, y: 110 } }
+          { kind: "dungeon", mapStyle: "stone", atmosphere: "menacing", ui: { x: 600, y: 110 } }
         ),
         place(
           "loc_river_ford",
@@ -38009,43 +39100,53 @@ ${g.lines.join("\n")}`).join("\n\n") + "\n\nSeveral commands and a message in on
         "loc_windgap",
         "Windgap Pass",
         "A notch between two bare peaks where the wind never stops. Far below, Stillwater Mere shines like a sheet of tin, and on the far shore the roofs of Lanternport. A broken watchtower stands on the crag above the road; a shepherds' trail drops steeply towards the meadows.",
-        { atmosphere: "windswept", connectedLocationIds: ["loc_gravel_road", "loc_watchtower", "loc_lanternport", "loc_shepherds_trail"], ui: { x: 1200, y: 180 } }
+        { atmosphere: "windswept", connectedLocationIds: ["loc_gravel_road", "loc_shepherds_trail"], ui: { x: 1200, y: 180 } }
       ),
       place(
         "loc_watchtower",
         "Watchtower Ruin",
         "A square tower from the days of the old dam, half its roof gone. Harpies nest at the top, and lately someone has been using the rooms below.",
-        { kind: "dungeon", mapStyle: "stone", atmosphere: "eerie", connectedLocationIds: ["loc_windgap", "loc_shepherds_trail"], ui: { x: 1200, y: 30 } }
+        { kind: "dungeon", mapStyle: "stone", atmosphere: "eerie", ui: { x: 1200, y: 30 } }
       ),
       place(
         "loc_shepherds_trail",
         "Shepherds' Trail",
         "A steep, narrow trail between the pass and the meadows, marked with cairns. Sheep use it; carts cannot.",
-        { atmosphere: "quiet", connectedLocationIds: ["loc_windgap", "loc_watchtower", "loc_outpost"], ui: { x: 1200, y: 370 } }
+        { atmosphere: "quiet", connectedLocationIds: ["loc_windgap"], ui: { x: 1200, y: 370 } }
       ),
       place(
         "loc_meadow_road",
         "Meadow Road",
         "The valley road: wide, flat and slow, through flowering meadows along the Brindle river — two easy days to Lanternport. Old Harrowfield's hut stands by a sheepfold; wild garlic and feverfew grow thick along the ditches. A trampled path leads into a thicket to the south.",
-        { atmosphere: "peaceful", connectedLocationIds: ["loc_river_ford", "loc_outpost", "loc_owlbear_hollow"], ui: { x: 900, y: 560 } }
+        { atmosphere: "peaceful", connectedLocationIds: ["loc_river_ford"], ui: { x: 900, y: 560 } }
       ),
       place(
         "loc_owlbear_hollow",
         "Owlbear Hollow",
         "A hollow in a thorn thicket, littered with wool and feathers. Something big lives here.",
-        { kind: "dungeon", mapStyle: "stone", atmosphere: "menacing", connectedLocationIds: ["loc_meadow_road"], ui: { x: 900, y: 740 } }
+        { kind: "dungeon", mapStyle: "stone", atmosphere: "menacing", ui: { x: 900, y: 740 } }
       ),
       place(
         "loc_outpost",
         "Traveler's Outpost",
         "A walled waystation where the Meadow Road meets the lake road: an inn, stables, a smithy corner and a lantern that burns all night over the gate. Carters, drovers and pilgrims to the Lantern Fair stop here.",
-        { kind: "town", mapStyle: "plots", atmosphere: "busy", hub: true, connectedLocationIds: ["loc_meadow_road", "loc_lanternport", "loc_shepherds_trail"], ui: { x: 1200, y: 560 } }
+        { kind: "town", mapStyle: "plots", atmosphere: "busy", hub: true, ui: { x: 1200, y: 560 } }
       ),
       place(
         "loc_lanternport",
         "Lanternport",
-        "The market town on the far shore of Stillwater Mere: stone quays, tall narrow houses and lanterns on every corner. In spring it prepares for its famous Lantern Fair. (Its streets open with the next part of the adventure.)",
-        { kind: "town", mapStyle: "streets", atmosphere: "lively", connectedLocationIds: ["loc_windgap", "loc_outpost"], ui: { x: 1500, y: 370 } }
+        "The market town on the far shore of Stillwater Mere: stone quays, tall narrow houses and lanterns on every corner. In spring it holds its famous Lantern Fair, when the Founders' Lantern is shown in the guildhall.",
+        {
+          kind: "town",
+          mapStyle: "streets",
+          atmosphere: "lively",
+          hub: true,
+          ui: { x: 1500, y: 370 },
+          phases: [
+            { id: "ph_fair", label: "The Lantern Fair", conditions: [flagIs("fair_open")], atmosphere: "festive, crowded, noisy" },
+            { id: "ph_saved", label: "The Lantern saved", conditions: [flagIs("lantern_saved")], atmosphere: "grateful, celebrating" }
+          ]
+        }
       ),
       // --- the Traveler's Outpost (town map) ---
       room(
@@ -38054,7 +39155,7 @@ ${g.lines.join("\n")}`).join("\n\n") + "\n\nSeveral commands and a message in on
         "loc_outpost",
         [5, 4],
         "A cobbled yard with a well, a mounting block and the all-night lantern over the gate. Carts come in from the Meadow Road and leave for Lanternport.",
-        { exits: [exit("ex_op_yard_common", "op_common", "n"), exit("ex_op_yard_stables", "op_stables", "s"), exit("ex_op_out_meadow", "loc_meadow_road", "w"), exit("ex_op_out_lanternport", "loc_lanternport", "e")] }
+        { exits: [exit("ex_op_yard_common", "op_common", "n"), exit("ex_op_yard_stables", "op_stables", "s"), exit("ex_op_out_meadow", "loc_meadow_road", "w"), exit("ex_op_out_lanternport", "lp_gate", "e")] }
       ),
       room(
         "op_common",
@@ -38235,7 +39336,7 @@ ${g.lines.join("\n")}`).join("\n\n") + "\n\nSeveral commands and a message in on
         mood: "weak, desperate",
         canJoin: true,
         ui: { x: 1480, y: 40 },
-        phases: [{ id: "ph_home", label: "Home again", conditions: [questIs("q_stablemaster", "turnedin")], name: "Corwin Lark", homeLocationId: "op_stables", mood: "grateful, recovering" }]
+        phases: [{ id: "ph_home", label: "Home again", conditions: [questIs("q_watchtower", "turnedin"), questIs("q_stablemaster", "turnedin")], name: "Corwin Lark", homeLocationId: "op_stables", mood: "grateful, recovering" }]
       },
       { id: "npc_harrowfield", name: "Old Harrowfield", personality: 'A shepherd (he/him), eighty if a day, who has lost six sheep and a lamb to "a bear with a beak" and will tell you all their names.', homeLocationId: "loc_meadow_road", mood: "grieving, stubborn", ui: { x: 1e3, y: 640 } }
     );
@@ -38308,17 +39409,18 @@ ${g.lines.join("\n")}`).join("\n\n") + "\n\nSeveral commands and a message in on
         objectives: [{ id: "o1", kind: "visit", target: "wt_hall", text: "Search the Watchtower Ruin on Windgap Pass" }, { id: "o2", kind: "talk", target: "npc_prisoner", text: "Find out who is held in the cellar" }],
         rewards: [{ type: "xp", xp: 150 }, { type: "reputation", factionId: "fac_outpost", amount: 50 }]
       },
+      // unlocked by finding the real Corwin in the Watchtower, or by the Reedcloaks' ledger (layer 4)
       {
         id: "q_stablemaster",
         title: "The Stablemaster",
         giverPersonId: "npc_hedda",
         turninPersonId: "npc_hedda",
-        prerequisites: { quests: ["q_watchtower"] },
+        prerequisites: { flags: ["stablemaster_suspected"] },
         ui: { x: 1560, y: 780 },
-        description: "The real Corwin Lark was chained in the watchtower. Something wearing his face works in the Outpost stables.",
-        offerText: "Pip told me. If Corwin is in that tower, then what is in my stables? …I have a crossbow and a very bad temper. Go and face it with me.",
+        description: "Something wearing the stablemaster's face works in the Outpost stables and tells the smugglers which carts to hit.",
+        offerText: 'Pip swears Mr Lark came back from the pass wrong — and now I hear the smugglers have "the stablemaster" in their pay. If that is not Corwin in my stables, what is it? …I have a crossbow and a very bad temper. Go and face it with me.',
         progressText: "It is still in the stables.",
-        completionText: "A shapechanger. In my stables, for a whole season, telling smugglers our carts. Corwin is home now — and you have a room here for as long as you live.",
+        completionText: "A shapechanger. In my stables, for a whole season, telling smugglers our carts. You have a room here for as long as you live.",
         objectives: [{ id: "o1", kind: "kill", target: "Doppelganger", count: 1, text: "Unmask the false stablemaster" }],
         rewards: [
           { type: "xp", xp: 300 },
@@ -38360,6 +39462,16 @@ ${g.lines.join("\n")}`).join("\n\n") + "\n\nSeveral commands and a message in on
         ui: { x: 1560, y: 380 }
       },
       {
+        id: "ev_suspect_tower",
+        name: "Corwin is alive",
+        description: "The real Corwin Lark is alive — so who works in the Outpost stables?",
+        triggers: [{ type: "onQuestState", questId: "q_watchtower", state: "turnedin" }],
+        conditions: [],
+        effects: [{ type: "flag", key: "stablemaster_suspected", value: true }],
+        repeatable: false,
+        ui: { x: 1640, y: 700 }
+      },
+      {
         id: "ev_unmask",
         name: "The mask slips",
         description: "Corwin Lark turns from the horses — and his face runs like wax into something grey and smooth.",
@@ -38373,6 +39485,1297 @@ ${g.lines.join("\n")}`).join("\n\n") + "\n\nSeveral commands and a message in on
     w.globalLore.push(
       { id: "gl_reedcloaks", label: "The Reedcloaks", content: "On the lake they speak of smugglers who wear cloaks the green of lake reeds and row at night without lights.", keys: ["Reedcloak", "green cloak", "smuggler"] },
       { id: "gl_watchtower", label: "The old watchtower", content: "The watchtower on Windgap Pass was built with the old dam, to watch the road and the water. It has stood empty for a century.", keys: ["watchtower", "tower", "Windgap"] }
+    );
+    return w;
+  }
+  var fairDay = (n) => ({ field: "flag.fair_day", op: "==", value: n });
+  var contest = (id, title, at, check, text, words, ui) => ({
+    id,
+    title,
+    giverPersonId: "npc_marlow",
+    turninPersonId: "npc_marlow",
+    repeat: "daily",
+    ui,
+    prerequisites: { quests: ["q_fair_signup"], notFlags: ["fair_over"] },
+    description: words.description,
+    offerText: words.offer,
+    progressText: "Go on — the crowd is waiting.",
+    completionText: words.done,
+    objectives: [Object.assign({ id: "o1", kind: "check", text, at }, check)],
+    rewards: [{ type: "xp", xp: 50 }, { type: "gold", gold: 5 }, { type: "reputation", factionId: "fac_lanternport", amount: 15 }]
+  });
+  function layer3(w) {
+    w.locations.push(
+      // --- Lanternport (town map): three columns of streets from the hill down to the shore ---
+      room(
+        "lp_hilltop",
+        "The Hilltop",
+        "loc_lanternport",
+        [5, 0],
+        "The quiet top of the town: old trees, walled gardens and Ashcombe House behind its iron gate. The hill road climbs from here to Windgap Pass.",
+        { exits: [exit("ex_lp_hill_windgap", "loc_windgap", "n"), exit("ex_lp_hill_temple", "lp_temple", "e")] }
+      ),
+      room(
+        "lp_temple",
+        "Temple of the Lantern",
+        "loc_lanternport",
+        [10, 0],
+        "A tall white temple with a lantern carved over the door. Inside, a hundred candles, and an empty bracket where the Founders' Lantern hangs when it is not on show.",
+        { light: "dim" }
+      ),
+      room(
+        "lp_gate",
+        "Lake Gate & Market Square",
+        "loc_lanternport",
+        [5, 4],
+        "The lake road enters under a gate of green stone into a square of stalls, awnings and gossip. A lantern pole stands in the middle, hung with ribbons for the fair.",
+        { exits: [exit("ex_lp_gate_hill", "lp_hilltop", "n"), exit("ex_lp_gate_guild", "lp_guildhall", "e"), exit("ex_lp_gate_inn", "lp_inn", "s")] }
+      ),
+      room(
+        "lp_guildhall",
+        "Guildhall & Counting House",
+        "loc_lanternport",
+        [10, 4],
+        "The merchants' hall: a great timbered room with the guild banners, a gallery, and behind it the counting house with its iron-bound doors. During the fair the Founders' Lantern stands here on a plinth under guard.",
+        { light: "bright", exits: [exit("ex_lp_guild_watch", "lp_watch", "s", "door", { door: { state: "closed", material: "oak" } })] }
+      ),
+      room(
+        "lp_crafts",
+        "Crafts Lane",
+        "loc_lanternport",
+        [0, 8],
+        "A crooked lane of workshops: hammering from Dagna Holloway's forge, strange smells from Yara Sels' shop of bottles.",
+        { exits: [exit("ex_lp_crafts_ware", "lp_warehouses", "s")] }
+      ),
+      room(
+        "lp_inn",
+        "The Lamplighter",
+        "loc_lanternport",
+        [5, 8],
+        "The town's big inn, loud and warm, with a stage for fiddlers and an arm-wrestling table everyone pretends is for dining.",
+        { light: "bright", exits: [exit("ex_lp_inn_crafts", "lp_crafts", "w"), exit("ex_lp_inn_watch", "lp_watch", "e"), exit("ex_lp_inn_docks", "lp_docks", "s")] }
+      ),
+      room(
+        "lp_watch",
+        "Watch House",
+        "loc_lanternport",
+        [10, 8],
+        "A squat stone house with barred cells, a map of the town on the wall and a kettle that is never off the fire.",
+        { exits: [exit("ex_lp_watch_fair", "lp_fairground", "s")] }
+      ),
+      room(
+        "lp_warehouses",
+        "Warehouse Row",
+        "loc_lanternport",
+        [0, 12],
+        'Tall warehouses along a dark canal, rope and tar and gulls. Old Fisk keeps a "shop" in the last one, where nothing has a receipt.',
+        { light: "dim", hazards: ["slick cobbles by the canal"] }
+      ),
+      room(
+        "lp_docks",
+        "Docks & Fish Market",
+        "loc_lanternport",
+        [5, 12],
+        "Stone quays, fishing boats, nets drying on poles and a fish market that starts before dawn. The boat race starts and ends here.",
+        { exits: [exit("ex_lp_docks_ware", "lp_warehouses", "w"), exit("ex_lp_docks_fair", "lp_fairground", "e")] }
+      ),
+      room(
+        "lp_fairground",
+        "Fairground",
+        "loc_lanternport",
+        [10, 12],
+        "The meadow on the shore, full of tents and banners: the archery butts, the riddle tent, cook fires, jugglers — and every night, lanterns on the water.",
+        { light: "bright" }
+      )
+    );
+    w.objects.push(
+      { id: "obj_founders_lantern", name: "The Founders' Lantern", desc: 'A tall lantern of green bronze and old glass on a plinth, its flame pale and strangely steady. The guard says it came from the old chapel "before the water".', locationId: "lp_guildhall", kind: "light", lit: true },
+      { id: "obj_fair_board", name: "Fair programme", desc: '"THE LANTERN FAIR — three days! Archery at the butts · The Riddle Tent · Arm-wrestling at the Lamplighter · The Boat Race from the docks · The great Cook-off · Fireworks on the last night. Contestants sign up with Magpie Marlow."', locationId: "lp_gate", kind: "furniture" },
+      { id: "obj_fisk_crates", name: "Unmarked crates", desc: "Crates stamped with the Brindlewick mill's mark, painted over in a hurry.", locationId: "lp_warehouses", kind: "container", contains: ["Grain Sack x2"] },
+      { id: "obj_stalls", name: "Market stalls", desc: "Cloth, pots, sweets and fish; good cover if a fight breaks out.", locationId: "lp_gate", kind: "furniture", cover: "half" }
+    );
+    w.factions.push(
+      {
+        id: "fac_lanternport",
+        name: "Lanternport",
+        description: "The town: its guild, its watch and its people.",
+        hqLocationId: "loc_lanternport",
+        startReputation: 0,
+        ui: { x: 1700, y: 120 },
+        goals: "A fair without trouble; the road to Brindlewick safe again (they suspect Brindlewick of stealing the carts).",
+        phases: [{ id: "ph_truth", label: "The truth is out", conditions: [questIs("q_whispers", "turnedin")], goals: "Catch the smugglers and whoever inside the town helps them; make peace with Brindlewick." }]
+      }
+    );
+    w.npcs.push(
+      { id: "npc_varga", name: "Mayor Isolde Varga", personality: "The mayor (she/her): fifty, brisk, elegant, carries a ledger like a shield. Blames Brindlewick for the missing carts until someone shows her better.", factionId: "fac_lanternport", homeLocationId: "lp_guildhall", mood: "harried", ui: { x: 1700, y: 200 } },
+      { id: "npc_almeer", name: "Guildmaster Rashid Almeer", personality: "Head of the merchants' guild (he/him): soft-spoken, precise, knows every debt in town and hates gossip — unless it is true.", factionId: "fac_lanternport", homeLocationId: "lp_guildhall", mood: "careful", ui: { x: 1780, y: 200 } },
+      { id: "npc_dahl", name: "Captain Sunniva Dahl", personality: "Captain of the town watch (she/her): tall, freckled, blunt and tired; has too few guards for the fair and knows it.", factionId: "fac_lanternport", homeLocationId: "lp_watch", mood: "tense", ui: { x: 1860, y: 200 } },
+      {
+        id: "npc_aurelio",
+        name: "Brother Aurelio",
+        personality: "Keeper of the Temple of the Lantern (he/him): old, gentle, a little deaf, and the only person in town who still reads the chapel's records.",
+        factionId: "fac_lanternport",
+        homeLocationId: "lp_temple",
+        mood: "serene",
+        ui: { x: 1700, y: 280 },
+        shop: { items: [{ item: "Holy Water", price: "" }, { item: "Healer's Kit", price: "" }, { item: "Potion of Healing", price: "", stock: 2 }], buys: false, note: "He heals the hurt for a donation, or for nothing." }
+      },
+      {
+        id: "npc_nell",
+        name: "Nell",
+        personality: "Keeper of the Lamplighter (she/her): round, quick-tongued, remembers every face and every tab.",
+        factionId: "fac_lanternport",
+        homeLocationId: "lp_inn",
+        mood: "busy",
+        ui: { x: 1780, y: 280 },
+        shop: { items: [{ item: "Hot meal", price: "4 sp" }, { item: "Ale", price: "4 cp" }, { item: "Rations", price: "" }, { item: "Torch", price: "" }, { item: "Lantern, Hooded", price: "" }, { item: "Oil", price: "" }, { item: "Potion of Healing", price: "", stock: 1 }], buys: true, note: "A bed is 8 sp a night during the fair." }
+      },
+      { id: "npc_tam", name: "Tam", personality: "Nell's brother (he/him): fiddler, cook and the town's worst liar; knows every rumour on the waterfront.", factionId: "fac_lanternport", homeLocationId: "lp_inn", mood: "cheerful", ui: { x: 1860, y: 280 } },
+      {
+        id: "npc_greta",
+        name: "Greta Salt",
+        personality: "A fish seller at the market (she/her): loud, weather-beaten, sells the best lake fish and has opinions about the boat race.",
+        factionId: "fac_lanternport",
+        homeLocationId: "lp_docks",
+        mood: "loud",
+        ui: { x: 1700, y: 360 },
+        shop: { items: [{ item: "Lake Fish", price: "1 sp" }, { item: "Smoked Eel", price: "3 sp" }, { item: "Fishing Tackle", price: "1 gp" }], buys: false }
+      },
+      { id: "npc_jory", name: "Jory", personality: "A dockhand (he/him): young, strong, frightened of the wrong people; has seen boats without lights going out at night.", homeLocationId: "lp_docks", mood: "nervous", ui: { x: 1780, y: 360 } },
+      {
+        id: "npc_fisk",
+        name: "Old Fisk",
+        personality: 'A "dealer in second-hand goods" in Warehouse Row (he/him): toothless, charming, a fence for anyone who pays. Knows exactly whose goods he sells and would rather not say.',
+        homeLocationId: "lp_warehouses",
+        mood: "sly",
+        ui: { x: 1860, y: 360 },
+        shop: { items: [{ item: "Thieves' Tools", price: "" }, { item: "Caltrops", price: "" }, { item: "Lantern, Bullseye", price: "" }, { item: "Reed-green Cloak", price: "2 gp" }], buys: true, note: "He buys anything and asks nothing." }
+      },
+      {
+        id: "npc_ashcombe",
+        name: "Lord Percival Ashcombe",
+        personality: "The last of an old family (he/him): charming, beautifully dressed, deep in debt, and nervous whenever the fair or the Lantern is mentioned.",
+        homeLocationId: "lp_hilltop",
+        mood: "jittery",
+        ui: { x: 1700, y: 440 },
+        phases: [{ id: "ph_caught", label: "Found out", conditions: [flagIs("lantern_saved")], mood: "disgraced, under guard" }]
+      },
+      { id: "npc_marlow", name: "Magpie Marlow", personality: "The fair master (they/them): quick, theatrical, in a coat of a hundred patches; runs every contest and loves a good loser as much as a winner.", factionId: "fac_lanternport", homeLocationId: "lp_fairground", mood: "exuberant", ui: { x: 1780, y: 440 } },
+      {
+        id: "npc_yara",
+        name: "Yara Sels",
+        personality: "The alchemist of Crafts Lane (she/her): precise, dry, gloves stained every colour; sells remedies and spices and sniffs every customer.",
+        factionId: "fac_lanternport",
+        homeLocationId: "lp_crafts",
+        mood: "focused",
+        ui: { x: 1860, y: 440 },
+        shop: { items: [{ item: "Potion of Healing", price: "", stock: 3 }, { item: "Antitoxin", price: "" }, { item: "Alchemist's Fire", price: "" }, { item: "Potion of Climbing", price: "75 gp", stock: 1 }, { item: "Lakeshore Saffron", price: "5 sp" }], buys: true }
+      },
+      {
+        id: "npc_dagna",
+        name: "Dagna Holloway",
+        personality: "The smith of Crafts Lane (she/her): huge, soot-black to the elbows, laughs like a bellows; makes the best blades on the lake.",
+        factionId: "fac_lanternport",
+        homeLocationId: "lp_crafts",
+        mood: "cheerful",
+        ui: { x: 1940, y: 440 },
+        shop: { items: [{ item: "Longsword", price: "" }, { item: "Rapier", price: "" }, { item: "Warhammer", price: "" }, { item: "Longbow", price: "" }, { item: "Light Crossbow", price: "" }, { item: "Arrows (20)", price: "1 gp" }, { item: "Scale Mail", price: "" }, { item: "Chain Mail", price: "", stock: 1 }, { item: "Shield", price: "" }], buys: true }
+      }
+    );
+    const baba = w.npcs.find((n) => n.id === "npc_baba");
+    baba.phases = [{ id: "ph_fair", label: "At the fair", conditions: [flagIs("fair_open"), { field: "flag.fair_over", op: "!=", value: true }], homeLocationId: "lp_fairground", mood: "excited, competitive" }];
+    w.quests.push(
+      // the hook from Brindlewick
+      {
+        id: "q_word_lanternport",
+        title: "Word to Lanternport",
+        giverPersonId: "npc_maren",
+        turninPersonId: "npc_varga",
+        prerequisites: { quests: ["q_hollow_oak"] },
+        ui: { x: 1780, y: 540 },
+        description: "Elder Holt wants Lanternport's mayor to hear that goblins — not Brindlewick — took the carts, and to see the strange green coin.",
+        offerText: "Lanternport says we steal our own carts to cheat them. Take this letter to Mayor Varga — in person — and show her that coin. Tell her about the oak. Maybe then she'll help with the road.",
+        progressText: "You have a letter from Brindlewick?",
+        completionText: "Goblins, paid in coins from under the lake. …I owe your elder an apology, and I hate owing people apologies. Stay for the fair — and keep your eyes open.",
+        objectives: [{ id: "o1", kind: "visit", target: "loc_lanternport", text: "Go to Lanternport" }, { id: "o2", kind: "talk", target: "npc_varga", text: "Give the letter to Mayor Varga" }],
+        rewards: [{ type: "xp", xp: 100 }, { type: "reputation", factionId: "fac_lanternport", amount: 50 }, { type: "reputation", factionId: "fac_brindlewick", amount: 50 }]
+      },
+      // B1
+      {
+        id: "q_fair_signup",
+        title: "A Stranger at the Fair",
+        giverPersonId: "npc_marlow",
+        turninPersonId: "npc_marlow",
+        ui: { x: 1940, y: 540 },
+        description: "The Lantern Fair needs contestants, and Magpie Marlow has decided you are one.",
+        offerText: "A new face! Wonderful. The fair opens the moment I have enough fools — sorry, contestants. Get a ribbon from Nell at the Lamplighter, go and see the Lantern in the guildhall for luck, and come back to me.",
+        progressText: "Ribbon? Lantern? Tick tock!",
+        completionText: "Marvellous. The Lantern Fair is OPEN! Three days, four contests, one cook-off, and fireworks on the last night. Try anything once a day — I remember every winner.",
+        objectives: [{ id: "o1", kind: "talk", target: "npc_nell", text: "Get a contestant's ribbon from Nell at the Lamplighter" }, { id: "o2", kind: "visit", target: "lp_guildhall", text: "See the Founders' Lantern in the guildhall" }],
+        rewards: [{ type: "xp", xp: 50 }, { type: "item", item: "Contestant's Ribbon", qty: 1 }]
+      },
+      // B2: the contests (daily) and the cook-off
+      contest(
+        "q_contest_archery",
+        "Archery at the Butts",
+        "lp_fairground",
+        { ability: "dex", dc: 13 },
+        "Hit the gold at the archery butts",
+        { description: "Three arrows at the painted butts on the shore.", offer: "Three arrows, one straw man, and the whole town watching. Dexterity, darling — and do not shoot the goat.", done: "Gold! The crowd loves you. Same time tomorrow?" },
+        { x: 2020, y: 460 }
+      ),
+      contest(
+        "q_contest_arms",
+        "Arm-Wrestling at the Lamplighter",
+        "lp_inn",
+        { skill: "athletics", dc: 13 },
+        "Win a bout at the Lamplighter's arm-wrestling table",
+        { description: "The Lamplighter's famous table, where dockhands and farmers settle arguments.", offer: "The Lamplighter's table: elbow down, grip, and try not to break the furniture.", done: "The table survived — barely. Well pulled!" },
+        { x: 2020, y: 540 }
+      ),
+      contest(
+        "q_contest_riddles",
+        "The Riddle Tent",
+        "lp_fairground",
+        { ability: "int", dc: 13 },
+        "Answer the riddle-keeper's three riddles",
+        { description: "A tent of silk and puzzles; the riddle-keeper never smiles.", offer: "In the striped tent sits a woman who has never smiled. Answer her three riddles and you will see her try.", done: "She SMILED. I owe Tam a silver piece." },
+        { x: 2020, y: 620 }
+      ),
+      contest(
+        "q_contest_boats",
+        "The Boat Race",
+        "lp_docks",
+        { skill: "athletics", dc: 14 },
+        "Row the boat race from the docks around the buoy and back",
+        { description: "Rowing boats from the docks around the red buoy and back.", offer: "From the docks to the red buoy and back, before the bell. Oars are provided. Swimming is discouraged.", done: "First to the bell! The fishwives are already arguing about it." },
+        { x: 2020, y: 700 }
+      ),
+      {
+        id: "q_cookoff",
+        title: "The Great Cook-off",
+        giverPersonId: "npc_baba",
+        turninPersonId: "npc_baba",
+        prerequisites: { quests: ["q_fair_signup"], notFlags: ["fair_over"] },
+        ui: { x: 2100, y: 460 },
+        description: "Baba Okafor has come to the fair to win the cook-off at last, and he needs fresh lake fish and saffron.",
+        offerText: "Every year Lanternport's cooks win with fish. This year I use THEIR fish and MY spice. Two lake fish from the market and saffron from the alchemist — quickly, before they see my face!",
+        progressText: "Fish? Saffron? My pot is waiting!",
+        completionText: "Taste. TASTE. …We won. Twenty years! Hedda will never believe it.",
+        objectives: [{ id: "o1", kind: "collect", target: "Lake Fish", count: 2, text: "Buy two lake fish at the fish market" }, { id: "o2", kind: "collect", target: "Lakeshore Saffron", count: 1, text: "Buy saffron from Yara Sels in Crafts Lane" }],
+        rewards: [{ type: "xp", xp: 100 }, { type: "gold", gold: 10 }, { type: "reputation", factionId: "fac_outpost", amount: 50 }, { type: "reputation", factionId: "fac_lanternport", amount: 25 }]
+      },
+      {
+        id: "q_fair_champion",
+        title: "Champion of the Fair",
+        giverPersonId: "npc_marlow",
+        turninPersonId: "npc_marlow",
+        prerequisites: { quests: ["q_contest_archery", "q_contest_arms", "q_contest_riddles", "q_contest_boats"] },
+        ui: { x: 2100, y: 540 },
+        description: "You have won every contest of the fair at least once. Magpie wants to crown you.",
+        offerText: "Archery, arms, riddles, oars — all four! Stand on the barrel, champion, and choose your prize before the guild changes its mind.",
+        progressText: "On the barrel!",
+        completionText: "THE CHAMPION OF THE LANTERN FAIR! Lanternport will be singing about you for a week. Badly.",
+        objectives: [{ id: "o1", kind: "talk", target: "npc_marlow", text: "Be crowned by Magpie Marlow" }],
+        rewards: [
+          { type: "xp", xp: 150 },
+          { type: "reputation", factionId: "fac_lanternport", amount: 100 },
+          { type: "choice", options: [{ item: "+1 Longsword", qty: 1 }, { item: "+1 Shortbow", qty: 1 }, { item: "+1 Rapier", qty: 1 }, { item: "+1 Mace", qty: 1 }] }
+        ]
+      },
+      // B3
+      {
+        id: "q_whispers",
+        title: "Whispers on the Docks",
+        giverPersonId: "npc_dahl",
+        turninPersonId: "npc_dahl",
+        prerequisites: { quests: ["q_fair_signup"] },
+        ui: { x: 2180, y: 460 },
+        description: "Captain Dahl has heard that someone plans to rob the fair. Three people may know more: the fence in Warehouse Row, the dockhands, and the guildmaster.",
+        offerText: "Word on the water is that someone means to rob the fair. I have six guards and a thousand visitors. Ask Old Fisk what he is selling, ask the dockhands about boats without lights, and ask Guildmaster Almeer who in this town owes too much money.",
+        progressText: "What have you heard?",
+        completionText: "Brindlewick grain in Fisk's shop, boats without lights, and Lord Ashcombe owing half the guild — and last week he asked to see the guildhall's night-watch plan. On the last night, when the fireworks go up, someone comes for the Lantern.",
+        objectives: [{ id: "o1", kind: "talk", target: "npc_fisk", text: "Ask Old Fisk what he sells in Warehouse Row" }, { id: "o2", kind: "talk", target: "npc_jory", text: "Ask the dockhands about boats at night" }, { id: "o3", kind: "talk", target: "npc_almeer", text: "Ask Guildmaster Almeer who owes too much" }],
+        rewards: [{ type: "xp", xp: 200 }, { type: "gold", gold: 20 }, { type: "reputation", factionId: "fac_lanternport", amount: 100 }]
+      },
+      // B4
+      // B4 "stop it"; the other way, "Let Them Run" (follow the thieves), comes with layer 4 — accepting one closes the other
+      {
+        id: "q_last_night",
+        title: "The Last Night",
+        giverPersonId: "npc_dahl",
+        turninPersonId: "npc_dahl",
+        prerequisites: { quests: ["q_whispers"], notFlags: ["follow_plan"] },
+        ui: { x: 2180, y: 540 },
+        description: "On the fair's last night, when the fireworks go up, thieves will come for the Founders' Lantern in the guildhall.",
+        offerText: "The last night of the fair. The fireworks start at nightfall; the guildhall will be half empty, and Ashcombe's friends know the watch plan. Be in the guildhall when the sky lights up. I will be there too.",
+        progressText: "Tonight? Or have they come already?",
+        completionText: "The Lantern is safe, the thieves are in my cells, and Lord Ashcombe is explaining himself to the mayor. One of them had a green coin like yours… and a map of the lake with a cave marked on it.",
+        objectives: [{ id: "o1", kind: "visit", target: "lp_guildhall", text: "Be in the guildhall on the fair's last night" }, { id: "o2", kind: "kill", target: "Spy", count: 1, text: "Stop the thieves' leader" }],
+        rewards: [
+          { type: "xp", xp: 300 },
+          { type: "gold", gold: 50 },
+          { type: "reputation", factionId: "fac_lanternport", amount: 250 },
+          { type: "reputation", factionId: "fac_reedcloaks", amount: -100 },
+          { type: "choice", options: [{ item: "Potion of Heroism", qty: 1 }, { item: "Potion of Healing", qty: 3 }, { item: "Cloak of Protection", qty: 1 }] }
+        ]
+      }
+    );
+    w.encounters.push(
+      { id: "enc_warehouse_toughs", name: "Toughs in Warehouse Row", monsters: [{ key: "tough", count: 2 }, { key: "bandit", count: 1 }], personIds: [], start: "near", factionId: "fac_reedcloaks" },
+      { id: "enc_heist", name: "The Lantern thieves", monsters: [{ key: "spy", count: 1 }, { key: "bandit", count: 2 }, { key: "scout", count: 1 }], personIds: [], start: "near", factionId: "fac_reedcloaks" }
+    );
+    w.events.push(
+      // the fair: opens with the sign-up and runs three days (a night, then the next morning)
+      {
+        id: "ev_fair_opens",
+        name: "The Lantern Fair opens",
+        description: "Drums, bunting and a hundred lanterns: the Lantern Fair of Lanternport is open, and Magpie Marlow announces the first contests.",
+        triggers: [{ type: "onQuestState", questId: "q_fair_signup", state: "turnedin" }],
+        conditions: [],
+        effects: [{ type: "flag", key: "fair_open", value: true }, { type: "flag", key: "fair_day", value: 1 }],
+        repeatable: false,
+        ui: { x: 2260, y: 300 }
+      },
+      {
+        id: "ev_fair_night1",
+        name: "Lanterns on the water",
+        description: "The first night of the fair: lanterns float out on the lake and the Lamplighter is full until dawn.",
+        triggers: [{ type: "onTime" }],
+        conditions: [fairDay(1), { field: "time", op: "==", value: "night" }],
+        effects: [{ type: "flag", key: "fair_night1", value: true }],
+        repeatable: false,
+        ui: { x: 2260, y: 360 }
+      },
+      {
+        id: "ev_fair_day2",
+        name: "The fair's second day",
+        description: "The second day of the Lantern Fair: the boat crews practise at the docks and the riddle tent has a queue.",
+        triggers: [{ type: "onTime" }],
+        conditions: [fairDay(1), flagIs("fair_night1"), { field: "time", op: "==", value: "morning" }],
+        effects: [{ type: "flag", key: "fair_day", value: 2 }],
+        repeatable: false,
+        ui: { x: 2260, y: 420 }
+      },
+      {
+        id: "ev_fair_night2",
+        name: "Music at the Lamplighter",
+        description: "The second night of the fair: fiddles at the Lamplighter, and boats without lights slipping out from the far end of the docks.",
+        triggers: [{ type: "onTime" }],
+        conditions: [fairDay(2), { field: "time", op: "==", value: "night" }],
+        effects: [{ type: "flag", key: "fair_night2", value: true }],
+        repeatable: false,
+        ui: { x: 2260, y: 480 }
+      },
+      {
+        id: "ev_fair_day3",
+        name: "The fair's last day",
+        description: "The last day of the Lantern Fair: the town is packed, the fireworks are stacked on the shore for tonight, and the guard at the guildhall is thin.",
+        triggers: [{ type: "onTime" }],
+        conditions: [fairDay(2), flagIs("fair_night2"), { field: "time", op: "==", value: "morning" }],
+        effects: [{ type: "flag", key: "fair_day", value: 3 }],
+        repeatable: false,
+        ui: { x: 2260, y: 540 }
+      },
+      {
+        id: "ev_heist",
+        name: "Fireworks and broken glass",
+        description: "The first rockets burst over the lake — and in the guildhall a window shatters. Figures in dark coats, one with a face you would forget at once, make for the Lantern.",
+        triggers: [{ type: "onEnterLocation", locationId: "lp_guildhall" }, { type: "onTime" }],
+        conditions: [questIs("q_last_night", "active"), fairDay(3), { field: "time", op: "==", value: "night" }, { field: "location", op: "==", value: "lp_guildhall" }],
+        effects: [{ type: "flag", key: "heist_night", value: true }, { type: "encounter", value: "enc_heist" }],
+        repeatable: false,
+        ui: { x: 2260, y: 600 }
+      },
+      {
+        id: "ev_fair_closes",
+        name: "The Lantern saved",
+        description: "The Founders' Lantern is back on its plinth; the fair ends with cheering on the shore.",
+        triggers: [{ type: "onQuestState", questId: "q_last_night", state: "turnedin" }],
+        conditions: [],
+        effects: [{ type: "flag", key: "lantern_saved", value: true }, { type: "flag", key: "fair_over", value: true }],
+        repeatable: false,
+        ui: { x: 2260, y: 660 }
+      },
+      {
+        id: "ev_warehouse_toughs",
+        name: "Unfriendly dockworkers",
+        description: "Three broad men step out of a warehouse door with cudgels: someone does not like your questions.",
+        triggers: [{ type: "onEnterLocation", locationId: "lp_warehouses" }],
+        conditions: [questIs("q_whispers", "active")],
+        effects: [{ type: "encounter", value: "enc_warehouse_toughs" }],
+        repeatable: false,
+        ui: { x: 2260, y: 720 }
+      }
+    );
+    w.globalLore.push(
+      { id: "gl_lantern", label: "The Founders' Lantern", content: "The Founders' Lantern is Lanternport's relic, brought from the drowned village's chapel when the dam was built. Its flame is said never to have gone out. It is shown in the guildhall during the Lantern Fair.", keys: ["Lantern", "Founders", "relic"] },
+      { id: "gl_fair", label: "The Lantern Fair", content: "The Lantern Fair lasts three days in spring: contests (archery, arm-wrestling, riddles, the boat race), a cook-off, and fireworks over the lake on the last night.", keys: ["fair", "contest", "fireworks"] }
+    );
+    return w;
+  }
+  var notFlag = (key) => ({ field: "flag." + key, op: "!=", value: true });
+  function layer4(w) {
+    const at = (id) => w.locations.find((l) => l.id === id);
+    at("loc_river_ford").exits = [exit("ex_ford_beach", "loc_hidden_beach", "s", "open", { secretDC: 14 })];
+    at("lp_docks").exits.push(exit("ex_lp_docks_boat", "loc_hidden_beach", "s", "open", { secretDC: 99, note: "by boat, once hired" }));
+    at("loc_river_ford").description += " Downstream, past the ferry, the reeds grow so thick that the river seems to end.";
+    at("loc_lanternport").phases.splice(1, 0, { id: "ph_robbed", label: "The Lantern stolen", conditions: [flagIs("lantern_stolen")], atmosphere: "shocked, angry, full of rumours" });
+    at("lp_guildhall").phases = [{
+      id: "ph_empty",
+      label: "The plinth is empty",
+      conditions: [flagIs("lantern_stolen"), notFlag("lantern_recovered")],
+      description: "The merchants' hall, quiet and ashamed: the plinth where the Founders' Lantern stood is empty, a broken window boarded up behind it, and two guards watch nothing."
+    }];
+    w.objects.find((o) => o.id === "obj_founders_lantern").phases = [{ id: "ph_stolen", label: "Stolen", conditions: [flagIs("lantern_stolen"), notFlag("lantern_recovered")], gone: true }];
+    w.factions.find((f) => f.id === "fac_reedcloaks").phases = [{
+      id: "ph_scattered",
+      label: "Scattered",
+      conditions: [questIs("q_reedcloak_cave", "turnedin")],
+      description: "Smugglers in reed-green cloaks. Their captain has fallen and their cave is taken; the crews that are left row at night for whoever pays."
+    }];
+    const ash = w.npcs.find((n) => n.id === "npc_ashcombe");
+    ash.phases.unshift({ id: "ph_named", label: "Named in the ledger", conditions: [flagIs("ledger_read")], mood: "frightened; the watch has questions about a ledger" });
+    w.locations.push(
+      // --- the world graph ---
+      place(
+        "loc_hidden_beach",
+        "Hidden Beach",
+        "A crescent of grey shingle on the south shore of Stillwater Mere, walled in by reeds and cliffs, where the Brindle river slips into the lake. Keel marks and boot prints lead to a dark cave in the cliff; a path climbs east along the shore to the old dam. Giant crabs bask here by day; at night the frogs sing.",
+        { atmosphere: "secretive", ui: { x: 450, y: 700 } }
+      ),
+      place(
+        "loc_sea_cave",
+        "The Sea Cave",
+        "A sea cave in the cliffs above the hidden beach, big enough to row a boat into — the Reedcloaks' base: a hidden dock, their stores and bunks, and passages that run down under the lake.",
+        { kind: "dungeon", mapStyle: "stone", atmosphere: "tense", ui: { x: 300, y: 860 } }
+      ),
+      place(
+        "loc_old_dam",
+        "The Old Dam",
+        "The great grey dam at the lake's outflow, two hundred years old, that raised the water and drowned Old Brindle. A sluice house squats on top; somebody still keeps it.",
+        { kind: "dungeon", mapStyle: "stone", atmosphere: "melancholy", ui: { x: 620, y: 860 } }
+      ),
+      // --- the Sea Cave (dungeon map): the dock in the middle, stores and the captain above, the deep passages behind ---
+      room(
+        "sc_mouth",
+        "Cave Mouth",
+        "loc_sea_cave",
+        [0, 4],
+        "The tide-worn mouth of the cave: slick rocks, knee-deep water at the edges and the smell of tar. The beach is a bright arch behind you.",
+        { light: "dim", hazards: ["slick rocks", "knee-deep water"], exits: [exit("ex_sc_out", "loc_hidden_beach", "w"), exit("ex_sc_mouth_dock", "sc_dock", "e", "corridor")] }
+      ),
+      room(
+        "sc_dock",
+        "Hidden Dock",
+        "loc_sea_cave",
+        [5, 4],
+        "A plank jetty on tarred posts in a cavern of black water. Two long rowing boats are tied up, reed-green cloth over their cargo. Lanterns hang low, hooded towards the wall.",
+        { light: "dim", exits: [exit("ex_sc_dock_lookout", "sc_lookout", "n", "stairs"), exit("ex_sc_dock_stores", "sc_stores", "e", "door", { door: { state: "closed", material: "tarred plank" } }), exit("ex_sc_dock_bunks", "sc_bunks", "s", "corridor")] }
+      ),
+      room(
+        "sc_lookout",
+        "Lookout Ledge",
+        "loc_sea_cave",
+        [5, 0],
+        "A ledge high in the cliff with a slit over the lake and a bell on a rope. Whoever stands here sees every boat on the south shore.",
+        { light: "dim", hazards: ["a long drop to the water"], exits: [exit("ex_sc_lookout_cabin", "sc_captain", "e", "secret", { secretDC: 17, door: { state: "closed", material: "plank behind a sailcloth" } })] }
+      ),
+      room(
+        "sc_captain",
+        "Captain's Cabin",
+        "loc_sea_cave",
+        [10, 0],
+        "A cabin built into a dry cave: a real bed, a chart table with the lake drawn in red ink, a strongbox, and a bottle of good wine. Captain Vesna Kral does not live like her crews.",
+        { light: "dim", exits: [exit("ex_sc_cabin_stores", "sc_stores", "s", "door", { door: { state: "closed", material: "iron-bound oak" } })] }
+      ),
+      room(
+        "sc_stores",
+        "Stolen Stores",
+        "loc_sea_cave",
+        [10, 4],
+        "Crates, barrels and sacks from a season of missing carts, stacked to the roof — Brindlewick's mill stamp, the Outpost's brand, Lanternport's guild seal. Tools on pegs by the door.",
+        { light: "dark", exits: [exit("ex_sc_stores_grotto", "sc_grotto", "e", "corridor"), exit("ex_sc_stores_relics", "sc_relics", "s", "door", { door: { state: "locked", material: "iron grille", lockDC: 14, keyItem: "Brass Key" } })] }
+      ),
+      room(
+        "sc_grotto",
+        "Grotto Pool",
+        "loc_sea_cave",
+        [15, 4],
+        "A round grotto around a pool of still, dark water. The Reedcloaks throw their scraps in here, and something big has learned to wait for them.",
+        { light: "dark", hazards: ["deep water at the edge"], exits: [exit("ex_sc_grotto_flooded", "sc_flooded", "s", "corridor")] }
+      ),
+      room(
+        "sc_bunks",
+        "Bunkroom",
+        "loc_sea_cave",
+        [5, 8],
+        "Hammocks, sea chests and wet boots; dice on an upturned barrel. It smells of damp wool and pipe smoke.",
+        { light: "dim", exits: [exit("ex_sc_bunks_galley", "sc_galley", "w", "open")] }
+      ),
+      room(
+        "sc_galley",
+        "Galley",
+        "loc_sea_cave",
+        [0, 8],
+        "A smoky cook-cave with a fire under a crack in the rock, a stew pot and one tired cook who does not look like a fighter.",
+        { light: "dim" }
+      ),
+      room(
+        "sc_relics",
+        "Sorting Room",
+        "loc_sea_cave",
+        [10, 8],
+        `Long tables covered in things dredged from the lake: green coins, a church bell's clapper, candlesticks, a stone saint with no face. Everything is sorted, cleaned and labelled — "for Mother R.".`,
+        { light: "dim", exits: [exit("ex_sc_relics_flooded", "sc_flooded", "e", "corridor")] }
+      ),
+      room(
+        "sc_flooded",
+        "Flooded Passage",
+        "loc_sea_cave",
+        [15, 8],
+        "The passage slopes down under the lake until black water fills it to the roof. The air is cold and smells of old stone; now and then, very far below, something rings like a bell. Old marks on the wall — a lantern over water — point down into the water.",
+        { light: "dark", hazards: ["deep cold water", "the passage dives under the lake"] }
+      ),
+      // --- the Old Dam (dungeon map) ---
+      room(
+        "od_crest",
+        "Dam Crest",
+        "loc_old_dam",
+        [0, 4],
+        "A broad stone walkway along the top of the dam: the Mere laps at one side, and on the other a dry gorge falls away to the millrace. A raft is moored below, with grappling hooks and nets.",
+        { exits: [exit("ex_od_out", "loc_hidden_beach", "w"), exit("ex_od_crest_sluice", "od_sluice", "e", "door", { door: { state: "closed", material: "weathered oak" } })] }
+      ),
+      room(
+        "od_sluice",
+        "Sluice House",
+        "loc_old_dam",
+        [5, 4],
+        "A stone house over the sluice gates: great winches, chains thick as an arm, and a gauge that shows how high the Mere stands. The big winch has no crank.",
+        { light: "dim", exits: [exit("ex_od_sluice_under", "od_under", "down", "stairs")] }
+      ),
+      room(
+        "od_under",
+        "Keeper's Undercroft",
+        "loc_old_dam",
+        [5, 8],
+        "A vault inside the dam where the keepers have always lived: a bunk, a stove, and on the walls the names of every family of Old Brindle, carved when the water came.",
+        { light: "dim" }
+      )
+    );
+    w.objects.push(
+      { id: "obj_keel_marks", name: "Keel marks", desc: "Fresh grooves in the shingle where boats are dragged up, and boot prints leading to a dark cave in the cliff.", locationId: "loc_hidden_beach" },
+      { id: "obj_driftwood", name: "Driftwood pile", desc: "Bleached logs piled high by the spring floods; good cover.", locationId: "loc_hidden_beach", kind: "furniture", cover: "half" },
+      { id: "obj_mouth_bell", name: "Alarm bell", desc: "A ship's bell on a rope; one pull and the whole cave knows.", locationId: "sc_lookout", kind: "furniture" },
+      { id: "obj_cave_crates", name: "Crates from the carts", desc: "Grain, cider, cloth and tools from a season of missing carts. And, on a peg by the door, a heavy iron crank.", locationId: "sc_stores", kind: "container", contains: ["Sluice Crank", "Grain Sack x2", "Rope"] },
+      { id: "obj_sea_chests", name: "Sea chests", desc: "The crews' chests, mostly unlocked: pay, pipes, letters home. One holds a small brass key on a string.", locationId: "sc_bunks", kind: "container", contains: ["Brass Key", "18 gp", "Reed-green Cloak"] },
+      { id: "obj_strongbox", name: "The captain's strongbox", desc: "Iron, bolted to the rock, unlocked with the captain's own key: coin, and a thick ledger in oilcloth.", locationId: "sc_captain", kind: "container", contains: ["Reedcloak Ledger", "85 gp", "Potion of Healing x2"] },
+      { id: "obj_chart_table", name: "Chart table", desc: `The Mere in red ink: the beach, the dam, Lanternport's docks — and in the middle of the lake a circle labelled "chapel — low water or the long swim".`, locationId: "sc_captain", kind: "furniture", cover: "half" },
+      { id: "obj_relic_tables", name: "Relic tables", desc: 'Relics of Old Brindle, cleaned and labelled "for Mother R.". A crate is packed for the next boat.', locationId: "sc_relics", kind: "container", contains: ["Lake-green Coin x3", "Bronze Candlestick"] },
+      {
+        id: "obj_stolen_lantern",
+        name: "The Founders' Lantern",
+        desc: "The Founders' Lantern, on the sorting table among the relics, its pale flame burning steadily in the dark.",
+        locationId: "sc_relics",
+        kind: "light",
+        lit: true,
+        hidden: true,
+        contains: ["Founders' Lantern"],
+        phases: [{ id: "ph_back", label: "Taken back", conditions: [flagIs("lantern_recovered")], gone: true }]
+      },
+      { id: "obj_winch", name: "The great winch", desc: "It opens the sluice gates — if it had its crank. Turning it would take a strong back even then.", locationId: "od_sluice", kind: "furniture", cover: "half" },
+      { id: "obj_names_wall", name: "The wall of names", desc: `The families of Old Brindle, carved in rows: Quill, Fenn, Holt, Wen… and above them the chapel's sign, a lantern over a church roof. At the bottom, newer letters: "The Still Water keeps them."`, locationId: "od_under", kind: "furniture" }
+    );
+    w.npcs.push(
+      {
+        id: "npc_ines",
+        name: "Ines Calder",
+        personality: "A boatwoman at Lanternport's docks (she/her): wiry, sun-browned, sixty, rows anyone anywhere on the Mere for a fair price and never asks why — though she has opinions about boats that go out without lights.",
+        factionId: "fac_lanternport",
+        homeLocationId: "lp_docks",
+        mood: "unbothered",
+        ui: { x: 1940, y: 360 },
+        shop: { items: [{ item: "Boat Passage", price: "5 gp" }, { item: "Fishing Tackle", price: "1 gp" }], buys: false, note: "Passage to the south shore is five gold; she waits an hour, not a minute more." }
+      },
+      { id: "npc_anselm", name: "Keeper Anselm Roe", personality: 'Keeper of the Old Dam (he/him): seventy, stooped, gentle and stubborn; the last of a line of keepers who swore never to open the sluice "unless the Still Water asks". Knows every name on the wall of the undercroft.', homeLocationId: "od_sluice", mood: "worried", ui: { x: 700, y: 960 } },
+      { id: "npc_brisco", name: "Brisco", personality: "The Reedcloaks' cook (he/him): big, soft-spoken, sick of smuggling and sicker of the things they have been dredging up. Will talk if nobody threatens him; knows Pell from the old days.", factionId: "fac_reedcloaks", homeLocationId: "sc_galley", mood: "weary", ui: { x: 200, y: 960 } }
+    );
+    w.quests.push(
+      // A4
+      {
+        id: "q_follow_river",
+        title: "Follow the River",
+        giverPersonId: "npc_odo",
+        turninPersonId: "npc_odo",
+        prerequisites: { quests: ["q_old_coin"] },
+        ui: { x: 500, y: 660 },
+        description: "The green coins wash down the river from the south shore, where the Brindle slips into the Mere. Odo knows a path through the reeds.",
+        offerText: "Green coins come down with the spring floods — from the south, where the river runs out into the Mere past the old dam. There's a path through the reeds the night-rowers use. I'll show you where it starts. Mind the crabs.",
+        progressText: "Found where the path goes?",
+        completionText: "A cave, boats and green cloaks. Aye — I thought as much, and I thought better of saying so. You'd best tell someone braver than me.",
+        objectives: [{ id: "o1", kind: "visit", target: "loc_hidden_beach", text: "Follow the river to the hidden beach" }],
+        rewards: [{ type: "xp", xp: 100 }, { type: "reputation", factionId: "fac_brindlewick", amount: 25 }]
+      },
+      // A5
+      {
+        id: "q_reedcloak_cave",
+        title: "The Reedcloaks' Cave",
+        giverPersonId: "npc_odo",
+        turninPersonId: "npc_maren",
+        prerequisites: { quests: ["q_follow_river"] },
+        ui: { x: 500, y: 740 },
+        description: "The smugglers in green cloaks work from a cave above the hidden beach. Take it, find out who pays them, and bring Elder Holt proof.",
+        offerText: "Those are the ones who pay goblins in drowned coins. Somebody has to go into that cave, and it won't be me. Bring the elder something with writing on it — smugglers always keep books.",
+        progressText: "The cave?",
+        completionText: '"The stablemaster: carts, days, guards." "The lord on the hill: the watch plan, against his debts." "Mother R. wants the Lantern. Only the Lantern." …There is one stablemaster on that road, Corwin Lark at the Outpost — Hedda Morrow must hear this. And who under the Mere is Mother R.?',
+        objectives: [{ id: "o1", kind: "kill", target: "Bandit Captain", count: 1, text: "Defeat the Reedcloaks' captain, Vesna Kral" }, { id: "o2", kind: "collect", target: "Reedcloak Ledger", count: 1, text: "Find the Reedcloaks' ledger" }],
+        rewards: [
+          { type: "xp", xp: 300 },
+          { type: "gold", gold: 60 },
+          { type: "reputation", factionId: "fac_brindlewick", amount: 150 },
+          { type: "reputation", factionId: "fac_reedcloaks", amount: -100 },
+          { type: "choice", options: [{ item: "Potion of Healing", qty: 3 }, { item: "Cloak of Protection", qty: 1 }, { item: "Longbow", qty: 1 }] }
+        ]
+      },
+      // side quest at the Old Dam
+      {
+        id: "q_sluice",
+        title: "The Sluice",
+        giverPersonId: "npc_anselm",
+        turninPersonId: "npc_anselm",
+        ui: { x: 700, y: 1040 },
+        description: "Men in green cloaks stole the crank of the Old Dam's great winch. Without it the keeper cannot work the sluice gates at all.",
+        offerText: "They came in a raft and asked me to open the gates — to lower the Mere, so the old village comes up out of the water. I said no, and they took my crank. Without it I can't open the gates, and I can't close them in a flood either. Bring it back. Please.",
+        progressText: "My crank?",
+        completionText: "Oh, you beauty. …You should know what this does. Open the gates and the Mere drops by a man's height; the roofs of Old Brindle come up out of the water — and the Brindle runs dry below the dam, and the mill with it, for a season. I won't do it. Unless someone gives me a very good reason.",
+        objectives: [{ id: "o1", kind: "collect", target: "Sluice Crank", count: 1, consume: true, text: "Bring back the sluice crank the Reedcloaks took" }],
+        rewards: [{ type: "xp", xp: 100 }, { type: "gold", gold: 15 }, { type: "reputation", factionId: "fac_brindlewick", amount: 50 }]
+      },
+      // the boat from Lanternport's docks
+      {
+        id: "q_hire_boat",
+        title: "A Boat for Hire",
+        giverPersonId: "npc_ines",
+        turninPersonId: "npc_ines",
+        ui: { x: 2020, y: 380 },
+        description: "Ines Calder rows anyone anywhere on the Mere — even to the smugglers' beach on the south shore — for five gold.",
+        offerText: "Anywhere on the Mere. The south shore? There's a cove there nobody fishes; the lightless boats go there. Five gold for that one — buy your passage and I'll row you whenever you like.",
+        progressText: "Five gold, love. I don't row for smiles.",
+        completionText: "Paid and done. When you want the south shore, come down to the docks and get in.",
+        objectives: [{ id: "o1", kind: "collect", target: "Boat Passage", count: 1, consume: true, text: "Buy a passage from Ines Calder" }],
+        rewards: []
+      },
+      // B4, the other way: let the thieves take the Lantern and follow them to their base
+      {
+        id: "q_follow_thieves",
+        title: "Let Them Run",
+        giverPersonId: "npc_dahl",
+        turninPersonId: "npc_dahl",
+        prerequisites: { quests: ["q_whispers"], notFlags: ["stop_plan"] },
+        ui: { x: 2180, y: 620 },
+        description: "Instead of stopping the thieves on the fair's last night, let them take the Founders' Lantern — and follow them to whoever pays them. A gamble: the town will not forgive a lost Lantern.",
+        offerText: "Or… we let them take it. Stop them in the hall and we catch the hands, never the head. Let them run with the Lantern and follow them home, and we get the lot. It is a gamble — lose the Lantern and this town will never forgive either of us. My watch boat will be waiting at the docks.",
+        progressText: "Where is the Lantern?",
+        completionText: "The Lantern! Intact, still burning — and their whole nest found. The mayor will shout at me for a week, and then she will give us both a medal. Here — you earned more than a medal.",
+        objectives: [
+          { id: "o1", kind: "visit", target: "lp_guildhall", text: "Be in the guildhall on the fair's last night — and let them take it" },
+          { id: "o2", kind: "visit", target: "loc_hidden_beach", text: "Follow the thieves' boat across the Mere" },
+          { id: "o3", kind: "kill", target: "Spy", count: 1, text: `Catch the thieves' leader, "Slate"` },
+          { id: "o4", kind: "collect", target: "Founders' Lantern", count: 1, consume: true, text: "Bring back the Founders' Lantern" }
+        ],
+        rewards: [
+          { type: "xp", xp: 350 },
+          { type: "gold", gold: 120 },
+          { type: "reputation", factionId: "fac_lanternport", amount: 100 },
+          { type: "reputation", factionId: "fac_reedcloaks", amount: -150 },
+          { type: "choice", options: [{ item: "Bag of Holding", qty: 1 }, { item: "Cloak of Protection", qty: 1 }, { item: "Potion of Healing", qty: 4 }] }
+        ]
+      }
+    );
+    w.encounters.push(
+      { id: "enc_beach_crabs", name: "Giant crabs on the beach", monsters: [{ key: "giant-crab", count: 4 }], personIds: [], start: "near" },
+      { id: "enc_beach_frogs", name: "The night chorus", monsters: [{ key: "giant-toad", count: 1 }, { key: "giant-frog", count: 2 }], personIds: [], start: "near" },
+      { id: "enc_dam_dredgers", name: "Reedcloak dredgers on the dam", monsters: [{ key: "bandit", count: 2 }, { key: "tough", count: 2 }], personIds: [], locationId: "od_crest", start: "auto", factionId: "fac_reedcloaks" },
+      { id: "enc_cave_dock", name: "Guards at the hidden dock", monsters: [{ key: "bandit", count: 2 }, { key: "tough", count: 1 }, { key: "scout", count: 1 }], personIds: [], locationId: "sc_dock", start: "auto", factionId: "fac_reedcloaks" },
+      { id: "enc_cave_lookout", name: "Lookouts on the ledge", monsters: [{ key: "scout", count: 2 }], personIds: [], locationId: "sc_lookout", start: "auto", factionId: "fac_reedcloaks" },
+      { id: "enc_cave_bunks", name: "The off-watch crew", monsters: [{ key: "bandit", count: 3 }, { key: "tough", count: 1 }], personIds: [], locationId: "sc_bunks", start: "auto", factionId: "fac_reedcloaks" },
+      { id: "enc_cave_grotto", name: "What waits in the pool", monsters: [{ key: "crocodile", count: 2 }], personIds: [], locationId: "sc_grotto", start: "auto" },
+      { id: "enc_cave_captain", name: "Captain Vesna Kral", monsters: [{ key: "bandit-captain", count: 1 }, { key: "bandit", count: 2 }], personIds: [], start: "auto", factionId: "fac_reedcloaks" },
+      { id: "enc_cave_slate", name: '"Slate" and the Lantern thieves', monsters: [{ key: "spy", count: 1 }, { key: "bandit", count: 2 }, { key: "tough", count: 1 }], personIds: [], start: "auto", factionId: "fac_reedcloaks" }
+    );
+    w.events.push(
+      {
+        id: "ev_river_path",
+        name: "Odo shows the way",
+        description: "Odo walks you down past the ferry and parts the reeds with his pole: a narrow path along the bank, heading south towards the Mere.",
+        triggers: [{ type: "onQuestState", questId: "q_follow_river", state: "active" }],
+        conditions: [],
+        effects: [{ type: "reveal", id: "ex_ford_beach" }],
+        repeatable: false,
+        ui: { x: 360, y: 660 }
+      },
+      {
+        id: "ev_beach_crabs",
+        name: "Crabs in the sun",
+        description: "The grey rocks along the waterline get up on long legs: giant crabs, claws raised, sidling towards you.",
+        triggers: [{ type: "onEnterLocation", locationId: "loc_hidden_beach" }],
+        conditions: [{ field: "time", op: "!=", value: "night" }],
+        effects: [{ type: "encounter", value: "enc_beach_crabs" }],
+        repeatable: false,
+        ui: { x: 360, y: 740 }
+      },
+      {
+        id: "ev_beach_frogs",
+        name: "The night chorus",
+        description: "The frog song stops all at once. Something huge and warty heaves itself out of the shallows, and two more follow.",
+        triggers: [{ type: "onEnterLocation", locationId: "loc_hidden_beach" }, { type: "onTime" }],
+        conditions: [{ field: "time", op: "==", value: "night" }, { field: "location", op: "==", value: "loc_hidden_beach" }],
+        effects: [{ type: "encounter", value: "enc_beach_frogs" }],
+        repeatable: false,
+        ui: { x: 360, y: 820 }
+      },
+      {
+        id: "ev_boat_hired",
+        name: "A boat for hire",
+        description: "Ines Calder will row you to the hidden beach on the south shore whenever you come down to the docks.",
+        triggers: [{ type: "onQuestState", questId: "q_hire_boat", state: "turnedin" }],
+        conditions: [],
+        effects: [{ type: "reveal", id: "ex_lp_docks_boat" }, { type: "flag", key: "boat_hired", value: true }],
+        repeatable: false,
+        ui: { x: 2020, y: 300 }
+      },
+      {
+        id: "ev_cave_captain",
+        name: "The captain's cabin",
+        description: 'Captain Vesna Kral — tall, scarred, in a reed-green coat with silver buttons — puts down her wine and draws a curved sword. "You must be the ones who have been costing me money."',
+        triggers: [{ type: "onEnterLocation", locationId: "sc_captain" }],
+        conditions: [],
+        effects: [{ type: "encounter", value: "enc_cave_captain" }],
+        repeatable: false,
+        ui: { x: 200, y: 1040 }
+      },
+      {
+        id: "ev_ledger",
+        name: "The ledger read",
+        description: `The Reedcloaks' ledger names "the stablemaster", "a lord on the hill" and "Mother R.", who wants the Lantern.`,
+        triggers: [{ type: "onQuestState", questId: "q_reedcloak_cave", state: "turnedin" }],
+        conditions: [],
+        effects: [{ type: "flag", key: "ledger_read", value: true }, { type: "flag", key: "stablemaster_suspected", value: true }],
+        repeatable: false,
+        ui: { x: 500, y: 820 }
+      },
+      // the last night, both ways: accepting one plan closes the other
+      {
+        id: "ev_plan_stop",
+        name: "Stop them in the hall",
+        description: "You and Captain Dahl will stop the thieves in the guildhall.",
+        triggers: [{ type: "onQuestState", questId: "q_last_night", state: "active" }],
+        conditions: [],
+        effects: [{ type: "flag", key: "stop_plan", value: true }],
+        repeatable: false,
+        ui: { x: 2340, y: 540 }
+      },
+      {
+        id: "ev_plan_follow",
+        name: "Let them run",
+        description: "You and Captain Dahl will let the thieves take the Lantern and follow them.",
+        triggers: [{ type: "onQuestState", questId: "q_follow_thieves", state: "active" }],
+        conditions: [],
+        effects: [{ type: "flag", key: "follow_plan", value: true }],
+        repeatable: false,
+        ui: { x: 2340, y: 620 }
+      },
+      {
+        id: "ev_heist_follow",
+        name: "The Lantern taken",
+        description: "The first rockets burst over the lake — a window shatters, and figures in dark coats snatch the Founders' Lantern and run for the docks. As agreed, nobody stops them. A boat without lights pulls away towards the south shore, and Captain Dahl's watch boat is waiting at the quay.",
+        triggers: [{ type: "onEnterLocation", locationId: "lp_guildhall" }, { type: "onTime" }],
+        conditions: [questIs("q_follow_thieves", "active"), fairDay(3), { field: "time", op: "==", value: "night" }, { field: "location", op: "==", value: "lp_guildhall" }],
+        effects: [
+          { type: "flag", key: "heist_night", value: true },
+          { type: "flag", key: "lantern_stolen", value: true },
+          { type: "flag", key: "fair_over", value: true },
+          { type: "reveal", id: "ex_lp_docks_boat" },
+          { type: "reveal", id: "obj_stolen_lantern" }
+        ],
+        repeatable: false,
+        ui: { x: 2340, y: 700 }
+      },
+      {
+        id: "ev_cave_slate",
+        name: "Slate with the Lantern",
+        description: `Among the relics, the Founders' Lantern burns on the sorting table. A man with a face you forget while you look at it — "Slate" — turns from it with a knife in each hand, and his crew close in.`,
+        triggers: [{ type: "onEnterLocation", locationId: "sc_relics" }],
+        conditions: [flagIs("lantern_stolen")],
+        effects: [{ type: "encounter", value: "enc_cave_slate" }],
+        repeatable: false,
+        ui: { x: 200, y: 1120 }
+      },
+      {
+        id: "ev_lantern_back",
+        name: "The Lantern returned",
+        description: "The Founders' Lantern is back on its plinth in the guildhall, and Lanternport cannot decide whether to cheer or to scold.",
+        triggers: [{ type: "onQuestState", questId: "q_follow_thieves", state: "turnedin" }],
+        conditions: [],
+        effects: [{ type: "flag", key: "lantern_recovered", value: true }, { type: "flag", key: "lantern_saved", value: true }],
+        repeatable: false,
+        ui: { x: 2340, y: 780 }
+      }
+    );
+    w.globalLore.push(
+      { id: "gl_old_dam", label: "The Old Dam", content: "The Old Dam at the lake's outflow was built two hundred years ago to power the mills downstream. Its sluice gates can lower the Mere by a man's height — enough to bring the roofs of Old Brindle out of the water, and to leave Brindlewick's millrace dry for a season. A keeper has always lived inside it.", keys: ["dam", "sluice", "keeper"] },
+      { id: "gl_sea_cave", label: "The south shore", content: "The south shore of Stillwater Mere is cliffs and reeds; fishermen avoid it. People say boats without lights put in at a hidden beach there.", keys: ["south shore", "beach", "cave"] }
+    );
+    return w;
+  }
+  function layer5(w) {
+    const at = (id) => w.locations.find((l) => l.id === id);
+    const person = (id) => w.npcs.find((n) => n.id === id);
+    at("sc_flooded").exits = [exit("ex_sc_flooded_cistern", "lc_cistern", "down", "open", { secretDC: 99, note: "the long swim under the lake" })];
+    at("loc_brindlewick").phases.push(
+      { id: "ph_dry", label: "The mill runs dry", conditions: [flagIs("low_water")], atmosphere: "grumbling", description: "A mill village of thatched roofs and stone walls. The Brindle runs thin below the dam this season and the mill wheel stands still again; people know why, and they are not sure yet whether to thank you." },
+      { id: "ph_peace", label: "Peace on the road", conditions: [questIs("q_home", "turnedin")], atmosphere: "festive", description: "A mill village of thatched roofs and stone walls, busy again: carts go to Lanternport every week, and there is talk of a Brindlewick stall at next year's fair." }
+    );
+    at("loc_lanternport").phases.push({ id: "ph_peace", label: "Friends with Brindlewick", conditions: [questIs("q_home", "turnedin")], atmosphere: "relieved, generous" });
+    at("loc_hidden_beach").phases = [{ id: "ph_low", label: "Low water", conditions: [flagIs("low_water")], description: "The Mere has drawn back from the hidden beach, leaving mud, stranded reeds and — running out into the lake — a causeway of old road stones towards roofs that have not seen the sky for two hundred years." }];
+    at("loc_forest_road").phases = [{ id: "ph_safe", label: "The road is safe", conditions: [questIs("q_home", "turnedin")], atmosphere: "peaceful", description: "The old trade road east of Brindlewick, under oak and beech. Carts come and go again, and someone has set a lantern on a post where Liu Wen's cart once lay." }];
+    person("npc_tobias").phases = [{ id: "ph_dry", label: "The mill dry", conditions: [flagIs("low_water")], mood: "sulking; understands, does not forgive yet" }];
+    w.objects.find((o) => o.id === "obj_founders_lantern").phases.push(
+      { id: "ph_lent", label: "Lent to the heroes", conditions: [flagIs("lantern_lent"), notFlag("lantern_home")], gone: true }
+    );
+    const brisco = person("npc_brisco");
+    brisco.phases = [{ id: "ph_honest", label: "Honest work", conditions: [flagIs("reedcloaks_recruited")], homeLocationId: "op_kitchen", mood: "happy, peeling onions for Baba" }];
+    w.factions.find((f) => f.id === "fac_reedcloaks").phases.push({
+      id: "ph_honest",
+      label: "Honest boatmen",
+      conditions: [flagIs("reedcloaks_recruited")],
+      description: "Former smugglers who now row honest cargo for the Outpost and the fair — mostly honest, anyway."
+    });
+    w.locations.push(
+      place(
+        "loc_lost_chapel",
+        "The Lost Chapel",
+        "Old Brindle under Stillwater Mere: a drowned village of fallen roofs and mud, and its chapel of the Still Water, held dry under the lake by something that should not be there.",
+        { kind: "dungeon", mapStyle: "stone", atmosphere: "drowned, silent, cold", ui: { x: 450, y: 1040 } }
+      ),
+      // --- the drowned village ---
+      room(
+        "lc_causeway",
+        "Drowned Causeway",
+        "loc_lost_chapel",
+        [0, 4],
+        "Old road stones slick with weed, running out from the beach into the lake. Where the water ends a shimmer hangs in the air like the wall of a glass bell, and beyond it the village is dry.",
+        { light: "dim", hazards: ["slick weed on the stones"], exits: [exit("ex_lc_causeway_beach", "loc_hidden_beach", "w", "open", { secretDC: 99, note: "only at low water" }), exit("ex_lc_causeway_street", "lc_street", "e")] }
+      ),
+      room(
+        "lc_street",
+        "Old Brindle High Street",
+        "loc_lost_chapel",
+        [5, 4],
+        "A street of mud and fallen thatch under a sky of dark water. Fish flap in the doorways. Figures stand in the houses, too still, facing the chapel.",
+        { light: "dim", hazards: ["deep mud"], exits: [exit("ex_lc_street_mill", "lc_mill", "n"), exit("ex_lc_street_houses", "lc_houses", "s"), exit("ex_lc_street_square", "lc_square", "e")] }
+      ),
+      room(
+        "lc_mill",
+        "The Old Mill",
+        "loc_lost_chapel",
+        [5, 0],
+        "The Quill family's first mill, its wheel rotted to ribs. Something has been eating in here, and not grain.",
+        { light: "dark" }
+      ),
+      room(
+        "lc_houses",
+        "Drowned Houses",
+        "loc_lost_chapel",
+        [5, 8],
+        "A row of cottages with their doors open, tables laid for a supper two hundred years cold. A well in the middle of the lane.",
+        { light: "dark" }
+      ),
+      room(
+        "lc_square",
+        "Chapel Square",
+        "loc_lost_chapel",
+        [10, 4],
+        "A small square before the chapel steps, with a stone lantern post whose top is carved like the Founders' Lantern. The chapel doors are swollen oak, shut tight.",
+        { light: "dim", exits: [exit("ex_lc_square_narthex", "lc_narthex", "e", "door", { door: { state: "closed", material: "swollen oak" } })] }
+      ),
+      // --- the chapel ---
+      room(
+        "lc_narthex",
+        "Narthex",
+        "loc_lost_chapel",
+        [15, 4],
+        "The chapel porch: a font of still water that has never dried, and the sign of the Still Water — a lantern over water — worn smooth by hands.",
+        { light: "dim", exits: [exit("ex_lc_narthex_nave", "lc_nave", "e", "corridor")] }
+      ),
+      room(
+        "lc_nave",
+        "The Nave",
+        "loc_lost_chapel",
+        [20, 4],
+        "Rows of rotting pews under a vault of dripping stone. Pale shapes drift between them. Behind the altar, bronze doors with a lock shaped like a lantern.",
+        { light: "dark", exits: [
+          exit("ex_lc_nave_bell", "lc_bell", "n", "stairs"),
+          exit("ex_lc_nave_stair", "lc_crypt_stair", "s", "corridor"),
+          exit("ex_lc_nave_sanctum", "lc_sanctum", "e", "door", { door: { state: "locked", material: "bronze doors with a lantern-shaped lock", lockDC: 30, keyItem: "Founders' Lantern" } })
+        ] }
+      ),
+      room(
+        "lc_bell",
+        "Bell Tower",
+        "loc_lost_chapel",
+        [20, 0],
+        "The tower stair winds up to the bell that rings under the lake in storms. The top of the tower is inside the glass bell; above it, black water and fish.",
+        { light: "dark", exits: [exit("ex_lc_bell_vestry", "lc_vestry", "e", "door", { door: { state: "closed", material: "iron-studded" } })] }
+      ),
+      room(
+        "lc_vestry",
+        "Vestry",
+        "loc_lost_chapel",
+        [25, 0],
+        "The keepers' robing room: cupboards of mouldering vestments, and on a lectern, dry as the day it was written, the chapel's own book of prayers.",
+        { light: "dark" }
+      ),
+      room(
+        "lc_crypt_stair",
+        "Crypt Stair",
+        "loc_lost_chapel",
+        [20, 8],
+        "Narrow steps down under the nave, their edges worn into cups. The air gets colder with every step.",
+        { light: "dark", exits: [exit("ex_lc_stair_crypt", "lc_crypt", "down", "stairs")] }
+      ),
+      room(
+        "lc_crypt",
+        "The Crypt",
+        "loc_lost_chapel",
+        [20, 12],
+        "Tombs of the chapel's keepers and one knight in armour on a stone bier — Sir Aldric, who guarded the chapel when the water came, and guards it still for someone else.",
+        { light: "dark", exits: [exit("ex_lc_crypt_ossuary", "lc_ossuary", "w", "corridor")] }
+      ),
+      room(
+        "lc_ossuary",
+        "Ossuary",
+        "loc_lost_chapel",
+        [15, 12],
+        "Bones stacked in patterns along every wall, skulls in rows like pews. Some of the rows have been taken apart and eaten.",
+        { light: "dark", exits: [exit("ex_lc_ossuary_cistern", "lc_cistern", "w", "corridor")] }
+      ),
+      room(
+        "lc_cistern",
+        "Flooded Cistern",
+        "loc_lost_chapel",
+        [10, 12],
+        "The chapel's cistern, half full of black water where the long swim from the sea cave comes up. The drowned stand in the water up to their chests, waiting.",
+        { light: "dark", hazards: ["chest-deep water"] }
+      ),
+      room(
+        "lc_sanctum",
+        "The Sanctum",
+        "loc_lost_chapel",
+        [25, 4],
+        "The heart of the chapel: an altar of green stone under a hanging chain where a lantern once hung. The water of the Mere stands like a wall where the east window was — and in it, looking in, a face.",
+        { light: "dim" }
+      )
+    );
+    w.objects.push(
+      { id: "obj_lantern_post", name: "Stone lantern post", desc: "Its top is carved like the Founders' Lantern; the carving is newer than the post — the drowned keep it clean.", locationId: "lc_square", kind: "furniture", cover: "half" },
+      { id: "obj_font", name: "Font of still water", desc: "Water that has not moved in two hundred years. Anyone of the Still Water knows the blessing for it.", locationId: "lc_narthex", kind: "furniture" },
+      { id: "obj_pews", name: "Rotting pews", desc: "Rows of them, heavy and soft; good cover.", locationId: "lc_nave", kind: "furniture", cover: "half" },
+      { id: "obj_rotten_steps", name: "Rotten steps", desc: "Tower steps eaten hollow by two centuries of damp.", locationId: "lc_bell", kind: "trap", trapDC: 14 },
+      { id: "obj_prayer_book", name: "The chapel's book of prayers", desc: `The Still Water's rite for the dead, including the last prayer "that lets the light go out and the drowned sleep".`, locationId: "lc_vestry", kind: "container", contains: ["Book of the Still Water", "Potion of Healing x2", "Holy Water x2"] },
+      { id: "obj_aldric_bier", name: "Sir Aldric's bier", desc: "A stone bier with an empty hollow where the knight lay; his sword belt hangs on it.", locationId: "lc_crypt", kind: "container", contains: ["+1 Longsword", "40 gp"] },
+      { id: "obj_mill_hoard", name: "The ghouls' hoard", desc: "Among the bones: rings, buckles and coins from travellers the lake took.", locationId: "lc_mill", kind: "container", contains: ["62 gp", "Silver Ring"] },
+      { id: "obj_altar", name: "Altar of green stone", desc: "Carved with the drowned village's names and a hollow for a lantern. The hag's offerings lie on it: every relic the Reedcloaks dredged.", locationId: "lc_sanctum", kind: "container", contains: ["Lake-green Coin x12", "Periapt of Wound Closure"] }
+    );
+    w.factions.push(
+      {
+        id: "fac_drowned",
+        name: "The Drowned",
+        description: "Mother Reedwater's dead: the people of Old Brindle, kept from their rest under the lake.",
+        startReputation: -1500,
+        killReputation: 0,
+        ui: { x: 80, y: 1100 },
+        goals: "Obey Mother Reedwater; guard the chapel; wait for the Lantern."
+      }
+    );
+    w.npcs.push(
+      {
+        id: "npc_oswin",
+        name: "Brother Oswin",
+        personality: `The ghost of the chapel's last keeper (he/him), of the Still Water, a gentle old man in a grey habit who drowned ringing the bell. He is kind, sad and very tired, speaks of the villagers as "my people", and knows the Still Water's prayers — and Tove's order — by heart.`,
+        homeLocationId: "lc_narthex",
+        mood: "sorrowful, hopeful",
+        ui: { x: 300, y: 1180 },
+        phases: [{ id: "ph_rest", label: "At rest", conditions: [flagIs("lantern_doused")], gone: true }]
+      }
+    );
+    w.quests.push(
+      // C1
+      {
+        id: "q_hag_wants",
+        title: "What the Hag Wants",
+        giverPersonId: "npc_aurelio",
+        turninPersonId: "npc_aurelio",
+        prerequisites: { quests: ["q_reedcloak_cave"], flags: ["lantern_saved"] },
+        ui: { x: 300, y: 1260 },
+        description: `"Mother R. wants the Lantern." Brother Aurelio keeps the old chapel's records; the keeper of the dam and Sister Imani may know the rest.`,
+        offerText: "Mother R. … I have read that name, in a book no one has opened in a hundred years. Ask the keeper of the old dam what his vows are for, and Sister Imani in Brindlewick what the Still Water sings for the drowned. Then come back, and I will tell you what I fear.",
+        progressText: "What did they say?",
+        completionText: "Then it is as I feared. Mother Reedwater is a hag of the deep water. When the dam drowned Old Brindle, she took the chapel and its dead for her own; the Lantern was carried out, and it is the key to the sanctum. With it lit on her altar she wakes the drowned and the Mere is hers. …The mayor agrees: take the Lantern to her — and end it. The records show the monks' way in: the long swim from the cave under the south cliffs. Or ask the keeper to lower the water.",
+        objectives: [{ id: "o1", kind: "talk", target: "npc_anselm", text: "Ask Keeper Anselm Roe about his vows" }, { id: "o2", kind: "talk", target: "npc_imani", text: "Ask Sister Imani what the Still Water sings for the drowned" }],
+        rewards: [{ type: "xp", xp: 200 }, { type: "item", item: "Founders' Lantern", qty: 1 }]
+      },
+      // the low-water way (the sluice)
+      {
+        id: "q_low_water",
+        title: "Low Water",
+        giverPersonId: "npc_anselm",
+        turninPersonId: "npc_anselm",
+        prerequisites: { quests: ["q_sluice", "q_hag_wants"] },
+        ui: { x: 380, y: 1260 },
+        description: "Opening the Old Dam's sluice gates would lower the Mere and bring Old Brindle out of the water — and leave Brindlewick's mill dry for a season.",
+        offerText: 'So that is what my vows were for. "Unless the Still Water asks." …Very well. Turn the great winch with me — it takes a strong back — and the water will go down by nightfall. Brindlewick will curse us both at the mill.',
+        progressText: "The winch will not turn itself.",
+        completionText: "Listen — the water is going out. By nightfall there will be a road to Old Brindle for the first time in two hundred years. May the Still Water forgive us the mill.",
+        objectives: [{ id: "o1", kind: "check", skill: "athletics", dc: 14, at: "od_sluice", text: "Turn the great winch and open the sluice gates" }],
+        rewards: [{ type: "xp", xp: 100 }]
+      },
+      // C2
+      {
+        id: "q_into_mere",
+        title: "Into the Mere",
+        giverPersonId: "npc_aurelio",
+        turninPersonId: "npc_oswin",
+        prerequisites: { quests: ["q_hag_wants"] },
+        ui: { x: 460, y: 1260 },
+        description: "Reach the drowned chapel of Old Brindle: at low water by the causeway from the hidden beach, or by the long swim from the sea cave's flooded passage.",
+        offerText: "Go by the causeway if the keeper opens the gates, or by the long swim if you must. The chapel's keepers were called the Still Water; if any of them are still there, they will know the Lantern.",
+        progressText: "You are still dripping.",
+        completionText: "The Lantern… after two hundred years. I am Oswin, the last keeper of this chapel. Forgive me for not rising; I have been dead some time.",
+        objectives: [{ id: "o1", kind: "visit", target: "loc_lost_chapel", text: "Reach the drowned village of Old Brindle" }, { id: "o2", kind: "talk", target: "npc_oswin", text: "Find out who still keeps the chapel" }],
+        rewards: [{ type: "xp", xp: 150 }]
+      },
+      // C3
+      {
+        id: "q_drowned_light",
+        title: "The Drowned Light",
+        giverPersonId: "npc_oswin",
+        turninPersonId: "npc_oswin",
+        prerequisites: { quests: ["q_into_mere"] },
+        ui: { x: 540, y: 1260 },
+        description: "Mother Reedwater waits in the sanctum behind the bronze doors, which only the Lantern opens. Sir Aldric, the knight who guarded the chapel, guards the crypt for her now.",
+        offerText: "She keeps my people from their rest, and Sir Aldric — our knight, who died holding the doors — she bound to her in the crypt. Free him if you can. Then open the sanctum with the Lantern and face her. Do not let her touch the light.",
+        progressText: "She is still there. I can feel her.",
+        completionText: "She is gone. The water is only water again. …Now the Lantern. Its flame is the drowned light — while it burns, my people cannot sleep, but Lanternport has loved it for two hundred years. That choice is yours, not mine.",
+        objectives: [{ id: "o1", kind: "kill", target: "Wight", count: 1, text: "Free Sir Aldric in the crypt" }, { id: "o2", kind: "kill", target: "Green Hag", count: 1, text: "Defeat Mother Reedwater in the sanctum" }],
+        rewards: [{ type: "xp", xp: 400 }, { type: "gold", gold: 100 }]
+      },
+      // the choice: put out the drowned light, or carry it home burning
+      {
+        id: "q_light_rest",
+        title: "Let the Light Rest",
+        giverPersonId: "npc_oswin",
+        turninPersonId: "npc_oswin",
+        prerequisites: { quests: ["q_drowned_light"], notFlags: ["choice_home"] },
+        ui: { x: 620, y: 1220 },
+        description: "Put out the Founders' Lantern on the altar with the Still Water's last prayer, so the drowned of Old Brindle can sleep. Lanternport will lose its burning relic.",
+        offerText: "Lay it on the altar and say the last prayer with me — it is in the book in the vestry, if you do not know it. The light goes out; my people sleep; so do I. Lanternport will have a lantern that is only a lantern.",
+        progressText: "The prayer is short. The hard part is meaning it.",
+        completionText: "The light is out. Listen… the bell. It is ringing us home. Thank you. Tell Lanternport it was the kindest thing their Lantern ever did.",
+        objectives: [{ id: "o1", kind: "check", skill: "religion", dc: 12, at: "lc_sanctum", text: "Say the Still Water's last prayer at the altar" }, { id: "o2", kind: "collect", target: "Founders' Lantern", count: 1, consume: true, text: "Lay the Lantern on the altar" }],
+        rewards: [{ type: "xp", xp: 200 }, { type: "reputation", factionId: "fac_brindlewick", amount: 150 }, { type: "reputation", factionId: "fac_lanternport", amount: -100 }]
+      },
+      {
+        id: "q_light_home",
+        title: "Carry the Light Home",
+        giverPersonId: "npc_oswin",
+        turninPersonId: "npc_varga",
+        prerequisites: { quests: ["q_drowned_light"], notFlags: ["choice_rest"] },
+        ui: { x: 620, y: 1300 },
+        description: "Take the Founders' Lantern back to Lanternport still burning. Nothing will wake the drowned now that the hag is gone — but they will not sleep either.",
+        offerText: "Then take it home burning. With her gone, no one can wake them; we will only… wait, as we always have. Go on. Lanternport has loved that light longer than I was alive.",
+        progressText: "You have the Lantern?",
+        completionText: "It is still burning. …You could have put it out, and you did not. Lanternport will not forget that — and I will make sure Brindlewick hears who brought it home.",
+        objectives: [{ id: "o1", kind: "collect", target: "Founders' Lantern", count: 1, consume: true, text: "Bring the Lantern back to Mayor Varga, still burning" }],
+        rewards: [{ type: "xp", xp: 200 }, { type: "reputation", factionId: "fac_lanternport", amount: 250 }]
+      },
+      // C4
+      {
+        id: "q_home",
+        title: "Home",
+        giverPersonId: "npc_maren",
+        turninPersonId: "npc_maren",
+        prerequisites: { flags: ["chapel_done"] },
+        ui: { x: 700, y: 1260 },
+        description: "The hag is gone and the Lantern's fate decided. Brindlewick and Lanternport should hear it from you — together.",
+        offerText: "The whole lake is talking. Go to Lanternport, tell Isolde Varga what you told me, and tell her Brindlewick will be at her fair next spring — with grain, not accusations. I'll write it down so she believes you.",
+        progressText: "Did Isolde listen?",
+        completionText: "She wrote back. She WROTE BACK — a whole page, and most of it polite. The road is ours again, both ways. …Sit down. Ada is bringing supper, and nobody in this village will let you pay for anything ever again.",
+        objectives: [{ id: "o1", kind: "talk", target: "npc_varga", text: "Tell Mayor Varga what happened under the lake" }],
+        rewards: [
+          { type: "xp", xp: 400 },
+          { type: "gold", gold: 100 },
+          { type: "reputation", factionId: "fac_brindlewick", amount: 200 },
+          { type: "reputation", factionId: "fac_lanternport", amount: 200 },
+          { type: "choice", options: [{ item: "Ring of Protection", qty: 1 }, { item: "Cloak of Elvenkind", qty: 1 }, { item: "Potion of Healing", qty: 5 }] }
+        ]
+      },
+      // side quests
+      {
+        id: "q_honest_work",
+        title: "Honest Work",
+        giverPersonId: "npc_brisco",
+        turninPersonId: "npc_brisco",
+        prerequisites: { quests: ["q_reedcloak_cave"] },
+        ui: { x: 200, y: 1260 },
+        description: "With their captain gone, some of the Reedcloaks want out. Brisco asks whether anyone would give smugglers honest work.",
+        offerText: "Half of us only ever wanted to row boats and eat. The Outpost always needs hands — would Hedda Morrow take on men who used to steal her carts? Would you ask her? …Pell would have asked. Pell always did the brave, stupid thing.",
+        progressText: "Did she laugh?",
+        completionText: "She said yes? She said YES. Oars and onions, then. You have saved more of us than you killed, friend.",
+        objectives: [{ id: "o1", kind: "talk", target: "npc_hedda", text: "Ask Hedda Morrow to hire the Reedcloaks who want out" }],
+        rewards: [{ type: "xp", xp: 100 }, { type: "reputation", factionId: "fac_reedcloaks", amount: 400 }, { type: "reputation", factionId: "fac_outpost", amount: 50 }]
+      },
+      {
+        id: "q_lights",
+        title: "Lights on the Lake",
+        giverPersonId: "npc_ines",
+        turninPersonId: "npc_ines",
+        prerequisites: { quests: ["q_hire_boat"] },
+        ui: { x: 2100, y: 380 },
+        description: "Pale lights over the south shore at night lure boats onto the rocks. Ines has lost a friend to them.",
+        offerText: "There are lights over the south shore at night — not lanterns. They bob and beckon, and boats that follow them end up on the rocks. Old Gudrun followed one last month. Row over after dark and put them out, whatever they are.",
+        progressText: "The lights still dance.",
+        completionText: "Dark over the south shore last night, for the first time in a year. Gudrun would have bought you a drink. I will have to do.",
+        objectives: [{ id: "o1", kind: "kill", target: "Will-o’-Wisp", count: 1, text: "Put out the lights over the hidden beach at night" }],
+        rewards: [{ type: "xp", xp: 150 }, { type: "gold", gold: 30 }, { type: "reputation", factionId: "fac_lanternport", amount: 50 }]
+      }
+    );
+    w.encounters.push(
+      { id: "enc_lc_street", name: "The drowned in the street", monsters: [{ key: "zombie", count: 4 }], personIds: [], locationId: "lc_street", start: "auto", factionId: "fac_drowned" },
+      { id: "enc_lc_mill", name: "Ghouls in the old mill", monsters: [{ key: "ghoul", count: 2 }], personIds: [], locationId: "lc_mill", start: "auto", factionId: "fac_drowned" },
+      { id: "enc_lc_houses", name: "Supper guests", monsters: [{ key: "ghoul", count: 1 }, { key: "zombie", count: 2 }], personIds: [], locationId: "lc_houses", start: "auto", factionId: "fac_drowned" },
+      { id: "enc_lc_nave", name: "Specters in the nave", monsters: [{ key: "specter", count: 2 }], personIds: [], locationId: "lc_nave", start: "auto", factionId: "fac_drowned" },
+      { id: "enc_lc_ossuary", name: "Ghouls in the ossuary", monsters: [{ key: "ghoul", count: 2 }], personIds: [], locationId: "lc_ossuary", start: "auto", factionId: "fac_drowned" },
+      { id: "enc_lc_cistern", name: "The drowned in the cistern", monsters: [{ key: "zombie", count: 3 }], personIds: [], start: "near", factionId: "fac_drowned" },
+      { id: "enc_lc_aldric", name: "Sir Aldric", monsters: [{ key: "wight", count: 1 }, { key: "zombie", count: 2 }], personIds: [], start: "auto", factionId: "fac_drowned" },
+      { id: "enc_lc_hag", name: "Mother Reedwater", monsters: [{ key: "green-hag", count: 1 }, { key: "ghoul", count: 2 }], personIds: [], start: "auto", factionId: "fac_drowned" },
+      { id: "enc_lights", name: "Lights on the lake", monsters: [{ key: "will-o-wisp", count: 1 }], personIds: [], start: "near" }
+    );
+    w.events.push(
+      {
+        id: "ev_long_swim",
+        name: "The monks' way",
+        description: "Brother Aurelio's records show the old keepers' way under the lake: from the flooded passage of the cave below the south cliffs, a long swim up into the chapel's cistern.",
+        triggers: [{ type: "onQuestState", questId: "q_hag_wants", state: "turnedin" }],
+        conditions: [],
+        effects: [{ type: "reveal", id: "ex_sc_flooded_cistern" }, { type: "flag", key: "lantern_lent", value: true }],
+        repeatable: false,
+        ui: { x: 300, y: 1340 }
+      },
+      {
+        id: "ev_low_water",
+        name: "The water goes out",
+        description: "The sluice gates grind open. By nightfall the Mere has dropped by a man's height; the Brindle runs thin below the dam, and a causeway of old road stones rises from the hidden beach towards the roofs of Old Brindle.",
+        triggers: [{ type: "onQuestState", questId: "q_low_water", state: "turnedin" }],
+        conditions: [],
+        effects: [{ type: "flag", key: "low_water", value: true }, { type: "reveal", id: "ex_lc_causeway_beach" }, { type: "reputation", factionId: "fac_brindlewick", amount: -150 }],
+        repeatable: false,
+        ui: { x: 380, y: 1340 }
+      },
+      {
+        id: "ev_cistern",
+        name: "Up from the long swim",
+        description: "You come up gasping into black water and cold air — and the drowned standing in the cistern turn their heads towards you.",
+        triggers: [{ type: "onEnterLocation", locationId: "lc_cistern" }],
+        conditions: [],
+        effects: [{ type: "encounter", value: "enc_lc_cistern" }],
+        repeatable: false,
+        ui: { x: 460, y: 1340 }
+      },
+      {
+        id: "ev_aldric",
+        name: "Sir Aldric rises",
+        description: 'The knight on the bier sits up. His eyes are pale lights; his sword is already in his hand. "The chapel is closed," he says, in a voice like water in a pipe.',
+        triggers: [{ type: "onEnterLocation", locationId: "lc_crypt" }],
+        conditions: [],
+        effects: [{ type: "encounter", value: "enc_lc_aldric" }],
+        repeatable: false,
+        ui: { x: 540, y: 1340 }
+      },
+      {
+        id: "ev_hag",
+        name: "Mother Reedwater",
+        description: 'The face in the wall of water smiles, and steps through: tall, green, draped in weed, with hands like roots. "The Lantern," Mother Reedwater says sweetly. "How kind of you to bring it all the way down."',
+        triggers: [{ type: "onEnterLocation", locationId: "lc_sanctum" }],
+        conditions: [],
+        effects: [{ type: "encounter", value: "enc_lc_hag" }],
+        repeatable: false,
+        ui: { x: 620, y: 1380 }
+      },
+      {
+        id: "ev_choice_rest",
+        name: "Chose rest",
+        description: "You will put out the drowned light.",
+        triggers: [{ type: "onQuestState", questId: "q_light_rest", state: "active" }],
+        conditions: [],
+        effects: [{ type: "flag", key: "choice_rest", value: true }],
+        repeatable: false,
+        ui: { x: 700, y: 1180 }
+      },
+      {
+        id: "ev_choice_home",
+        name: "Chose home",
+        description: "You will carry the Lantern home burning.",
+        triggers: [{ type: "onQuestState", questId: "q_light_home", state: "active" }],
+        conditions: [],
+        effects: [{ type: "flag", key: "choice_home", value: true }],
+        repeatable: false,
+        ui: { x: 700, y: 1340 }
+      },
+      {
+        id: "ev_light_out",
+        name: "The drowned light goes out",
+        description: "The Founders' Lantern goes dark on the altar. Far above, the chapel bell rings once, and the drowned of Old Brindle lie down to sleep. Lanternport's relic is only a lantern now.",
+        triggers: [{ type: "onQuestState", questId: "q_light_rest", state: "turnedin" }],
+        conditions: [],
+        effects: [{ type: "flag", key: "lantern_doused", value: true }, { type: "flag", key: "chapel_done", value: true }],
+        repeatable: false,
+        ui: { x: 780, y: 1220 }
+      },
+      {
+        id: "ev_light_home",
+        name: "The Lantern comes home",
+        description: "The Founders' Lantern is back on its plinth in the guildhall, still burning with its pale, steady flame.",
+        triggers: [{ type: "onQuestState", questId: "q_light_home", state: "turnedin" }],
+        conditions: [],
+        effects: [{ type: "flag", key: "lantern_home", value: true }, { type: "flag", key: "chapel_done", value: true }],
+        repeatable: false,
+        ui: { x: 780, y: 1300 }
+      },
+      {
+        id: "ev_recruited",
+        name: "Oars and onions",
+        description: "The Reedcloaks who wanted out now row for the Outpost.",
+        triggers: [{ type: "onQuestState", questId: "q_honest_work", state: "turnedin" }],
+        conditions: [],
+        effects: [{ type: "flag", key: "reedcloaks_recruited", value: true }],
+        repeatable: false,
+        ui: { x: 200, y: 1340 }
+      },
+      {
+        id: "ev_lights",
+        name: "Lights over the shore",
+        description: "A pale light bobs over the rocks at the end of the beach, beckoning — and when you come close it flares cold and blue.",
+        triggers: [{ type: "onEnterLocation", locationId: "loc_hidden_beach" }, { type: "onTime" }],
+        conditions: [questIs("q_lights", "active"), { field: "time", op: "==", value: "night" }, { field: "location", op: "==", value: "loc_hidden_beach" }],
+        effects: [{ type: "encounter", value: "enc_lights" }],
+        repeatable: false,
+        ui: { x: 2100, y: 300 }
+      }
+    );
+    w.globalLore.push(
+      { id: "gl_reedwater", label: "Mother Reedwater", content: "Old stories around the Mere tell of Mother Reedwater, a green woman of the deep water who trades in drowned things and wants what shines. Children are told not to lean over the side of boats, or she will take their faces.", keys: ["Reedwater", "Mother R", "hag"] },
+      { id: "gl_aldric", label: "Sir Aldric", content: "Sir Aldric was the knight who guarded Old Brindle's chapel. When the water came he held the doors while the keepers carried the Lantern out, and he was never seen again.", keys: ["Aldric", "knight"] }
     );
     return w;
   }
@@ -38391,7 +40794,7 @@ ${g.lines.join("\n")}`).join("\n\n") + "\n\nSeveral commands and a message in on
       summary: "Supply carts keep vanishing between the village of Brindlewick and the lakeside town of Lanternport. Follow the trail from goblin raiders to smugglers on Stillwater Mere, and to what lies under the lake. A starter adventure for one character and a companion.",
       levels: [1, 5],
       credits: [SRD.attribution],
-      world: layer2(world()),
+      world: layer5(layer4(layer3(layer2(world())))),
       characters: PREGENS.map(pregenCard),
       start: { view: "player", pregens: PREGENS.map((p) => p.id), opening: OPENING }
     };
@@ -38572,6 +40975,10 @@ ${g.lines.join("\n")}`).join("\n\n") + "\n\nSeveral commands and a message in on
       try {
         Shell2()?.close("adventure");
         Shell2()?.open("world");
+      } catch (_) {
+      }
+      try {
+        if (typeof window.autosave === "function") window.autosave();
       } catch (_) {
       }
       return { worldId, persona: me.name, pregens: cards };
